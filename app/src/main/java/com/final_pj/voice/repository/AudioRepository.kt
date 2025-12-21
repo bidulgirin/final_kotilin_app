@@ -22,7 +22,7 @@ class AudioRepository(
             MediaStore.Audio.Media.DURATION
         )
 
-        val selection = "${MediaStore.Audio.Media.IS_RECORDING} = 0"
+        val selection = "${MediaStore.Audio.Media.IS_MUSIC} = 0"
         val sortOrder = "${MediaStore.Audio.Media.DATE_ADDED} DESC"
 
         contentResolver.query(

@@ -62,6 +62,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startRecording() {
         outputFile = "${externalCacheDir?.absolutePath}/voice_${System.currentTimeMillis()}"
+        //val outputFile = File(getExternalFilesDir("Recordings/Call"), "recording_${System.currentTimeMillis()}")
         mediaRecorder = MediaRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
