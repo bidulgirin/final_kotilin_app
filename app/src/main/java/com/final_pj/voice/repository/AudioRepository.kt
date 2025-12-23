@@ -11,7 +11,6 @@ class AudioRepository(
     private val contentResolver: ContentResolver
 ) {
     fun loadAudioFiles(): List<AudioItem> {
-        Log.d("test", "저장소에 갈래")
         val audioList = mutableListOf<AudioItem>()
         val collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
 
@@ -40,7 +39,7 @@ class AudioRepository(
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idCol)
                 val uri = ContentUris.withAppendedId(collection, id)
-
+                Log.d("나다!!!!", "${uri}")
                 audioList.add(
                     AudioItem(
                         id = id,
@@ -55,4 +54,5 @@ class AudioRepository(
 
         return audioList
     }
+
 }

@@ -2,6 +2,7 @@ package com.final_pj.voice
 
 import android.Manifest
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
@@ -10,6 +11,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
@@ -22,6 +24,8 @@ import com.final_pj.voice.adapter.AudioAdapter
 import com.final_pj.voice.model.AudioItem
 import com.final_pj.voice.repository.AudioRepository
 import com.final_pj.voice.service.CallDetectService
+import com.final_pj.voice.util.VoskModelHolder
+import com.final_pj.voice.util.transcribeLatestCall30s
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -61,8 +65,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var outputFile: String
 
     private fun startRecording() {
+
         outputFile = "${externalCacheDir?.absolutePath}/voice_${System.currentTimeMillis()}"
-        //val outputFile = File(getExternalFilesDir("Recordings/Call"), "recording_${System.currentTimeMillis()}")
+
         mediaRecorder = MediaRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
@@ -73,7 +78,7 @@ class MainActivity : AppCompatActivity() {
         }
         isRecording = true
         findViewById<Button>(R.id.btnRecord).text = "녹음 끝"
-        Toast.makeText(this, "녹음 시작", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "녹음 시작${outputFile}", Toast.LENGTH_LONG).show()
     }
     private fun saveToMediaStore(file: File) {
         val values = ContentValues().apply {
@@ -134,12 +139,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+
     // ----------------------------
     // 권한 관련
     // ----------------------------
+    private lateinit var resultTextView: TextView
+
+
     private fun checkAndRequestPermissions() {
         // 모든 권한이 있다면
         if (hasRequiredPermissions()) {
+            // 모델 불러오기
+            VoskModelHolder.init(this)
             // 포그라운드 서비스 시작
             startForegroundService()
             // 오디오 파일 가져오기
@@ -149,6 +161,16 @@ class MainActivity : AppCompatActivity() {
             btnRecord.setOnClickListener {
                 if (isRecording) stopRecording() else startRecording()
             }
+
+            // 변환된 텍스를 보여줌
+
+            resultTextView = findViewById(R.id.resultTextView)
+
+            transcribeLatestCall30s(this) { text ->
+                resultTextView.text = text ?: "인식 실패"
+            }
+
+
         } else {
             // 권한 요청을 해라
             requestRequiredPermissions()
@@ -210,6 +232,8 @@ class MainActivity : AppCompatActivity() {
             finishAffinity() // 앱의 모든 Activity 종료
         }
     }
+    
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d("test", "mainActivity 발동")
@@ -219,7 +243,8 @@ class MainActivity : AppCompatActivity() {
         checkAndRequestPermissions()
 
 
-        
+
+
     }
     companion object {
         private const val REQUEST_PERMISSION_CODE = 1001
