@@ -6,7 +6,6 @@ import java.io.File
 import java.io.FileOutputStream
 
 object AssetUtils {
-
     fun copyAssets(context: Context, assetPath: String) {
         val assetManager = context.assets
         val files = assetManager.list(assetPath) ?: return
