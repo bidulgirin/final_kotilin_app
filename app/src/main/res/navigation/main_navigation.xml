@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 앱의 모든 화면과 화면간의 이동경로(트랜지션)을 정의하는 XML파일 -->
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_navigation"
+    app:startDestination="@id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.final_pj.voice.fragment.HomeFragment"
+        android:label="Home" />
+
+    <fragment
+        android:id="@+id/navigation_record"
+        android:name="com.final_pj.voice.fragment.MainRecodeListFragment"
+        android:label="Record" />
+
+    <fragment
+        android:id="@+id/navigation_history"
+        android:name="com.final_pj.voice.fragment.HistoryFragment"
+        android:label="History" />
+
+</navigation>

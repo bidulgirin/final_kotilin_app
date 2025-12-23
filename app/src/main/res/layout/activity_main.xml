@@ -1,43 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
-    <!-- 상단 타이틀 -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="통화 녹음 목록"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:padding="16dp"
-        android:layout_marginBottom="10dp"
-        android:background="#FFFFFF" />
-    <Button
-        android:id="@+id/btnRecord"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="녹음"/>
-    <!-- 구분선 -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#DDDDDD"/>
-<!--    text 변환 -->
-    <TextView
-        android:id="@+id/resultTextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="결과 대기 중"
-        android:textSize="16sp" />
+    android:orientation="vertical">
 
-    <!-- RecyclerView -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/nav_host"
+        android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp"/>
+        app:navGraph="@navigation/main_navigation"
+        app:defaultNavHost="true" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/menu_bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:menu="@menu/main_menu_bottom" />
+
 </LinearLayout>

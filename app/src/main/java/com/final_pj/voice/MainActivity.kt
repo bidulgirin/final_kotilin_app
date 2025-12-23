@@ -1,39 +1,52 @@
 package com.final_pj.voice
 
 import android.Manifest
-import android.content.ContentValues
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.MediaPlayer
-import android.media.MediaRecorder
 import android.os.Bundle
-import android.provider.MediaStore
-import android.util.Log
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.final_pj.voice.adapter.AudioAdapter
-import com.final_pj.voice.model.AudioItem
-import com.final_pj.voice.repository.AudioRepository
+import androidx.fragment.app.commit
+import androidx.navigation.NavController
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.NavigationUI
+import androidx.navigation.ui.setupWithNavController
+import com.final_pj.voice.databinding.ActivityMainBinding
 import com.final_pj.voice.service.CallDetectService
 import com.final_pj.voice.util.VoskModelHolder
-import com.final_pj.voice.util.transcribeLatestCall30s
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileInputStream
-import java.io.OutputStream
+import com.google.android.material.bottomnavigation.BottomNavigationView
+
 
 class MainActivity : AppCompatActivity() {
+
+    // ----------------------------
+    // vosk 인디바이스 예제
+    // ----------------------------
+
+    private lateinit var resultTextView: TextView
+
+
+    // ----------------------------
+    // 화면 + 네비게이션 구성 관련
+    // ----------------------------
+    private fun setupBottomNavigation() {
+        // NavHostFragment 가져오기
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host) as NavHostFragment
+
+        // NavController
+        val navController = navHostFragment.navController
+
+        // BottomNavigationView
+        val bottomNav = findViewById<BottomNavigationView>(R.id.menu_bottom_navigation)
+
+        // 연결
+        bottomNav.setupWithNavController(navController)
+    }
 
     // ----------------------------
     // 포그라운드서비스 관련
@@ -42,109 +55,12 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, CallDetectService::class.java)
         ContextCompat.startForegroundService(this, intent)
     }
-    private fun showAudioList(){
-        // 화면 구성
-        // 저장소에서 가져와
-        audioRepository = AudioRepository(contentResolver)
-
-        audioAdapter = AudioAdapter(emptyList()) {
-            playAudio(it)
-        }
-
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = audioAdapter
-
-        loadAudio()
-    }
-    // ----------------------------
-    // 녹음 예제 (테스트용)
-    // ----------------------------
-    private var mediaRecorder: MediaRecorder? = null
-    private var isRecording = false
-    private lateinit var outputFile: String
-
-    private fun startRecording() {
-
-        outputFile = "${externalCacheDir?.absolutePath}/voice_${System.currentTimeMillis()}"
-
-        mediaRecorder = MediaRecorder().apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setOutputFile(outputFile)
-            prepare()
-            start()
-        }
-        isRecording = true
-        findViewById<Button>(R.id.btnRecord).text = "녹음 끝"
-        Toast.makeText(this, "녹음 시작${outputFile}", Toast.LENGTH_LONG).show()
-    }
-    private fun saveToMediaStore(file: File) {
-        val values = ContentValues().apply {
-            put(MediaStore.Audio.Media.DISPLAY_NAME, file.name)
-            put(MediaStore.Audio.Media.MIME_TYPE, "audio/mp4")
-            put(MediaStore.Audio.Media.IS_RECORDING, 0) // 0: 녹음 파일
-        }
-
-        val uri = contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values)
-
-        uri?.let {
-            val outputStream: OutputStream? = contentResolver.openOutputStream(uri)
-            val inputStream = FileInputStream(file)
-            inputStream.copyTo(outputStream!!)
-            inputStream.close()
-            outputStream.close()
-        }
-    }
-    private fun stopRecording() {
-        mediaRecorder?.apply {
-            stop()
-            release()
-        }
-        mediaRecorder = null
-
-        isRecording = false
-        findViewById<Button>(R.id.btnRecord).text = "녹음 시작"
-        Toast.makeText(this, "녹음 완료: $outputFile", Toast.LENGTH_SHORT).show()
-
-        // MediaStore에 등록
-        val file = File(outputFile)
-        saveToMediaStore(file)
-
-    }
-
-    private val REQUEST_PERMISSION_CODE = 1000
-
-    // ----------------------------
-    // 오디오 관련
-    // ----------------------------
-    private lateinit var audioAdapter: AudioAdapter
-    private lateinit var audioRepository: AudioRepository // 저장소에서 오디오 가져오기
-    private fun loadAudio() {
-        Log.d("test", "오디오 로드 시도")
-        lifecycleScope.launch(Dispatchers.IO) {
-            val list = audioRepository.loadAudioFiles()
-            withContext(Dispatchers.Main) {
-                audioAdapter.submitList(list)
-            }
-        }
-    }
-
-    private fun playAudio(item: AudioItem) {
-        MediaPlayer().apply {
-            setDataSource(this@MainActivity, item.uri)
-            prepare()
-            start()
-        }
-    }
 
 
 
     // ----------------------------
     // 권한 관련
     // ----------------------------
-    private lateinit var resultTextView: TextView
 
 
     private fun checkAndRequestPermissions() {
@@ -154,31 +70,13 @@ class MainActivity : AppCompatActivity() {
             VoskModelHolder.init(this)
             // 포그라운드 서비스 시작
             startForegroundService()
-            // 오디오 파일 가져오기
-            showAudioList()
-            // 녹음 토클 버튼
-            val btnRecord: Button = findViewById(R.id.btnRecord)
-            btnRecord.setOnClickListener {
-                if (isRecording) stopRecording() else startRecording()
-            }
-
-            // 변환된 텍스를 보여줌
-
-            resultTextView = findViewById(R.id.resultTextView)
-
-            transcribeLatestCall30s(this) { text ->
-                resultTextView.text = text ?: "인식 실패"
-            }
-
-
         } else {
-            // 권한 요청을 해라
+            // 권한 없으면 권한 요청을 해라
             requestRequiredPermissions()
         }
     }
-
-
-    private fun hasRequiredPermissions(): Boolean {
+    
+    private fun hasRequiredPermissions(): Boolean { // 어떤 권한이 필요한지
         val permissions = arrayOf(
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.RECORD_AUDIO,
@@ -207,25 +105,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     
-    override fun onRequestPermissionsResult(
+    override fun onRequestPermissionsResult( // 퍼미션 권한 결과
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
+        // 코드가 다르면 돌려보내라
         if (requestCode != REQUEST_PERMISSION_CODE) return
 
+        // 모든 권한을 잘 받았다면
         if (grantResults.isNotEmpty() &&
             grantResults.all { it == PackageManager.PERMISSION_GRANTED }
         ) {
             // 포그라운드 서비스 시작
             startForegroundService()
-            showAudioList()
         } else {
+            // 모든 권한을 받지 못했으므로 쫓아내기
             Toast.makeText(
                 this,
-                "통화 감지 기능을 사용하려면 권한이 필요합니다.\\n권한을 허용하지 않으면 앱이 종료됩니다.",
+                "모든 권한을 허용하지 않으면 앱을 사용할 수 없습니다.",
                 Toast.LENGTH_LONG
             ).show()
 
@@ -235,16 +135,20 @@ class MainActivity : AppCompatActivity() {
     
 
 
+    // 앱을 실행했을때
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d("test", "mainActivity 발동")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // 권한 요청
-        checkAndRequestPermissions()
 
+        // fragment 부르기 (프레그먼트 중복 소환 방지)
+        if(savedInstanceState == null){
 
-
-
+            // 권한 요청
+            checkAndRequestPermissions()
+            supportFragmentManager.commit{ // 프래그먼트 매니저
+                setupBottomNavigation()
+            }
+        }
     }
     companion object {
         private const val REQUEST_PERMISSION_CODE = 1001
