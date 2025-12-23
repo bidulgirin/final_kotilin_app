@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/menu_result"
+        android:id="@+id/navigation_home"
         android:icon="@drawable/ic_phone_call"
-        android:title="분석결과" />
+        android:title="Home" />
 
     <item
-        android:id="@+id/menu_home"
+        android:id="@+id/navigation_record"
         android:icon="@drawable/ic_phone_call"
-        android:title="홈" />
+        android:title="Record" />
 
     <item
-        android:id="@+id/menu_setting"
+        android:id="@+id/navigation_history"
         android:icon="@drawable/ic_phone_call"
-        android:title="설정" />
+        android:title="History" />
 
 </menu>

@@ -2,32 +2,22 @@
 <!-- 앱의 모든 화면과 화면간의 이동경로(트랜지션)을 정의하는 XML파일 -->
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_navigation"
-    app:startDestination="@id/navigation_home"><!-- 시작 지점 -->
-<!--    분석결과  -->
-    <fragment
-        android:id="@+id/navigation_record"
-        android:name="com.final_pj.voice.fragment.MainRecodeListFragment"
-        android:label="MainRecodeListFragment" >
-                <action
-                    app:destination="@id/navigation_record" />
-    </fragment>
-    <!-- 홈 -->
+    app:startDestination="@id/navigation_home">
+
     <fragment
         android:id="@+id/navigation_home"
         android:name="com.final_pj.voice.fragment.HomeFragment"
-        android:label="HomeFragment"
-        >
-        <action
-            app:destination="@id/navigation_home" />
-    </fragment>
-<!-- 최근 기록 -->
+        android:label="Home" />
+
+    <fragment
+        android:id="@+id/navigation_record"
+        android:name="com.final_pj.voice.fragment.MainRecodeListFragment"
+        android:label="Record" />
+
     <fragment
         android:id="@+id/navigation_history"
         android:name="com.final_pj.voice.fragment.HistoryFragment"
-        android:label="HistoryFragment" >
-                <action
-                    app:destination="@id/navigation_history" />
-    </fragment>
+        android:label="History" />
+
 </navigation>

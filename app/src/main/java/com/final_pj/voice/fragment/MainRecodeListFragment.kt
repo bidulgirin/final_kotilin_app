@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,29 +21,31 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-// 프레그 먼트에서는 함수 등을 쓰지 못할까?...
-class MainRecodeListFragment : Fragment() {
+class MainRecodeListFragment : Fragment(R.layout.fragment_main_recode_list) {
 
-    // ----------------------------
-    // 오디오 관련
-    // ----------------------------
-    val itemList = ArrayList<AudioItem>()
-
-    // 초기화가 필요한 리소스들을 초기화
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var audioAdapter: AudioAdapter
+    private lateinit var audioRepository: AudioRepository
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        lateinit var binding: FragmentMainRecodeListBinding
-        binding.audioList.adapter = AudioAdapter(itemList, onClick = {Log.d("test", "눌렀다")})
-        binding.audioList.layoutManager = LinearLayoutManager(
-            context, LinearLayoutManager.VERTICAL, false)
-    }
 
-    companion object {
+        // RecyclerView
+        recyclerView = view.findViewById(R.id.audioList)
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
+        // Repository 생성
+        audioRepository = AudioRepository(requireContext().contentResolver)
+
+        // 🔥 오디오 리스트 로드
+        val audioList = audioRepository.loadAudioFiles()
+
+        // Adapter 연결
+        audioAdapter = AudioAdapter(audioList) { audioItem ->
+            // 아이템 클릭 이벤트
+            Log.d("AudioClick", "클릭: ${audioItem.title}")
+        }
+
+        recyclerView.adapter = audioAdapter
     }
 }

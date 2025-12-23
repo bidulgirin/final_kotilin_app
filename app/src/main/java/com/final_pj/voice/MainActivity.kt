@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -11,24 +12,40 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.commit
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.NavigationUI
+import androidx.navigation.ui.setupWithNavController
 import com.final_pj.voice.databinding.ActivityMainBinding
 import com.final_pj.voice.service.CallDetectService
+import com.final_pj.voice.util.VoskModelHolder
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 
 class MainActivity : AppCompatActivity() {
+
+    // ----------------------------
+    // vosk 인디바이스 예제
+    // ----------------------------
+
+    private lateinit var resultTextView: TextView
+
+
     // ----------------------------
     // 화면 + 네비게이션 구성 관련
     // ----------------------------
-    private lateinit var binding: ActivityMainBinding
-    private lateinit var navController: NavController
+    private fun setupBottomNavigation() {
+        // NavHostFragment 가져오기
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host) as NavHostFragment
 
-    private fun initBinding() {
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-    }
-    private fun initNavigation() {
-        NavigationUI.setupWithNavController(binding.menuBottomNavigation, findNavController(R.id.nav_host))
+        // NavController
+        val navController = navHostFragment.navController
+
+        // BottomNavigationView
+        val bottomNav = findViewById<BottomNavigationView>(R.id.menu_bottom_navigation)
+
+        // 연결
+        bottomNav.setupWithNavController(navController)
     }
 
     // ----------------------------
@@ -44,7 +61,6 @@ class MainActivity : AppCompatActivity() {
     // ----------------------------
     // 권한 관련
     // ----------------------------
-    private lateinit var resultTextView: TextView
 
 
     private fun checkAndRequestPermissions() {
@@ -130,6 +146,7 @@ class MainActivity : AppCompatActivity() {
             // 권한 요청
             checkAndRequestPermissions()
             supportFragmentManager.commit{ // 프래그먼트 매니저
+                setupBottomNavigation()
             }
         }
     }
