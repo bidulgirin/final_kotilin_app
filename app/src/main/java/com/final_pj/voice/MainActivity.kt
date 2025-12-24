@@ -1,20 +1,24 @@
 package com.final_pj.voice
 
 import android.Manifest
+import android.app.role.RoleManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import android.telecom.TelecomManager
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.commit
-import androidx.navigation.NavController
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
+
 import com.final_pj.voice.databinding.ActivityMainBinding
 import com.final_pj.voice.service.CallDetectService
 import com.final_pj.voice.util.VoskModelHolder
@@ -41,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         // NavController
         val navController = navHostFragment.navController
 
-        // BottomNavigationView
+        // BottomNavigationView 부르기
         val bottomNav = findViewById<BottomNavigationView>(R.id.menu_bottom_navigation)
 
         // 연결
@@ -75,9 +79,10 @@ class MainActivity : AppCompatActivity() {
             requestRequiredPermissions()
         }
     }
-    
+
     private fun hasRequiredPermissions(): Boolean { // 어떤 권한이 필요한지
         val permissions = arrayOf(
+            Manifest.permission.CALL_PHONE,
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.POST_NOTIFICATIONS,
@@ -95,6 +100,7 @@ class MainActivity : AppCompatActivity() {
         ActivityCompat.requestPermissions(
             this,
             arrayOf(
+                Manifest.permission.CALL_PHONE,
                 Manifest.permission.READ_PHONE_STATE, // 통화상태감지
                 Manifest.permission.RECORD_AUDIO, // 오디오 녹음 권한
                 Manifest.permission.POST_NOTIFICATIONS, // 알림권한
@@ -132,9 +138,14 @@ class MainActivity : AppCompatActivity() {
             finishAffinity() // 앱의 모든 Activity 종료
         }
     }
-    
 
+    // ----------------------------
+    // 전화 관련(전화 기본 앱)
+    // ----------------------------
 
+    // 내 앱이 기본 연결 프로그램으로 사용할 수 있는지 체크
+    val mRoleManager = getSystemService(RoleManager::class.java)
+    val isRoleAvailable = mRoleManager.isRoleAvailable((RoleManager.ROLE_CALL_SCREENING))
     // 앱을 실행했을때
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -142,7 +153,6 @@ class MainActivity : AppCompatActivity() {
 
         // fragment 부르기 (프레그먼트 중복 소환 방지)
         if(savedInstanceState == null){
-
             // 권한 요청
             checkAndRequestPermissions()
             supportFragmentManager.commit{ // 프래그먼트 매니저
