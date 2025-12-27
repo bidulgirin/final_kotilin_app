@@ -2,16 +2,19 @@ package com.final_pj.voice
 
 import android.Manifest
 import android.app.role.RoleManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.telecom.TelecomManager
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -31,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     // vosk 인디바이스 예제
     // ----------------------------
 
-    private lateinit var resultTextView: TextView
+    //private lateinit var resultTextView: TextView
 
 
     // ----------------------------
@@ -79,18 +82,25 @@ class MainActivity : AppCompatActivity() {
             requestRequiredPermissions()
         }
     }
-
-    private fun hasRequiredPermissions(): Boolean { // 어떤 권한이 필요한지
-        val permissions = arrayOf(
+    private fun requiredPermissions(): Array<String> {
+        val list = mutableListOf(
             Manifest.permission.CALL_PHONE,
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.POST_NOTIFICATIONS,
-            Manifest.permission.READ_MEDIA_AUDIO,
-
+            //Manifest.permission.READ_PHONE_NUMBERS
         )
 
-        return permissions.all {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            list += Manifest.permission.POST_NOTIFICATIONS
+            list += Manifest.permission.READ_MEDIA_AUDIO
+        } else {
+            list += Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+
+        return list.toTypedArray()
+    }
+    private fun hasRequiredPermissions(): Boolean {
+        return requiredPermissions().all {
             ContextCompat.checkSelfPermission(this, it) ==
                     PackageManager.PERMISSION_GRANTED
         }
@@ -99,18 +109,12 @@ class MainActivity : AppCompatActivity() {
     private fun requestRequiredPermissions() {
         ActivityCompat.requestPermissions(
             this,
-            arrayOf(
-                Manifest.permission.CALL_PHONE,
-                Manifest.permission.READ_PHONE_STATE, // 통화상태감지
-                Manifest.permission.RECORD_AUDIO, // 오디오 녹음 권한
-                Manifest.permission.POST_NOTIFICATIONS, // 알림권한
-                Manifest.permission.READ_MEDIA_AUDIO, // 외부저장소  READ_EXTERNAL_STORAGE 1ㅡ3이하
-            ),
+            requiredPermissions(),
             REQUEST_PERMISSION_CODE
         )
     }
 
-    
+
     override fun onRequestPermissionsResult( // 퍼미션 권한 결과
         requestCode: Int,
         permissions: Array<out String>,
@@ -139,17 +143,74 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun askDefaultDialerWithUI() {
+        AlertDialog.Builder(this)
+            .setTitle("기본 전화 앱 설정")
+            .setMessage("통화 감지 기능을 사용하려면 기본 전화 앱으로 설정해야 합니다.")
+            .setPositiveButton("설정") { _, _ ->
+                requestDefaultDialer()
+            }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
     // ----------------------------
     // 전화 관련(전화 기본 앱)
     // ----------------------------
+    /**
+     * 현재 앱을 "기본 전화(Dialer) 앱"으로 설정하도록 사용자에게 요청하는 메소드
+     *
+     * - Telecom 기능(가짜 수신 전화, ConnectionService 등)을 제대로 쓰려면
+     *   앱이 기본 Dialer로 설정되어 있어야 함
+     * - 강제로 변경할 수는 없고, 반드시 시스템 설정 화면을 통해
+     *   사용자의 명시적인 동의가 필요함
+     */
+    private fun requestDefaultDialer() {
 
-    // 내 앱이 기본 연결 프로그램으로 사용할 수 있는지 체크
-    val mRoleManager = getSystemService(RoleManager::class.java)
-    val isRoleAvailable = mRoleManager.isRoleAvailable((RoleManager.ROLE_CALL_SCREENING))
+        // 시스템의 TelecomManager 획득
+        // 통화, 전화 계정, 기본 Dialer 정보 등을 관리하는 핵심 매니저
+        val telecomManager =
+            getSystemService(Context.TELECOM_SERVICE) as TelecomManager
+
+        // 현재 기본 Dialer 앱의 패키지명이
+        // 우리 앱의 패키지명이 아닐 경우에만 요청
+        if (telecomManager.defaultDialerPackage != packageName) {
+
+            // 기본 Dialer 변경을 요청하는 시스템 Intent 생성
+            val intent =
+                Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER).apply {
+
+                    // 변경하려는 Dialer 앱의 패키지명 전달
+                    // → 여기서는 현재 앱(packageName)
+                    putExtra(
+                        TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME,
+                        packageName
+                    )
+                }
+
+            // 시스템 설정 화면 실행
+            // 사용자는 여기서 "이 앱을 기본 전화 앱으로 설정"할지 선택하게 됨
+            startActivity(intent)
+        }
+    }
+
+    private fun setupDialerButton() {
+        // fragment_home.xml 에 있는 dialer_go_btn 버튼
+        val dialerButton = findViewById<Button>(R.id.dialer_go_btn)
+
+        dialerButton.setOnClickListener {
+            Log.d("test", "버튼눌림")
+            val intent = Intent(this, DialerActivity::class.java)
+            startActivity(intent)
+        }
+    }
+
     // 앱을 실행했을때
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        // 내 앱을 기본 통화 앱 설정하는 함수
+        requestDefaultDialer()
 
         // fragment 부르기 (프레그먼트 중복 소환 방지)
         if(savedInstanceState == null){
@@ -159,6 +220,8 @@ class MainActivity : AppCompatActivity() {
                 setupBottomNavigation()
             }
         }
+        // 버튼을 누르면 DialerActivity 로 넘어가는 함수
+        setupDialerButton()
     }
     companion object {
         private const val REQUEST_PERMISSION_CODE = 1001

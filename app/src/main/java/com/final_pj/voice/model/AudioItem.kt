@@ -4,9 +4,10 @@ package com.final_pj.voice.model
 import android.net.Uri
 
 data class AudioItem(
-    val id: Long,
+    val id: Long = -1L,
     val title: String,
     val displayName: String,
-    val duration: Long,
+    val duration: Long = 0L,
+    val path: String = "",
     val uri: Uri
 )

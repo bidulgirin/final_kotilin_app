@@ -12,7 +12,7 @@
 
     <fragment
         android:id="@+id/navigation_record"
-        android:name="com.final_pj.voice.fragment.MainRecodeListFragment"
+        android:name="com.final_pj.voice.fragment.AudioListFragment"
         android:label="Record" />
 
     <fragment

@@ -413,7 +413,7 @@ fun transcribeLatestCall30s(
     context: Context,
     onResult: (String?) -> Unit
 ) {
-    val repo = AudioRepository(context.contentResolver)
+    val repo = AudioRepository(context)
 
     // 맨 마지막에 입력된 파일
     val latestAudio = repo.loadAudioFiles().firstOrNull()

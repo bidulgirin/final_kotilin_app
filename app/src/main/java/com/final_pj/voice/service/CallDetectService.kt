@@ -1,5 +1,6 @@
 package com.final_pj.voice.service
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -9,6 +10,7 @@ import android.os.IBinder
 import android.telephony.TelephonyCallback
 import android.telephony.TelephonyManager
 import android.util.Log
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -21,6 +23,7 @@ class CallDetectService : Service() {
     private val executor by lazy { ContextCompat.getMainExecutor(this) }
 
     // 통화감지하면 알림
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     private fun showCallNotification() {
         val channelId = "call_state_channel"
 
@@ -54,6 +57,7 @@ class CallDetectService : Service() {
         telephonyCallback = object : TelephonyCallback(),
             TelephonyCallback.CallStateListener {
 
+            @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
             override fun onCallStateChanged(state: Int) {
                 when (state) {
                     TelephonyManager.CALL_STATE_OFFHOOK -> {

@@ -4,6 +4,15 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+//signingConfigs {
+//    config {
+//        keyAlias 'androiddebugkey'
+//        keyPassword 'android'
+//        storeFile file('C://Users/de051/AndroidStudioProjects/Keystore/platform.jks')
+//        storePassword 'android'
+//    }
+//}
+
 android {
     namespace 'com.final_pj.voice'
     compileSdk {
@@ -67,4 +76,12 @@ dependencies {
     implementation 'com.alphacephei:vosk-android:0.3.75'
     implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")
     implementation("androidx.navigation:navigation-ui-ktx:2.5.3")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
 }
+
+// 시스템 앱으로 빌드하기 위한... 나의 손짓 발짓
+//buildTypes {
+//    debug {
+//        signingConfig signingConfigs.config
+//    }
+//}
