@@ -7,14 +7,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.telecom.TelecomManager
-import android.util.Log
-import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -22,21 +16,12 @@ import androidx.fragment.app.commit
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 
-import com.final_pj.voice.databinding.ActivityMainBinding
 import com.final_pj.voice.service.CallDetectService
 import com.final_pj.voice.util.VoskModelHolder
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 
 class MainActivity : AppCompatActivity() {
-
-    // ----------------------------
-    // vosk 인디바이스 예제
-    // ----------------------------
-
-    //private lateinit var resultTextView: TextView
-
-
     // ----------------------------
     // 화면 + 네비게이션 구성 관련
     // ----------------------------
@@ -56,20 +41,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ----------------------------
-    // 포그라운드서비스 관련
+    // 포그라운드서비스
     // ----------------------------
     private fun startForegroundService() {
         val intent = Intent(this, CallDetectService::class.java)
         ContextCompat.startForegroundService(this, intent)
     }
 
-
-
     // ----------------------------
-    // 권한 관련
+    // 권한
     // ----------------------------
-
-
     private fun checkAndRequestPermissions() {
         // 모든 권한이 있다면
         if (hasRequiredPermissions()) {
@@ -114,7 +95,6 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-
     override fun onRequestPermissionsResult( // 퍼미션 권한 결과
         requestCode: Int,
         permissions: Array<out String>,
@@ -141,17 +121,6 @@ class MainActivity : AppCompatActivity() {
 
             finishAffinity() // 앱의 모든 Activity 종료
         }
-    }
-
-    private fun askDefaultDialerWithUI() {
-        AlertDialog.Builder(this)
-            .setTitle("기본 전화 앱 설정")
-            .setMessage("통화 감지 기능을 사용하려면 기본 전화 앱으로 설정해야 합니다.")
-            .setPositiveButton("설정") { _, _ ->
-                requestDefaultDialer()
-            }
-            .setNegativeButton("취소", null)
-            .show()
     }
 
     // ----------------------------
@@ -194,17 +163,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupDialerButton() {
-        // fragment_home.xml 에 있는 dialer_go_btn 버튼
-        val dialerButton = findViewById<Button>(R.id.dialer_go_btn)
-
-        dialerButton.setOnClickListener {
-            Log.d("test", "버튼눌림")
-            val intent = Intent(this, DialerActivity::class.java)
-            startActivity(intent)
-        }
-    }
-
     // 앱을 실행했을때
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -220,8 +178,6 @@ class MainActivity : AppCompatActivity() {
                 setupBottomNavigation()
             }
         }
-        // 버튼을 누르면 DialerActivity 로 넘어가는 함수
-        setupDialerButton()
     }
     companion object {
         private const val REQUEST_PERMISSION_CODE = 1001

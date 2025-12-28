@@ -2,22 +2,39 @@
 <!-- 앱의 모든 화면과 화면간의 이동경로(트랜지션)을 정의하는 XML파일 -->
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_navigation"
     app:startDestination="@id/navigation_home">
-
     <fragment
         android:id="@+id/navigation_home"
         android:name="com.final_pj.voice.fragment.HomeFragment"
-        android:label="Home" />
+        android:label="Home" >
+        <!-- HomeFragment에서 CallFragment로 가는 action -->
+        <action
+            android:id="@+id/action_home_to_call"
+            app:destination="@id/callFragment" />
+    </fragment>
+    <!-- CallFragment -->
+    <fragment
+        android:id="@+id/callFragment"
+        android:name="com.final_pj.voice.fragment.CallFragment"
+        android:label="Call" />
 
     <fragment
         android:id="@+id/navigation_record"
         android:name="com.final_pj.voice.fragment.AudioListFragment"
         android:label="Record" />
 
+<!--    <fragment-->
+<!--        android:id="@+id/navigation_dialog"-->
+<!--        android:name="com.final_pj.voice.fragment.HistoryFragment"-->
+<!--        android:label="History" />-->
+
+    <!--    다이얼 fragment -->
     <fragment
-        android:id="@+id/navigation_history"
-        android:name="com.final_pj.voice.fragment.HistoryFragment"
-        android:label="History" />
+        android:id="@+id/navigation_dialog"
+        android:name="com.final_pj.voice.fragment.DialerFragment"
+        android:label="Dialer"
+        tools:layout="@layout/fragment_dialer" />
 
 </navigation>

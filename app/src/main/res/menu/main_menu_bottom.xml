@@ -2,12 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/navigation_home"
-        android:icon="@drawable/ic_phone_call"
+        android:icon="@drawable/ic_home"
         android:title="Home" />
 
     <item
         android:id="@+id/navigation_record"
-        android:icon="@drawable/ic_phone_call"
+        android:icon="@drawable/ic_audio"
         android:title="Record" />
 
     <item
@@ -17,7 +17,7 @@
     <!--    다이얼로그 activity -->
     <item
         android:id="@+id/navigation_dialog"
-        android:icon="@drawable/ic_launcher_background"
+        android:icon="@drawable/ic_dialog"
         android:title="Dialog" />
 
 </menu>

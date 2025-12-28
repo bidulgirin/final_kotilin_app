@@ -25,6 +25,7 @@
         tools:ignore="ProtectedPermissions" /> <!-- ================= 저장소 ================= -->
     <!-- Android 13+ -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" /> <!-- Android 12 이하 -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- ================= 전화 / 통화 ================= -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -63,12 +64,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity> <!-- ================= Dialer Activity ================= -->
+        <!-- 전화 중 화면 -->
+        <activity
+            android:name=".CallingControlActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+
         <activity
             android:name=".DialerActivity"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
-                <action android:name="android.intent.action.CALL" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
 
                 <category android:name="android.intent.category.DEFAULT" />
 
@@ -100,6 +111,7 @@
                 <action android:name="android.telecom.ConnectionService" />
             </intent-filter>
         </service>
+        <!-- 전화가 걸려올 때(수신 시) 호출 -->
         <service
             android:name=".service.MyCallScreeningService"
             android:exported="true"

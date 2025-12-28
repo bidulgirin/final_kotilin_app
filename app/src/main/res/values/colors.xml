@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- 기존 색상 -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
@@ -7,4 +8,14 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- 다이얼러 전용 색상 -->
+    <color name="red">#FFF44336</color>
+    <color name="light_gray">#FFE0E0E0</color>       <!-- 버튼 기본 배경 -->
+    <color name="dial_button_pressed">#FFB0B0B0</color> <!-- 버튼 누를 때 배경 -->
+    <color name="green">#FF4CAF50</color>          <!-- 전화걸기 버튼 -->
+    <color name="blue">#FF2196F3</color>           <!-- 저장 버튼 -->
+    <color name="orange">#FFFF9800</color>         <!-- 검색 버튼 -->
+    <color name="dial_bg">#FFFFFFFF</color>        <!-- 전체 다이얼러 배경 -->
+    <color name="edit_text_bg">#FFF5F5F5</color>   <!-- 전화번호 표시 배경 -->
 </resources>

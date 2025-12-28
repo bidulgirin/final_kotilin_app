@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black">
+
+    <!-- 걸려온 번호/발신 번호 표시 -->
+    <TextView
+        android:id="@+id/tvCallingNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="+82 10-1234-5678"
+        android:textSize="28sp"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:gravity="center"/>
+
+    <!-- 통화 상태 표시 -->
+    <TextView
+        android:id="@+id/tvCallState"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="연결 중..."
+        android:textSize="18sp"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/tvCallingNumber"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- 통화 시간 -->
+    <TextView
+        android:id="@+id/tvCallTimer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="00:00"
+        android:textSize="18sp"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/tvCallState"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- 음소거 / 스피커 / 키패드 버튼 -->
+    <LinearLayout
+        android:id="@+id/llCallOptions"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="40dp"
+        app:layout_constraintTop_toBottomOf="@id/tvCallTimer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:weightSum="3">
+
+        <Button
+            android:id="@+id/btnMute"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="음소거"
+            android:backgroundTint="@color/black"
+            android:textColor="@color/white"/>
+
+        <Button
+            android:id="@+id/btnSpeaker"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="스피커"
+            android:backgroundTint="@color/black"
+            android:textColor="@color/white"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/btnKeypad"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="키패드"
+            android:backgroundTint="@color/black"
+            android:textColor="@color/white"/>
+    </LinearLayout>
+
+    <!-- 통화 종료 버튼 -->
+    <Button
+        android:id="@+id/btnEndCall"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:text="종료"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/red"
+        app:cornerRadius="50dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="60dp"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
+

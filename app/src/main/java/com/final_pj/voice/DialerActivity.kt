@@ -1,5 +1,6 @@
 package com.final_pj.voice
 
+import android.app.Activity
 import android.app.role.RoleManager
 import android.content.ComponentName
 import android.content.Context
@@ -41,7 +42,7 @@ class DialerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
 
-        setContentView(R.layout.activity_dialer)
+        setContentView(R.layout.fragment_dialer)
 
         // 기본 Dialer가 아니면 사용자에게 안내
         // Activity Result API 등록
@@ -55,19 +56,10 @@ class DialerActivity : AppCompatActivity() {
             }
         }
 
-//        if (!isDefaultDialer) {
-//            requestDefaultDialer()
-//        }
-        findViewById<Button>(R.id.btnSetDefaultDialer).setOnClickListener {
+        if (!isDefaultDialer) {
             requestDefaultDialer()
         }
 
-        // 버튼 클릭 이벤트
-        findViewById<Button>(R.id.btnFakeCall).setOnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                tryFakeIncomingCall()
-            }
-        }
     }
 
     // ==========================
@@ -77,10 +69,21 @@ class DialerActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             Log.d("Dialer", "di!!!!!!!!!!!!!!")
             val roleManager = getSystemService(RoleManager::class.java)
-            if (!roleManager.isRoleHeld(RoleManager.ROLE_DIALER)) {
-                val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER)
-                requestRoleLauncher.launch(intent) // ❌ startActivityForResult 대신
+//            if (!roleManager.isRoleHeld(RoleManager.ROLE_DIALER)) {
+//                val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER)
+//                requestRoleLauncher.launch(intent) // ❌ startActivityForResult 대신
+//            }
+//
+
+            val dialerRoleRequest = registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult()
+            ) {
+                Log.d("!!", "dialerRoleRequest succeeded: ${it.resultCode == Activity.RESULT_OK}")
             }
+
+            if (roleManager.isRoleAvailable(RoleManager.ROLE_DIALER) &&
+                !roleManager.isRoleHeld(RoleManager.ROLE_DIALER))
+                dialerRoleRequest.launch(roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER))
         } else {
             val intent = Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER)
                 .putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, packageName)
