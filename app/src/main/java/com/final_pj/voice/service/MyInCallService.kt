@@ -7,7 +7,9 @@ import android.content.Intent
 import android.media.MediaRecorder
 import android.telecom.TelecomManager
 import android.util.Log
+import com.final_pj.voice.IncomingCallActivity
 import java.io.File
+import com.final_pj.voice.bus.CallEventBus
 
 /**
  * 시스템 통화 상태를 관리하는 InCallService
@@ -30,6 +32,11 @@ class MyInCallService : InCallService() {
         const val ACTION_CALL_ENDED = "com.final_pj.voice.CALL_ENDED"
     }
 
+
+    private fun sendCallEndedBroadcast() {
+        val intent = Intent(ACTION_CALL_ENDED)
+        sendBroadcast(intent)
+    }
     /** 통화 녹음용 MediaRecorder */
     private var recorder: MediaRecorder? = null
 
@@ -61,6 +68,12 @@ class MyInCallService : InCallService() {
         call.registerCallback(callCallback)
 
         Log.d("CALL", "Call added: ${call.details.handle}")
+
+        val direction = call.details.callDirection
+        if (direction == Call.Details.DIRECTION_INCOMING) {
+            showIncomingCallUI(call)
+        }
+
     }
 
     override fun onCallRemoved(call: Call) {
@@ -68,11 +81,6 @@ class MyInCallService : InCallService() {
 
         call.unregisterCallback(callCallback)
         currentCall = null
-
-        stopRecordingSafely()
-
-        // 📢 Activity에 통화 종료 알림
-        sendBroadcast(Intent(ACTION_CALL_ENDED))
 
         Log.d("CALL", "Call removed")
     }
@@ -92,19 +100,37 @@ class MyInCallService : InCallService() {
 
         override fun onStateChanged(call: Call, state: Int) {
             when (state) {
+
                 Call.STATE_ACTIVE -> {
-                    // 📞 실제 통화 시작
+                    // 실제 통화 시작
                     Log.d("CALL", "Call ACTIVE")
                     startRecording()
                 }
 
                 Call.STATE_DISCONNECTED -> {
                     // ☎ 통화 종료
-                    Log.d("CALL", "Call DISCONNECTED")
+                    Log.d("CALL", "통화종료!!!!!")
+                    CallEventBus.callEnded.tryEmit(Unit)
                     stopRecordingSafely()
                 }
             }
         }
+
+    }
+    // -----------------
+    // 수신 UI 띄우는 함수
+    // -----------------
+    private fun showIncomingCallUI(call: Call) {
+        val intent = Intent(this, IncomingCallActivity::class.java).apply {
+            addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+            )
+            putExtra("phone_number", call.details.handle?.schemeSpecificPart)
+        }
+
+        startActivity(intent)
     }
 
     // =====================
@@ -160,4 +186,5 @@ class MyInCallService : InCallService() {
             recorder = null
         }
     }
+
 }

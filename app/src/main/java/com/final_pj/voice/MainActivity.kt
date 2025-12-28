@@ -1,6 +1,7 @@
 package com.final_pj.voice
 
 import android.Manifest
+import android.app.Activity
 import android.app.role.RoleManager
 import android.content.Context
 import android.content.Intent
@@ -8,7 +9,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.telecom.TelecomManager
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -47,6 +50,8 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, CallDetectService::class.java)
         ContextCompat.startForegroundService(this, intent)
     }
+
+
 
     // ----------------------------
     // 권한
@@ -135,31 +140,22 @@ class MainActivity : AppCompatActivity() {
      *   사용자의 명시적인 동의가 필요함
      */
     private fun requestDefaultDialer() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roleManager = getSystemService(RoleManager::class.java)
 
-        // 시스템의 TelecomManager 획득
-        // 통화, 전화 계정, 기본 Dialer 정보 등을 관리하는 핵심 매니저
-        val telecomManager =
-            getSystemService(Context.TELECOM_SERVICE) as TelecomManager
+            val dialerRoleRequest = registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult()
+            ) {
+                Log.d("!!", "dialerRoleRequest succeeded: ${it.resultCode == Activity.RESULT_OK}")
+            }
 
-        // 현재 기본 Dialer 앱의 패키지명이
-        // 우리 앱의 패키지명이 아닐 경우에만 요청
-        if (telecomManager.defaultDialerPackage != packageName) {
-
-            // 기본 Dialer 변경을 요청하는 시스템 Intent 생성
-            val intent =
-                Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER).apply {
-
-                    // 변경하려는 Dialer 앱의 패키지명 전달
-                    // → 여기서는 현재 앱(packageName)
-                    putExtra(
-                        TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME,
-                        packageName
-                    )
-                }
-
-            // 시스템 설정 화면 실행
-            // 사용자는 여기서 "이 앱을 기본 전화 앱으로 설정"할지 선택하게 됨
-            startActivity(intent)
+            if (roleManager.isRoleAvailable(RoleManager.ROLE_DIALER) &&
+                !roleManager.isRoleHeld(RoleManager.ROLE_DIALER))
+                dialerRoleRequest.launch(roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER))
+        } else {
+            val intent = Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER)
+                .putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, packageName)
+            startActivity(intent) // Q 미만에서는 여전히 사용 가능
         }
     }
 

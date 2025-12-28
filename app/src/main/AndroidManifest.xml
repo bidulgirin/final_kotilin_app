@@ -63,16 +63,6 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity> <!-- ================= Dialer Activity ================= -->
-        <!-- 전화 중 화면 -->
-        <activity
-            android:name=".CallingControlActivity"
-            android:exported="true"
-            android:screenOrientation="portrait" />
-
-        <activity
-            android:name=".DialerActivity"
-            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
 
@@ -85,12 +75,32 @@
 
                 <data android:scheme="tel" />
             </intent-filter>
-        </activity> <!-- ================= Foreground Service ================= -->
+        </activity> <!-- ================= Dialer Activity ================= -->
+        <!-- 전화 중 화면 -->
+        <activity
+            android:name=".CallingControlActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+
+        <!--  전화 수신 -->
+        <activity
+            android:name=".IncomingCallActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            />
+
+        <!-- ================= Foreground Service ================= -->
         <service
             android:name=".service.CallDetectService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="microphone|phoneCall" /> <!-- ================= Telecom / System Services ================= -->
+            android:foregroundServiceType="microphone|phoneCall" />
+
+        <!-- ================= Telecom / System Services ================= -->
         <!-- InCallService (통화 UI/상태 감지) -->
         <service
             android:name=".service.MyInCallService"
@@ -102,7 +112,9 @@
             <intent-filter>
                 <action android:name="android.telecom.InCallService" />
             </intent-filter>
-        </service> <!-- ConnectionService (통화 연결 관리) -->
+        </service>
+
+        <!-- ConnectionService (통화 연결 관리) -->
         <service
             android:name=".service.MyConnectionService"
             android:exported="true"
@@ -111,6 +123,7 @@
                 <action android:name="android.telecom.ConnectionService" />
             </intent-filter>
         </service>
+
         <!-- 전화가 걸려올 때(수신 시) 호출 -->
         <service
             android:name=".service.MyCallScreeningService"
@@ -120,6 +133,7 @@
                 <action android:name="android.telecom.CallScreeningService" />
             </intent-filter>
         </service>
+
     </application>
 
 </manifest>
