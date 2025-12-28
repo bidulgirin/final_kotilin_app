@@ -4,15 +4,6 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-//signingConfigs {
-//    config {
-//        keyAlias 'androiddebugkey'
-//        keyPassword 'android'
-//        storeFile file('C://Users/de051/AndroidStudioProjects/Keystore/platform.jks')
-//        storePassword 'android'
-//    }
-//}
-
 android {
     namespace 'com.final_pj.voice'
     compileSdk {
@@ -78,11 +69,23 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")
     implementation("androidx.navigation:navigation-ui-ktx:2.5.3")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 }
 
-// 시스템 앱으로 빌드하기 위한... 나의 손짓 발짓
-//buildTypes {
-//    debug {
-//        signingConfig signingConfigs.config
-//    }
-//}
+tasks.register('genUUID') {
+    // buildDir 대신 실제 assets 경로를 지정 (src/main/assets/model)
+    def odir = file("src/main/assets/model")
+    def ofile = file("$odir/uuid")
+
+    doLast {
+        if (!odir.exists()) {
+            mkdir odir
+        }
+        ofile.text = UUID.randomUUID().toString()
+        println "Vosk UUID generated at: ${ofile.absolutePath}"
+    }
+}
+
+// 빌드 시작 전 항상 실행되도록 연결
+preBuild.dependsOn(genUUID)

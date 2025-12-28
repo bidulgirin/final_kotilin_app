@@ -2,14 +2,16 @@ package com.final_pj.voice.service
 
 import android.telecom.Call
 import android.telecom.InCallService
-import android.content.Context
 import android.content.Intent
 import android.media.MediaRecorder
-import android.telecom.TelecomManager
 import android.util.Log
+import com.final_pj.voice.CallSttManager
 import com.final_pj.voice.IncomingCallActivity
 import java.io.File
 import com.final_pj.voice.bus.CallEventBus
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * 시스템 통화 상태를 관리하는 InCallService
@@ -18,7 +20,7 @@ import com.final_pj.voice.bus.CallEventBus
  * - Activity에 통화 종료 알림 전달
  */
 class MyInCallService : InCallService() {
-
+    private lateinit var sttManager: CallSttManager
     companion object {
         /** 현재 실행 중인 InCallService 인스턴스 */
         var instance: MyInCallService? = null
@@ -31,6 +33,9 @@ class MyInCallService : InCallService() {
         /** 통화 종료 브로드캐스트 액션 */
         const val ACTION_CALL_ENDED = "com.final_pj.voice.CALL_ENDED"
     }
+
+
+
 
 
     private fun sendCallEndedBroadcast() {
@@ -48,12 +53,23 @@ class MyInCallService : InCallService() {
         super.onCreate()
         instance = this
         Log.d("MyInCallService", "Service created")
+
+
+        //  stt 매니저
+        sttManager = CallSttManager(this) { text ->
+            // 코루틴을 통해 Flow에 텍스트 발행
+            CoroutineScope(Dispatchers.IO).launch {
+                CallEventBus.postSttResult(text)
+            }
+        }
+
     }
 
     override fun onDestroy() {
         super.onDestroy()
         instance = null
         stopRecordingSafely()
+        sttManager.stop()
         Log.d("MyInCallService", "Service destroyed")
     }
 
@@ -81,7 +97,8 @@ class MyInCallService : InCallService() {
 
         call.unregisterCallback(callCallback)
         currentCall = null
-
+        // 통화가 종료되면 STT 정지
+        sttManager.stop()
         Log.d("CALL", "Call removed")
     }
 
@@ -105,13 +122,16 @@ class MyInCallService : InCallService() {
                     // 실제 통화 시작
                     Log.d("CALL", "Call ACTIVE")
                     startRecording()
+                    CallEventBus.notifyCallStarted()
+                    sttManager.start()
                 }
 
                 Call.STATE_DISCONNECTED -> {
                     // ☎ 통화 종료
                     Log.d("CALL", "통화종료!!!!!")
-                    CallEventBus.callEnded.tryEmit(Unit)
                     stopRecordingSafely()
+                    // 통화 종료 했다고 알려주는 함수
+                    CallEventBus.notifyCallEnded()
                 }
             }
         }
