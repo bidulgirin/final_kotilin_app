@@ -1,60 +1,90 @@
 package com.final_pj.voice.fragment
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.provider.CallLog
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.final_pj.voice.R
+import com.final_pj.voice.adapter.CallLogAdapter
+import com.final_pj.voice.model.CallRecord
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [HistoryFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class HistoryFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private lateinit var adapter: CallLogAdapter
+    private val callRecords = mutableListOf<CallRecord>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_history, container, false)
+        return inflater.inflate(R.layout.fragment_home, container, false)
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment HistoryFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            HistoryFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val recycler = view.findViewById<RecyclerView>(R.id.contact_recycler)
+        recycler.layoutManager = LinearLayoutManager(requireContext())
+        adapter = CallLogAdapter(callRecords) { record ->
+            // 상세 페이지로 이동
+            val bundle = Bundle().apply {
+                putLong("call_id", record.id)
             }
+            findNavController().navigate(R.id.action_home_to_detail, bundle)
+        }
+        recycler.adapter = adapter
+
+        loadCallLogs()
+    }
+
+    private fun loadCallLogs() {
+        val cursor = requireContext().contentResolver.query(
+            CallLog.Calls.CONTENT_URI,
+            arrayOf(
+                CallLog.Calls._ID,
+                CallLog.Calls.CACHED_NAME,
+                CallLog.Calls.NUMBER,
+                CallLog.Calls.TYPE,
+                CallLog.Calls.DATE
+            ),
+            null, null,
+            CallLog.Calls.DATE + " DESC"
+        )
+
+        cursor?.use {
+            while (it.moveToNext()) {
+                val record = CallRecord(
+                    id = it.getLong(0),
+                    name = it.getString(1),
+                    phoneNumber = it.getString(2),
+                    callType = when(it.getInt(3)) {
+                        CallLog.Calls.INCOMING_TYPE -> "Incoming"
+                        CallLog.Calls.OUTGOING_TYPE -> "Outgoing"
+                        CallLog.Calls.MISSED_TYPE -> "Missed"
+                        else -> "Unknown"
+                    },
+                    date = it.getLong(4)
+                )
+                callRecords.add(record)
+                adapter.notifyItemInserted(callRecords.size - 1)
+
+                // 딥러닝 요약 시뮬레이션
+                simulateSummary(record)
+            }
+        }
+    }
+
+    private fun simulateSummary(record: CallRecord) {
+        // 예: 2초 후 요약 완료
+        Handler(Looper.getMainLooper()).postDelayed({
+            record.isSummaryDone = true
+            record.summary = "요약된 내용 예시"
+            adapter.notifyItemChanged(callRecords.indexOf(record))
+        }, 2000)
     }
 }

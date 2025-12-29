@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.final_pj.voice.CallingControlActivity
 import com.final_pj.voice.R
 import com.final_pj.voice.adapter.ContactAdapter
 import com.final_pj.voice.model.Contact
@@ -49,8 +50,19 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 putString("phone", contact.phone)
             }
             //findNavController().navigate(R.id.action_home_to_call, bundle)
+            callPhone(contact.phone)
         }
 
+    }
+    // 전화 거는 화면으로 이동 (발신) : DialerFragement 랑 중복됨...
+    private fun callPhone(number: String) {
+        if (number.isNotEmpty()) {
+            val intent = Intent(requireContext(), CallingControlActivity::class.java).apply {
+                putExtra("phone_number", number)
+                putExtra("is_outgoing", true)   // ⭐ 발신 표시
+            }
+            startActivity(intent)
+        }
     }
 
     private fun callContact(phone: String) {

@@ -5,7 +5,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_navigation"
     app:startDestination="@id/navigation_home">
-
     <!-- 홈(연락처) -->
     <fragment
         android:id="@+id/navigation_home"
@@ -16,8 +15,20 @@
     <fragment
         android:id="@+id/navigation_record"
         android:name="com.final_pj.voice.fragment.AudioListFragment"
-        android:label="Record" />
-
+        android:label="Record" >
+        <action
+            android:id="@+id/action_home_to_detail"
+            app:destination="@id/detailFragment" />
+    </fragment>
+    <!--  녹음기록 상세보기 -->
+    <fragment
+        android:id="@+id/detailFragment"
+        android:name="com.final_pj.voice.fragment.DetailFragment"
+        android:label="상세보기">
+        <argument
+            android:name="call_id"
+            app:argType="long" />
+    </fragment>
     <!-- 통화기록 -->
     <fragment
         android:id="@+id/navigation_history"
@@ -28,6 +39,13 @@
         android:id="@+id/navigation_dialog"
         android:name="com.final_pj.voice.fragment.DialerFragment"
         android:label="Dialer"
+        tools:layout="@layout/fragment_dialer" />
+
+    <!-- 설정 -->
+    <fragment
+        android:id="@+id/navigation_setting"
+        android:name="com.final_pj.voice.fragment.SettingFragment"
+        android:label="Setting"
         tools:layout="@layout/fragment_dialer" />
 
 </navigation>
