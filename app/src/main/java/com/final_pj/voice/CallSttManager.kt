@@ -8,7 +8,7 @@ import android.util.Log
 import org.vosk.android.StorageService
 import org.vosk.Recognizer
 
-class CallSttManager(
+class CallSttManager__origin(
     private val context: Context,
     private val onResult: (String) -> Unit
 ) {

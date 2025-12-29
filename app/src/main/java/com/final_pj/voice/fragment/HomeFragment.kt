@@ -18,13 +18,9 @@ import com.final_pj.voice.R
 import com.final_pj.voice.adapter.ContactAdapter
 import com.final_pj.voice.model.Contact
 
-// 연락처 불러옴
-// 필요한것
-// 프레그먼트 안에 연락처 어답터 + 데이터 합쳐줌
-// 전화 거는 기능
-// 전화 차단 하는 기능
-class HomeFragment : Fragment(R.layout.fragment_home) {
+// 전화통화 기록 + 전화통화 기록 요약 페이지
 
+class HomeFragment : Fragment(R.layout.fragment_home) {
     private val PERMISSION_REQUEST = 1001
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -39,7 +35,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             )
         }
     }
-
     private fun setupRecycler(view: View) {
         val recycler = view.findViewById<RecyclerView>(R.id.contact_recycler)
         recycler.layoutManager = LinearLayoutManager(requireContext())
@@ -47,16 +42,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val contacts = loadContacts()
         Log.d("CONTACT_PHONE", "${contacts}")
 
-//        recycler.adapter = ContactAdapter(contacts) { contact ->
-//            callContact(contact.phone)
-//        }
 
         recycler.adapter = ContactAdapter(contacts) { contact ->
             val bundle = Bundle().apply {
                 putString("name", contact.name)
                 putString("phone", contact.phone)
             }
-            findNavController().navigate(R.id.action_home_to_call, bundle)
+            //findNavController().navigate(R.id.action_home_to_call, bundle)
         }
 
     }

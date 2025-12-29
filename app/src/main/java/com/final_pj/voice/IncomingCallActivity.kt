@@ -20,7 +20,7 @@ class IncomingCallActivity : AppCompatActivity() {
 
         tvNumber.text = intent.getStringExtra("phone_number")
 
-        // 📞 수락
+        // 수락
         btnAccept.setOnClickListener {
             val number = intent.getStringExtra("phone_number") ?: return@setOnClickListener
 
