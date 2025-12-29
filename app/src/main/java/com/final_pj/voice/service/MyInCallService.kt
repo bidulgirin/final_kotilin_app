@@ -13,7 +13,6 @@ import com.final_pj.voice.MCCPManager
 import java.io.File
 import com.final_pj.voice.bus.CallEventBus
 
-
 /**
  * 시스템 통화 상태를 관리하는 InCallService
  * - 통화 상태 감지
@@ -153,46 +152,58 @@ class MyInCallService : InCallService() {
         // 별도 스레드에서 오디오 캡처 시작
         Thread {
             val sampleRate = 16000
-            val maxSamples = sampleRate * 5 // 80,000 샘플 (5초)
-            val bufferSize = AudioRecord.getMinBufferSize(sampleRate, 0, 1)
-            
-            // audio record 로 실시간 검사할것임 
-            val audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+            val seconds = 5
+            val maxSamples = sampleRate * seconds
+
+            val channelConfig = AudioFormat.CHANNEL_IN_MONO
+            val audioFormat = AudioFormat.ENCODING_PCM_16BIT
+
+            val minBufferSize = AudioRecord.getMinBufferSize(
                 sampleRate,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                bufferSize
+                channelConfig,
+                audioFormat
             )
-            
-            
+
+            require(minBufferSize > 0) { "Invalid bufferSize: $minBufferSize" }
+
+            val audioRecord = AudioRecord(
+                MediaRecorder.AudioSource.VOICE_CALL, // 유지 가능
+                sampleRate,
+                channelConfig,
+                audioFormat,
+                minBufferSize * 2
+            )
+
+            if (audioRecord.state != AudioRecord.STATE_INITIALIZED) {
+                Log.e("AUDIO", "AudioRecord init failed")
+                return@Thread
+            }
+
             audioRecord.startRecording()
 
+            val pcmBuffer = ShortArray(minBufferSize)
             val audioBuffer = FloatArray(maxSamples)
             var currentPos = 0
 
             while (isRunning) {
-                // 1. 실시간으로 소리 읽기
-                val tempBuffer = FloatArray(1024)
-                val readCount = audioRecord.read(tempBuffer, 0, 1024, AudioRecord.READ_BLOCKING)
+                val readCount = audioRecord.read(pcmBuffer, 0, pcmBuffer.size)
 
-                // 2. 5초 버퍼 채우기
-                for (i in 0 until readCount) {
-                    if (currentPos < maxSamples) {
-                        audioBuffer[currentPos++] = tempBuffer[i]
+                if (readCount > 0) {
+                    for (i in 0 until readCount) {
+                        if (currentPos < maxSamples) {
+                            audioBuffer[currentPos++] = pcmBuffer[i] / 32768f
+                        }
                     }
                 }
 
-                // 3. 5초가 꽉 찼다면 모델 돌리기!
                 if (currentPos >= maxSamples) {
-                    // 모델 추론 및 DB 저장 (비동기 권장)
                     mccpManager.processAudioSegment(audioBuffer.clone())
-
-                    // 버퍼 초기화 (다시 0초부터 시작)
                     currentPos = 0
                 }
             }
+
             audioRecord.stop()
+            audioRecord.release()
         }.start()
     }
 
@@ -226,12 +237,12 @@ class MyInCallService : InCallService() {
         try {
             val outputFile = File(
                 getExternalFilesDir(null),
-                "call_${System.currentTimeMillis()}.wav" // wav 파일로 모두 통일 (되는지 테스트해야함)
+                "call_${System.currentTimeMillis()}.m4a" // wav 파일로 모두 통일 (되는지 테스트해야함)
             )
 
             recorder = MediaRecorder().apply {
-                setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
-                setOutputFormat(MediaRecorder.OutputFormat.WEBM)
+                setAudioSource(MediaRecorder.AudioSource.VOICE_CALL)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
                 setAudioSamplingRate(44100)
                 setAudioEncodingBitRate(128_000)

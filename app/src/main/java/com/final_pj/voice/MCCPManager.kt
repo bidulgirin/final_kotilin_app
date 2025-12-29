@@ -8,7 +8,15 @@ import org.pytorch.Module
 import org.pytorch.Tensor
 import java.io.File
 import java.io.FileOutputStream
-
+import be.tarsos.dsp.AudioEvent
+import be.tarsos.dsp.AudioDispatcher
+import be.tarsos.dsp.AudioProcessor
+import be.tarsos.dsp.io.TarsosDSPAudioFormat
+import be.tarsos.dsp.io.UniversalAudioInputStream
+import be.tarsos.dsp.mfcc.MFCC
+import java.io.ByteArrayInputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 // MCCP 매니저임 통화중에 발동/ 전화 끊기면 끝!
 
@@ -18,8 +26,7 @@ import java.io.FileOutputStream
 
 // 3. 결과물을 반환함 (Room) 을 이용해서 저장할것임
 
-
-// 재미니가 짜준 예시 코드임 고쳐야함
+// 4. 임계값이 넘으면 알림(푸쉬알림) 하고 루프 종료해야함
 
 // wav 파일을 들여보내야함
 
@@ -36,26 +43,18 @@ import java.io.FileOutputStream
 //NUM_WORKERS = 8         # Drive 최대 안정
 //PREFETCH = 4
 
-//loader = DataLoader(
-//DriveWavDataset(files),
-//batch_size=BATCH_SIZE,
-//num_workers=NUM_WORKERS,
-//pin_memory=True,
-//persistent_workers=True,
-//prefetch_factor=PREFETCH
-//)
-
 class MCCPManager(private val context: Context) {
     private var module: Module? = null
 
     init {
         // 1. 모델 로드 (assets 폴더에서 읽어오기)
-        loadModel("MFCC/binary_cnn_mfcc.pt")
+        // 모바일용으로 변환함
+        loadModel("MFCC/binary_cnn_mfcc_lite.pt")
     }
 
     private fun loadModel(modelName: String) {
         val modelPath = assetFilePath(context, modelName)
-        Log.d("modelPath", "${modelPath}")
+        Log.d("modelPath", modelPath)
         module = LiteModuleLoader.load(modelPath)
     }
 
@@ -64,9 +63,11 @@ class MCCPManager(private val context: Context) {
         // MFCC 추출 로직 (별도 유틸리티 필요)
         val mfccFeatures = extractMFCC(audioData)
 
-        // Tensor 변환 (모델 입력 Shape에 맞춰 조정 필요: 예 [1, 1, 40, 500])
-        // sample, channel, length(second) shape
-        val inputTensor = Tensor.fromBlob(mfccFeatures, longArrayOf(1, 1, 40, 500))
+        val inputTensor = Tensor.fromBlob(
+            mfccFeatures,
+            longArrayOf(1, 1, 40, 500)   //  여기중요 (lite 모델에서는 4차원만 받음)
+        )
+
 
         // 모델 실행
         val outputTensor = module?.forward(IValue.from(inputTensor))?.toTensor()
@@ -74,16 +75,124 @@ class MCCPManager(private val context: Context) {
 
         // 3. 결과 반환 및 Room 저장
         if (scores != null) {
-            Log.d("결과!!!!!!!", "${scores[0]}")
-           //saveToRoom(scores[0]) // 결과값 저장 로직 호출
+            val logit = outputTensor.dataAsFloatArray[0]
+            val prob = sigmoid(logit)
+
+            //Log.d("logit", "$logit")
+            Log.d("prob", "$prob")
         }
     }
-
-    private fun extractMFCC(audioData: FloatArray): FloatArray {
-        // 여기에서 Librosa 같은 라이브러리를 포팅하거나
-        // 직접 MFCC 연산 로직을 구현하여 FloatArray로 반환해야 합니다.
-        return FloatArray(40 * 500)
+    fun sigmoid(x: Float): Float {
+        return (1f / (1f + kotlin.math.exp(-x)))
     }
+
+    // 실시간 통화 전처리
+    private fun extractMFCC(audioData: FloatArray): FloatArray {
+
+        // =========================
+        // 1. 기본 MFCC 파라미터 정의
+        // =========================
+        val sampleRate = 16000f   // 오디오 샘플링 레이트 (Hz)
+        val bufferSize = 400      // FFT 윈도우 크기 (N_FFT)
+        val hopSize = 160         // 프레임 간 이동 거리 (HOP_LENGTH)
+        val nMFCC = 40            // 추출할 MFCC 계수 개수
+        val maxFrames = 500       // 모델 입력에 맞춘 최대 프레임 길이
+
+        // =========================================
+        // 2. FloatArray -> PCM16 바이트 배열 변환
+        // =========================================
+        // TarsosDSP는 float[]가 아니라 PCM16 입력을 받기 때문에 변환
+        val pcmBytes = ByteBuffer
+            .allocate(audioData.size * 2) // short = 2 bytes
+            .order(ByteOrder.LITTLE_ENDIAN) // 리틀 엔디안
+            .apply {
+                for (f in audioData) {
+                    // -1..1 범위의 float를 short로 변환 (PCM16)
+                    putShort((f.coerceIn(-1f, 1f) * Short.MAX_VALUE).toInt().toShort())
+                }
+            }
+            .array() // 최종 ByteArray
+
+        // =========================================
+        // 3. TarsosDSP 오디오 포맷 정의
+        // =========================================
+        val audioFormat = TarsosDSPAudioFormat(
+            sampleRate, // 샘플링 레이트
+            16,         // 비트 깊이 (16bit)
+            1,          // 모노 채널
+            true,       // signed
+            false       // bigEndian (리틀 엔디안)
+        )
+
+        // =========================================
+        // 4. ByteArray -> AudioInputStream
+        // =========================================
+        val audioStream = UniversalAudioInputStream(
+            ByteArrayInputStream(pcmBytes), // PCM 데이터를 스트림으로 감쌈
+            audioFormat
+        )
+
+        // =========================================
+        // 5. Dispatcher 설정
+        // =========================================
+        // AudioDispatcher: 오디오를 프레임 단위로 잘라서 AudioProcessor에게 전달
+        val dispatcher = AudioDispatcher(
+            audioStream,
+            bufferSize,          // FFT 윈도우 크기
+            bufferSize - hopSize // hop length
+        )
+
+        // =========================================
+        // 6. MFCC 객체 생성
+        // =========================================
+        val mfcc = MFCC(
+            bufferSize,    // FFT 윈도우 크기
+            sampleRate,    // 샘플링 레이트
+            nMFCC,         // 추출할 MFCC 계수 개수
+            40,            // n_mels, 멜 필터뱅크 개수
+            20f,           // 최소 주파수 (Hz)
+            sampleRate / 2 // 최대 주파수 (Hz)
+        )
+
+        // MFCC 결과를 저장할 리스트
+        val mfccList = mutableListOf<FloatArray>()
+
+        // =========================================
+        // 7. AudioProcessor 등록
+        // =========================================
+        dispatcher.addAudioProcessor(mfcc) // MFCC 계산
+        dispatcher.addAudioProcessor(object : AudioProcessor {
+            override fun process(audioEvent: AudioEvent): Boolean {
+                // 각 프레임마다 MFCC 계수 복사 후 리스트에 저장
+                mfccList.add(mfcc.mfcc.copyOf())
+                return true
+            }
+            override fun processingFinished() {}
+        })
+
+        // =========================================
+        // 8. Dispatcher 실행
+        // =========================================
+        // 오디오 스트림을 순회하면서 MFCC를 계산
+        dispatcher.run()
+
+        // =========================================
+        // 9.  결과 배열로 정리 (모델 입력용)
+        // =========================================
+        // 2D MFCC (nMFCC x frames) -> 1D FloatArray (nMFCC * maxFrames)
+        val result = FloatArray(nMFCC * maxFrames)
+        for (t in 0 until minOf(maxFrames, mfccList.size)) { // 프레임 수 제한
+            for (c in 0 until nMFCC) {                        // MFCC 계수
+                // column-major 방식으로 flatten
+                result[c * maxFrames + t] = mfccList[t][c]
+            }
+        }
+
+        // 최종 1D FloatArray 반환 (shape: [40*500])
+        return result
+    }
+
+
 
     private fun saveToRoom(result: Float) {
         // Coroutine을 활용하여 Room DB에 비동기 저장
@@ -91,18 +200,34 @@ class MCCPManager(private val context: Context) {
     }
 
     // Assets 파일을 실제 파일 경로로 변환하는 유틸리티
-    private fun assetFilePath(context: Context, assetName: String): String {
+    fun assetFilePath(context: Context, assetName: String): String {
         val file = File(context.filesDir, assetName)
-        context.assets.open(assetName).use { isStream ->
-            FileOutputStream(file).use { osStream ->
-                val buffer = ByteArray(4 * 1024)
-                var read: Int
-                while (isStream.read(buffer).also { read = it } != -1) {
-                    osStream.write(buffer, 0, read)
-                }
-                osStream.flush()
+
+        // 부모 디렉토리 생성 (핵심)
+        file.parentFile?.let {
+            if (!it.exists()) {
+                it.mkdirs()
             }
         }
+
+        if (file.exists() && file.length() > 0) {
+            return file.absolutePath
+        }
+
+        context.assets.open(assetName).use { inputStream ->
+            FileOutputStream(file).use { outputStream ->
+                val buffer = ByteArray(4 * 1024)
+                var read: Int
+                while (inputStream.read(buffer).also { read = it } != -1) {
+                    outputStream.write(buffer, 0, read)
+                }
+                outputStream.flush()
+            }
+        }
+
+        Log.d("ASSET_COPY", "copied to ${file.absolutePath}, size=${file.length()}")
         return file.absolutePath
     }
+
+
 }

@@ -56,7 +56,7 @@ android {
         pickFirst 'lib/armeabi-v7a/libc++_shared.so'
         pickFirst 'lib/arm64-v8a/libc++_shared.so'
     }
-    rootProject.ext.ffmpegKitPackage = "video"
+    rootProject.ext.ffmpegKitPackage = "audio"
 
 }
 
@@ -77,6 +77,8 @@ dependencies {
     implementation libs.androidx.lifecycle.livedata.ktx
     implementation libs.androidx.lifecycle.viewmodel.ktx
     implementation libs.androidx.fragment.ktx
+    implementation libs.androidx.media3.common.ktx
+    implementation files('libs/TarsosDSP-Android-latest.jar')
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core
@@ -92,16 +94,6 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
     implementation 'org.tensorflow:tensorflow-lite:+'
-
-
-    // 1. WhisperKit SDK
-    implementation("com.argmaxinc:whisperkit:0.3.3")  // Check badge above for latest version
-    
-    // 오류나서 주석처리
-    // 2. QNN dependencies for hardware acceleration
-//    implementation("com.qualcomm.qnn:qnn-runtime:2.34.0")
-//    implementation("com.qualcomm.qnn:qnn-litert-delegate:2.34.0")
-
     // 파이토치
     implementation 'org.pytorch:pytorch_android_lite:1.13.1'
     implementation 'org.pytorch:pytorch_android_torchvision_lite:1.13.1'
