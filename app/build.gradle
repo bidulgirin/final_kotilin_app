@@ -38,6 +38,26 @@ android {
         //compose true
         viewBinding true
     }
+    aaptOptions {
+        noCompress "tflite"
+    }
+    // 이건 뭐하는 거냐...
+    // 꺼내오는거 허용한다는 뜻이냐...?
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+    // 파이토치 관련
+    // https://stackoverflow.com/questions/70890854/2-files-found-with-path-lib-arm64-v8a-libc-shared-so-from-inputs-react-na
+    packagingOptions {
+        pickFirst 'lib/x86/libc++_shared.so'
+        pickFirst 'lib/x86_64/libc++_shared.so'
+        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+    }
+    rootProject.ext.ffmpegKitPackage = "video"
+
 }
 
 dependencies {
@@ -71,21 +91,35 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    implementation 'org.tensorflow:tensorflow-lite:+'
+
+
+    // 1. WhisperKit SDK
+    implementation("com.argmaxinc:whisperkit:0.3.3")  // Check badge above for latest version
+    
+    // 오류나서 주석처리
+    // 2. QNN dependencies for hardware acceleration
+//    implementation("com.qualcomm.qnn:qnn-runtime:2.34.0")
+//    implementation("com.qualcomm.qnn:qnn-litert-delegate:2.34.0")
+
+    // 파이토치
+    implementation 'org.pytorch:pytorch_android_lite:1.13.1'
+    implementation 'org.pytorch:pytorch_android_torchvision_lite:1.13.1'
 }
 
-tasks.register('genUUID') {
-    // buildDir 대신 실제 assets 경로를 지정 (src/main/assets/model)
-    def odir = file("src/main/assets/model")
-    def ofile = file("$odir/uuid")
-
-    doLast {
-        if (!odir.exists()) {
-            mkdir odir
-        }
-        ofile.text = UUID.randomUUID().toString()
-        println "Vosk UUID generated at: ${ofile.absolutePath}"
-    }
-}
-
-// 빌드 시작 전 항상 실행되도록 연결
-preBuild.dependsOn(genUUID)
+//tasks.register('genUUID') {
+//    // buildDir 대신 실제 assets 경로를 지정 (src/main/assets/model)
+//    def odir = file("src/main/assets/model")
+//    def ofile = file("$odir/uuid")
+//
+//    doLast {
+//        if (!odir.exists()) {
+//            mkdir odir
+//        }
+//        ofile.text = UUID.randomUUID().toString()
+//        println "Vosk UUID generated at: ${ofile.absolutePath}"
+//    }
+//}
+//
+//// 빌드 시작 전 항상 실행되도록 연결
+//preBuild.dependsOn(genUUID)

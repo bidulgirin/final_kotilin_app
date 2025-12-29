@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="DialButton">
+    <style name="DialButton" >
         <item name="android:layout_rowWeight">1</item>
         <item name="android:layout_columnWeight">1</item>
-
         <!-- 버튼 글씨 크기 -->
         <item name="android:textSize">24sp</item>
-
         <!-- 글씨 색상 -->
         <item name="android:textColor">@android:color/black</item>
 
+        <!-- 버튼 모서리 둥글게 -->
+        <item name="android:background">@drawable/dial_button_bg</item>
         <!-- 배경 색상 (기본 연한 회색) -->
         <item name="android:backgroundTint">@color/light_gray</item>
 
-        <!-- 버튼 모서리 둥글게 -->
-        <item name="android:background">@drawable/dial_button_bg</item>
+        <item name="android:layout_margin">2dp</item>
     </style>
 </resources>

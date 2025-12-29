@@ -13,7 +13,7 @@ class AudioRepository(private val context: Context) {
     fun loadAudioFiles(): List<AudioItem> {
         val audioList = mutableListOf<AudioItem>()
 
-        // ✅ 통화 녹음이 저장된 경로
+        // 통화 녹음이 저장된 경로
         val dir: File = context.getExternalFilesDir(null) ?: return emptyList()
         Log.d("여기있니????", "${dir}")
 

@@ -58,14 +58,11 @@ class CallingControlActivity : AppCompatActivity() {
 
         tvNumber.text = phoneNumber
 
+
+        // 발신일 때만 전화 걸기
         if (isOutgoing) {
-            // 발신일 때만 전화 걸기
             CallUtils.placeCall(this, phoneNumber)
         }
-
-
-
-
 
         // 뮤트 처리
         btnMute.setOnClickListener {
@@ -73,7 +70,6 @@ class CallingControlActivity : AppCompatActivity() {
             isMuted = !isMuted
             service.setMuted(isMuted)
         }
-
 
         // 전화 끊기는 이벤트
         lifecycleScope.launch {
@@ -104,27 +100,28 @@ class CallingControlActivity : AppCompatActivity() {
 
 
         lifecycleScope.launch {
-            CallEventBus.sttResult.collect { jsonText ->
-                // 1. Vosk 결과는 JSON 형태( {"text": "안녕하세요"} )이므로 순수 텍스트만 추출
-                // 간단하게 처리하기 위해 정규식이나 JSONObject를 사용합니다.
-                val cleanText = extractText(jsonText)
+//            CallEventBus.sttResult.collect { jsonText ->
+//                // 1. Vosk 결과는 JSON 형태( {"text": "안녕하세요"} )이므로 순수 텍스트만 추출
+//                // 간단하게 처리하기 위해 정규식이나 JSONObject를 사용합니다.
+//                val cleanText = extractText(jsonText)
+//
+//                if (cleanText.isNotBlank()) {
+//                    // 2. 리스트에 추가
+//                    sttList.add(cleanText)
+//
+//                    // 3. 리스트의 내용을 한 줄씩 합쳐서 TextView에 표시
+//                    // 최신 내용 50개만 유지하고 싶다면: if(sttList.size > 50) sttList.removeAt(0)
+//                    val fullText = sttList.joinToString("\n")
+//
+//                    tvStt.text = fullText
+//
+//                    // 4. 새 메시지가 오면 자동으로 하단 스크롤
+//                    svSttContainer.post {
+//                        svSttContainer.fullScroll(android.view.View.FOCUS_DOWN)
+//                    }
+//                }
+//            }
 
-                if (cleanText.isNotBlank()) {
-                    // 2. 리스트에 추가
-                    sttList.add(cleanText)
-
-                    // 3. 리스트의 내용을 한 줄씩 합쳐서 TextView에 표시
-                    // 최신 내용 50개만 유지하고 싶다면: if(sttList.size > 50) sttList.removeAt(0)
-                    val fullText = sttList.joinToString("\n")
-
-                    tvStt.text = fullText
-
-                    // 4. 새 메시지가 오면 자동으로 하단 스크롤
-                    svSttContainer.post {
-                        svSttContainer.fullScroll(android.view.View.FOCUS_DOWN)
-                    }
-                }
-            }
         }
 
 
@@ -161,10 +158,6 @@ class CallingControlActivity : AppCompatActivity() {
             }
         })
 
-
     }
-
-
-
 
 }

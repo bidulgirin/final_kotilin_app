@@ -7,7 +7,7 @@
     android:background="#000000"
     android:padding="24dp">
 
-    <!-- 📞 전화번호 표시 -->
+    <!-- 전화번호 표시 -->
     <TextView
         android:id="@+id/tvNumber"
         android:layout_width="wrap_content"
@@ -17,39 +17,60 @@
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/btnAccept"
+        app:layout_constraintBottom_toTopOf="@id/name"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"/>
+    <!-- 이름 표시 : 모르는 번호면 그대로 -->
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="모르는번호"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/call_btn_layout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_chainStyle="packed"/>
 
-    <!-- ✅ 수락 버튼 -->
-    <Button
-        android:id="@+id/btnAccept"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:text="받기"
-        android:textSize="16sp"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#4CAF50"
-        app:layout_constraintTop_toBottomOf="@id/tvNumber"
+    <LinearLayout
+        android:id="@+id/call_btn_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:weightSum="2"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/btnReject"
-        app:layout_constraintHorizontal_chainStyle="packed"
-        android:layout_marginEnd="24dp"/>
+        app:layout_constraintStart_toStartOf="parent">
+        <!-- 수락 버튼 -->
+        <Button
+            android:id="@+id/btnAccept"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_marginEnd="24dp"
+            android:layout_weight="1"
+            android:backgroundTint="#4CAF50"
+            android:text="받기"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintTop_toBottomOf="@id/tvNumber" />
 
-    <!-- ❌ 거절 버튼 -->
-    <Button
-        android:id="@+id/btnReject"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:text="거절"
-        android:textSize="16sp"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#F44336"
-        app:layout_constraintTop_toBottomOf="@id/tvNumber"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/btnAccept"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        <!-- 거절 버튼 -->
+        <Button
+            android:id="@+id/btnReject"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_weight="1"
+            android:backgroundTint="#F44336"
+            android:text="거절"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp" />
+
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

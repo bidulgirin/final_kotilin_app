@@ -1,17 +1,18 @@
 package com.final_pj.voice.service
 
+import android.annotation.SuppressLint
 import android.telecom.Call
 import android.telecom.InCallService
 import android.content.Intent
+import android.media.AudioFormat
+import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
-import com.final_pj.voice.CallSttManager
 import com.final_pj.voice.IncomingCallActivity
+import com.final_pj.voice.MCCPManager
 import java.io.File
 import com.final_pj.voice.bus.CallEventBus
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+
 
 /**
  * 시스템 통화 상태를 관리하는 InCallService
@@ -20,7 +21,12 @@ import kotlinx.coroutines.launch
  * - Activity에 통화 종료 알림 전달
  */
 class MyInCallService : InCallService() {
-    private lateinit var sttManager: CallSttManager
+
+    // mccp 모델
+    private lateinit var mccpManager: MCCPManager
+    private var isRunning = false
+
+
     companion object {
         /** 현재 실행 중인 InCallService 인스턴스 */
         var instance: MyInCallService? = null
@@ -33,8 +39,6 @@ class MyInCallService : InCallService() {
         /** 통화 종료 브로드캐스트 액션 */
         const val ACTION_CALL_ENDED = "com.final_pj.voice.CALL_ENDED"
     }
-
-
 
 
 
@@ -52,24 +56,19 @@ class MyInCallService : InCallService() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+
+        mccpManager = MCCPManager(this) // 매니저 초기화 (모델 로드 포함)
         Log.d("MyInCallService", "Service created")
 
-
-        //  stt 매니저
-        sttManager = CallSttManager(this) { text ->
-            // 코루틴을 통해 Flow에 텍스트 발행
-            CoroutineScope(Dispatchers.IO).launch {
-                CallEventBus.postSttResult(text)
-            }
-        }
-
     }
+
+
 
     override fun onDestroy() {
         super.onDestroy()
         instance = null
         stopRecordingSafely()
-        sttManager.stop()
+        isRunning = false // 종료 시 mccp 루프 정지
         Log.d("MyInCallService", "Service destroyed")
     }
 
@@ -77,6 +76,7 @@ class MyInCallService : InCallService() {
     // 통화 상태 콜백
     // =====================
 
+    // 전화 신호 왔져염
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
 
@@ -98,7 +98,8 @@ class MyInCallService : InCallService() {
         call.unregisterCallback(callCallback)
         currentCall = null
         // 통화가 종료되면 STT 정지
-        sttManager.stop()
+        //sttManager.stop()
+        isRunning = false // 종료 시 mccp 루프 정지
         Log.d("CALL", "Call removed")
     }
 
@@ -123,7 +124,10 @@ class MyInCallService : InCallService() {
                     Log.d("CALL", "Call ACTIVE")
                     startRecording()
                     CallEventBus.notifyCallStarted()
-                    sttManager.start()
+
+                    // 오디오 캡쳐 시작 (mccp)
+                    startCallMonitoring()
+
                 }
 
                 Call.STATE_DISCONNECTED -> {
@@ -137,6 +141,61 @@ class MyInCallService : InCallService() {
         }
 
     }
+
+    // -----------------
+    // 수신 UI 띄우는 함수
+    // -----------------
+
+    @SuppressLint("MissingPermission") // 퍼미션있는지 확인하는 코드 필요함
+    private fun startCallMonitoring() {
+        isRunning = true
+
+        // 별도 스레드에서 오디오 캡처 시작
+        Thread {
+            val sampleRate = 16000
+            val maxSamples = sampleRate * 5 // 80,000 샘플 (5초)
+            val bufferSize = AudioRecord.getMinBufferSize(sampleRate, 0, 1)
+            
+            // audio record 로 실시간 검사할것임 
+            val audioRecord = AudioRecord(
+                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                sampleRate,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                bufferSize
+            )
+            
+            
+            audioRecord.startRecording()
+
+            val audioBuffer = FloatArray(maxSamples)
+            var currentPos = 0
+
+            while (isRunning) {
+                // 1. 실시간으로 소리 읽기
+                val tempBuffer = FloatArray(1024)
+                val readCount = audioRecord.read(tempBuffer, 0, 1024, AudioRecord.READ_BLOCKING)
+
+                // 2. 5초 버퍼 채우기
+                for (i in 0 until readCount) {
+                    if (currentPos < maxSamples) {
+                        audioBuffer[currentPos++] = tempBuffer[i]
+                    }
+                }
+
+                // 3. 5초가 꽉 찼다면 모델 돌리기!
+                if (currentPos >= maxSamples) {
+                    // 모델 추론 및 DB 저장 (비동기 권장)
+                    mccpManager.processAudioSegment(audioBuffer.clone())
+
+                    // 버퍼 초기화 (다시 0초부터 시작)
+                    currentPos = 0
+                }
+            }
+            audioRecord.stop()
+        }.start()
+    }
+
     // -----------------
     // 수신 UI 띄우는 함수
     // -----------------
@@ -167,12 +226,12 @@ class MyInCallService : InCallService() {
         try {
             val outputFile = File(
                 getExternalFilesDir(null),
-                "call_${System.currentTimeMillis()}.m4a"
+                "call_${System.currentTimeMillis()}.wav" // wav 파일로 모두 통일 (되는지 테스트해야함)
             )
 
             recorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setOutputFormat(MediaRecorder.OutputFormat.WEBM)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
                 setAudioSamplingRate(44100)
                 setAudioEncodingBitRate(128_000)
@@ -206,5 +265,22 @@ class MyInCallService : InCallService() {
             recorder = null
         }
     }
+
+
+
+
+    // 필요한것
+
+    // 1. 전화가 시작되면 모델 로드
+
+    // 2. 통화중에 상대방/나 의 통화 음성 모델 데이터로 들어감
+
+    // 3. stt 변환
+
+    // 4. 결과 출력 (혹은 모델 저장)
+
+    // 5. 통화가 끝나면 ondestory 에서 모두 없애기
+
+
 
 }
