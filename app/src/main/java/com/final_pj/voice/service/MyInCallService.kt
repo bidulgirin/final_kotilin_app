@@ -10,6 +10,7 @@ import android.media.MediaRecorder
 import android.util.Log
 import com.final_pj.voice.IncomingCallActivity
 import com.final_pj.voice.MCCPManager
+import com.final_pj.voice.WhisperTFLite
 import java.io.File
 import com.final_pj.voice.bus.CallEventBus
 
@@ -89,6 +90,7 @@ class MyInCallService : InCallService() {
             showIncomingCallUI(call)
         }
 
+
     }
 
     override fun onCallRemoved(call: Call) {
@@ -109,6 +111,8 @@ class MyInCallService : InCallService() {
         currentCall?.disconnect()
     }
 
+
+
     // =====================
     // Call 상태 변경 감지
     // =====================
@@ -124,8 +128,9 @@ class MyInCallService : InCallService() {
                     startRecording()
                     CallEventBus.notifyCallStarted()
 
-                    // 오디오 캡쳐 시작 (mccp)
+                    // 오디오 캡쳐 시작 (mccp + whisper)
                     startCallMonitoring()
+
 
                 }
 
@@ -154,6 +159,8 @@ class MyInCallService : InCallService() {
             val sampleRate = 16000
             val seconds = 5
             val maxSamples = sampleRate * seconds
+
+
 
             val channelConfig = AudioFormat.CHANNEL_IN_MONO
             val audioFormat = AudioFormat.ENCODING_PCM_16BIT
@@ -184,22 +191,35 @@ class MyInCallService : InCallService() {
             val pcmBuffer = ShortArray(minBufferSize)
             val audioBuffer = FloatArray(maxSamples)
             var currentPos = 0
+            // =====================
+            // Whisper
+            // =====================
+            val whisper = WhisperTFLite(this, "whisper.tflite")
 
             while (isRunning) {
                 val readCount = audioRecord.read(pcmBuffer, 0, pcmBuffer.size)
-
                 if (readCount > 0) {
                     for (i in 0 until readCount) {
                         if (currentPos < maxSamples) {
                             audioBuffer[currentPos++] = pcmBuffer[i] / 32768f
                         }
                     }
+                    // whisper 사용하는 곳
+//                    // PCM -> Mel Spectrogram 변환
+//                    val mel = Utils.pcmToMel(pcmBuffer, sampleRate)
+//                    // 모델 추론
+//                    val text = whisperManager.infer(mel)
+//                    Log.d("WhisperOutput", text)
+
                 }
 
                 if (currentPos >= maxSamples) {
                     mccpManager.processAudioSegment(audioBuffer.clone())
+                    Log.d("whisper","${whisper.transcribe(audioBuffer)}")
                     currentPos = 0
                 }
+
+
             }
 
             audioRecord.stop()

@@ -25,17 +25,19 @@ class CallingControlActivity : AppCompatActivity() {
     private var isMuted = false
     private var isSpeakerOn = false
 
-    // 기존 텍스트들을 저장할 리스트
-    private val sttList = mutableListOf<String>()
+//    // 기존 텍스트들을 저장할 리스트
+//    private val sttList = mutableListOf<String>()
+//
+//    // Vosk JSON 결과에서 "text" 필드만 뽑아내는 함수
+//    private fun extractText(json: String): String {
+//        return try {
+//            org.json.JSONObject(json).getString("text")
+//        } catch (e: Exception) {
+//            ""
+//        }
+//    }
+   
 
-    // Vosk JSON 결과에서 "text" 필드만 뽑아내는 함수
-    private fun extractText(json: String): String {
-        return try {
-            org.json.JSONObject(json).getString("text")
-        } catch (e: Exception) {
-            ""
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
