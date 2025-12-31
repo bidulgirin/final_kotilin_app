@@ -51,7 +51,9 @@
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Voice">
+     <!-- 테스트용!!!! 꼭 나중에 삭제 android:usesCleartextTraffic="true" -->
         <!-- ================= Launcher Activity ================= -->
         <activity
             android:name=".MainActivity"
