@@ -25,19 +25,6 @@ class CallingControlActivity : AppCompatActivity() {
     private var isMuted = false
     private var isSpeakerOn = false
 
-//    // 기존 텍스트들을 저장할 리스트
-//    private val sttList = mutableListOf<String>()
-//
-//    // Vosk JSON 결과에서 "text" 필드만 뽑아내는 함수
-//    private fun extractText(json: String): String {
-//        return try {
-//            org.json.JSONObject(json).getString("text")
-//        } catch (e: Exception) {
-//            ""
-//        }
-//    }
-   
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,13 +40,12 @@ class CallingControlActivity : AppCompatActivity() {
         val btnEndCall = findViewById<Button>(R.id.btnEndCall)
 
         val tvStt = findViewById<TextView>(R.id.tvStt)
-        val svSttContainer: ScrollView = findViewById(R.id.svSttContainer)
+        // val svSttContainer: ScrollView = findViewById(R.id.svSttContainer)
 
         val phoneNumber = intent.getStringExtra("phone_number") ?: ""
         val isOutgoing = intent.getBooleanExtra("is_outgoing", false)
 
         tvNumber.text = phoneNumber
-
 
         // 발신일 때만 전화 걸기
         if (isOutgoing) {
@@ -73,7 +59,7 @@ class CallingControlActivity : AppCompatActivity() {
             service.setMuted(isMuted)
         }
 
-        // 전화 끊기는 이벤트
+        // 전화 끊기는 이벤트 감시
         lifecycleScope.launch {
             CallEventBus.callEnded.collect {
                 //  UI 업데이트
@@ -100,35 +86,7 @@ class CallingControlActivity : AppCompatActivity() {
             // 키패드 토글 (DialerFragment 호출 가능)
         }
 
-
-        lifecycleScope.launch {
-//            CallEventBus.sttResult.collect { jsonText ->
-//                // 1. Vosk 결과는 JSON 형태( {"text": "안녕하세요"} )이므로 순수 텍스트만 추출
-//                // 간단하게 처리하기 위해 정규식이나 JSONObject를 사용합니다.
-//                val cleanText = extractText(jsonText)
-//
-//                if (cleanText.isNotBlank()) {
-//                    // 2. 리스트에 추가
-//                    sttList.add(cleanText)
-//
-//                    // 3. 리스트의 내용을 한 줄씩 합쳐서 TextView에 표시
-//                    // 최신 내용 50개만 유지하고 싶다면: if(sttList.size > 50) sttList.removeAt(0)
-//                    val fullText = sttList.joinToString("\n")
-//
-//                    tvStt.text = fullText
-//
-//                    // 4. 새 메시지가 오면 자동으로 하단 스크롤
-//                    svSttContainer.post {
-//                        svSttContainer.fullScroll(android.view.View.FOCUS_DOWN)
-//                    }
-//                }
-//            }
-
-        }
-
-
-
-        // 통화 종료 버튼
+        // 통화 종료 버튼 이벤트
         btnEndCall.setOnClickListener {
 
             // 통화 종료
@@ -146,7 +104,6 @@ class CallingControlActivity : AppCompatActivity() {
             finish()
         }
 
-
         // 통화 시간 타이머
         val handler = Handler(Looper.getMainLooper())
         var seconds = 0
@@ -159,7 +116,5 @@ class CallingControlActivity : AppCompatActivity() {
                 handler.postDelayed(this, 1000)
             }
         })
-
     }
-
 }

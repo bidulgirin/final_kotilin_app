@@ -22,6 +22,8 @@ import androidx.navigation.ui.setupWithNavController
 import com.final_pj.voice.service.CallDetectService
 import com.final_pj.voice.util.VoskModelHolder
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import java.io.File
+import java.io.FileOutputStream
 
 
 class MainActivity : AppCompatActivity() {
@@ -50,8 +52,6 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, CallDetectService::class.java)
         ContextCompat.startForegroundService(this, intent)
     }
-
-
 
     // ----------------------------
     // 권한
@@ -128,6 +128,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+
+
     // ----------------------------
     // 전화 관련(전화 기본 앱)
     // ----------------------------
@@ -174,6 +177,7 @@ class MainActivity : AppCompatActivity() {
                 setupBottomNavigation()
             }
         }
+
     }
     companion object {
         private const val REQUEST_PERMISSION_CODE = 1001
