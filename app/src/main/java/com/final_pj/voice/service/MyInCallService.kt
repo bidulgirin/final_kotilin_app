@@ -17,6 +17,8 @@ import java.io.File
 import com.final_pj.voice.bus.CallEventBus
 import com.final_pj.voice.util.encryptAudioBuffer.encryptAudioBuffer
 import com.final_pj.voice.util.encryptAudioBuffer.sendAudioToServer
+import java.io.FileOutputStream
+import java.io.RandomAccessFile
 
 /**
  * 시스템 통화 상태를 관리하는 InCallService

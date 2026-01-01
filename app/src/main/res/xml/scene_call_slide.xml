@@ -1,0 +1,63 @@
+<MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:motion="http://schemas.android.com/apk/res-auto">
+
+    <!-- 오른쪽(받기)로 드래그 -->
+    <Transition
+        motion:constraintSetStart="@id/start"
+        motion:constraintSetEnd="@id/accept"
+        motion:duration="250">
+        <OnSwipe
+            motion:dragDirection="dragRight"
+            motion:touchAnchorId="@id/slider"
+            motion:touchAnchorSide="right" />
+    </Transition>
+
+    <!-- 왼쪽(거절)로 드래그 -->
+    <Transition
+        motion:constraintSetStart="@id/start"
+        motion:constraintSetEnd="@id/reject"
+        motion:duration="250">
+        <OnSwipe
+            motion:dragDirection="dragLeft"
+            motion:touchAnchorId="@id/slider"
+            motion:touchAnchorSide="left" />
+    </Transition>
+
+    <!-- ✅ 시작(가운데) -->
+    <ConstraintSet android:id="@+id/start">
+        <Constraint android:id="@id/slider">
+            <Layout
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                motion:layout_constraintTop_toTopOf="parent"
+                motion:layout_constraintBottom_toBottomOf="parent"
+                motion:layout_constraintStart_toStartOf="parent"
+                motion:layout_constraintEnd_toEndOf="parent" />
+        </Constraint>
+    </ConstraintSet>
+
+    <!-- ✅ 수락(오른쪽 끝) -->
+    <ConstraintSet android:id="@+id/accept">
+        <Constraint android:id="@id/slider">
+            <Layout
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                motion:layout_constraintTop_toTopOf="parent"
+                motion:layout_constraintBottom_toBottomOf="parent"
+                motion:layout_constraintEnd_toEndOf="parent" />
+        </Constraint>
+    </ConstraintSet>
+
+    <!-- ✅ 거절(왼쪽 끝) -->
+    <ConstraintSet android:id="@+id/reject">
+        <Constraint android:id="@id/slider">
+            <Layout
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                motion:layout_constraintTop_toTopOf="parent"
+                motion:layout_constraintBottom_toBottomOf="parent"
+                motion:layout_constraintStart_toStartOf="parent" />
+        </Constraint>
+    </ConstraintSet>
+
+</MotionScene>

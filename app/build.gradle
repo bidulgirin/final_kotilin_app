@@ -1,119 +1,196 @@
+// 🔌 Gradle 플러그인 설정
 plugins {
+    // Android 애플리케이션 플러그인
     alias(libs.plugins.android.application)
+
+    // Kotlin Android 플러그인
     alias(libs.plugins.kotlin.android)
+
+    // Kotlin Compose 플러그인 (Compose 사용 시 필요)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
+    // 📦 앱의 패키지 네임스페이스
     namespace 'com.final_pj.voice'
+
+    // 🧱 컴파일 SDK 버전 (빌드 시 기준 Android API)
     compileSdk {
         version = release(35)
     }
 
-
     defaultConfig {
+        // 📱 실제 앱 ID (Play Store 기준)
         applicationId "com.final_pj.voice"
+
+        // ⬇ 최소 지원 Android 버전 (Android 13)
         minSdk 33
+
+        // 🎯 타겟 SDK (Android 15/16 대응)
         targetSdk 36
+
+        // 🔢 내부 버전 코드 (업데이트 시 증가)
         versionCode 1
+
+        // 🏷 사용자에게 보이는 버전 이름
         versionName "1.0"
 
+        // 🧪 테스트 러너 설정
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // 🏗 빌드 타입 설정
     buildTypes {
         release {
+            // 🔐 코드 난독화 비활성
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            // 📜 Proguard 설정 파일
+            proguardFiles getDefaultProguardFile(
+                    'proguard-android-optimize.txt'
+            ), 'proguard-rules.pro'
         }
     }
+
+    // ☕ Java 컴파일 옵션
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+
+    // 🟣 Kotlin JVM 타겟
     kotlinOptions {
         jvmTarget = '11'
     }
+
+    // 🧩 빌드 기능 활성화
     buildFeatures {
-        //compose true
+        // Jetpack Compose (현재 비활성)
+        // compose true
+
+        // XML ViewBinding 활성화
         viewBinding true
     }
+
+    // 📦 AAPT 옵션 (압축 제외 파일)
     aaptOptions {
+        // TensorFlow Lite 모델 압축 방지
         noCompress "tflite"
     }
-    // 이건 뭐하는 거냐...
-    // 꺼내오는거 허용한다는 뜻이냐...?
+
+    // 📦 패키징 설정
     packaging {
         jniLibs {
+            // 구형 JNI 패키징 방식 사용 (ML 라이브러리 호환)
             useLegacyPackaging = true
         }
     }
-    // 파이토치 관련
-    // https://stackoverflow.com/questions/70890854/2-files-found-with-path-lib-arm64-v8a-libc-shared-so-from-inputs-react-na
+
+    // 🔧 PyTorch / FFmpeg 관련 충돌 해결
     packagingOptions {
+        // C++ 공유 라이브러리 중복 시 첫 번째 사용
         pickFirst 'lib/x86/libc++_shared.so'
         pickFirst 'lib/x86_64/libc++_shared.so'
         pickFirst 'lib/armeabi-v7a/libc++_shared.so'
         pickFirst 'lib/arm64-v8a/libc++_shared.so'
     }
-    rootProject.ext.ffmpegKitPackage = "audio"
 
+    // 🎧 FFmpegKit 패키지 타입 (audio 전용)
+    rootProject.ext.ffmpegKitPackage = "audio"
 }
 
 dependencies {
+
+    // 🔹 Android 기본 KTX 확장
     implementation libs.androidx.core.ktx
+
+    // 🔹 Lifecycle (런타임)
     implementation libs.androidx.lifecycle.runtime.ktx
+
+    // 🔹 Compose Activity 지원
     implementation libs.androidx.activity.compose
+
+    // 🔹 Compose BOM (버전 통합 관리)
     implementation platform(libs.androidx.compose.bom)
+
+    // 🔹 Compose UI 핵심
     implementation libs.androidx.compose.ui
     implementation libs.androidx.compose.ui.graphics
     implementation libs.androidx.compose.ui.tooling.preview
+
+    // 🔹 Compose Material3
     implementation libs.androidx.compose.material3
+
+    // 🔹 AppCompat (하위 호환)
     implementation libs.androidx.appcompat
+
+    // 🔹 프로세스 라이프사이클 관리
     implementation libs.androidx.lifecycle.process
+
+    // 🔹 RecyclerView
     implementation libs.androidx.recyclerview
+
+    // 🔹 Material Design
     implementation libs.material
+
+    // 🔹 ConstraintLayout (MotionLayout 포함)
     implementation libs.androidx.constraintlayout
+
+    // 🔹 LiveData
     implementation libs.androidx.lifecycle.livedata.ktx
+
+    // 🔹 ViewModel
     implementation libs.androidx.lifecycle.viewmodel.ktx
+
+    // 🔹 Fragment KTX
     implementation libs.androidx.fragment.ktx
+
+    // 🔹 Media3 (미디어 공통 유틸)
     implementation libs.androidx.media3.common.ktx
+
+    // 🔊 오디오 DSP 라이브러리 (JAR 직접 포함)
     implementation files('libs/TarsosDSP-Android-latest.jar')
+
+    // 🧪 단위 테스트
     testImplementation libs.junit
+
+    // 🧪 Android 테스트
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core
+
+    // 🧪 Compose 테스트
     androidTestImplementation platform(libs.androidx.compose.bom)
     androidTestImplementation libs.androidx.compose.ui.test.junit4
+
+    // 🛠 Compose 디버그 툴
     debugImplementation libs.androidx.compose.ui.tooling
     debugImplementation libs.androidx.compose.ui.test.manifest
+
+    // 🎙 음성 인식 (VOSK)
     implementation 'com.alphacephei:vosk-android:0.3.75'
+
+    // 🎨 Material Components
     implementation "com.google.android.material:material:1.11.0"
+
+    // 🧱 ConstraintLayout 최신 버전 (MotionLayout 필수)
+    implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+
+    // 🧭 Jetpack Navigation
     implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")
     implementation("androidx.navigation:navigation-ui-ktx:2.5.3")
+
+    // 🌐 네트워크 통신 (OkHttp)
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
+
+    // 🔄 코루틴 (백그라운드 처리)
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 
+    // 🧠 TensorFlow Lite
     implementation 'org.tensorflow:tensorflow-lite:2.14.0'
     implementation 'org.tensorflow:tensorflow-lite-select-tf-ops:+'
-    // 파이토치
+
+    // 🔥 PyTorch Lite (모바일 추론)
     implementation 'org.pytorch:pytorch_android_lite:1.13.1'
     implementation 'org.pytorch:pytorch_android_torchvision_lite:1.13.1'
 }
-
-//tasks.register('genUUID') {
-//    // buildDir 대신 실제 assets 경로를 지정 (src/main/assets/model)
-//    def odir = file("src/main/assets/model")
-//    def ofile = file("$odir/uuid")
-//
-//    doLast {
-//        if (!odir.exists()) {
-//            mkdir odir
-//        }
-//        ofile.text = UUID.randomUUID().toString()
-//        println "Vosk UUID generated at: ${ofile.absolutePath}"
-//    }
-//}
-//
-//// 빌드 시작 전 항상 실행되도록 연결
-//preBuild.dependsOn(genUUID)

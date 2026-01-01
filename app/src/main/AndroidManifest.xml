@@ -25,6 +25,7 @@
         tools:ignore="ProtectedPermissions" /> <!-- ================= 저장소 ================= -->
     <!-- Android 13+ -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" /> <!-- Android 12 이하 -->
+    <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- ================= 전화 / 통화 ================= -->
