@@ -21,6 +21,8 @@ import androidx.navigation.ui.setupWithNavController
 
 import com.final_pj.voice.service.CallDetectService
 import com.final_pj.voice.util.VoskModelHolder
+import com.final_pj.voice.util.encryptAudioBuffer.encryptAudioBuffer
+import com.final_pj.voice.util.encryptAudioBuffer.sendAudioToServer
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.io.File
 import java.io.FileOutputStream
@@ -177,6 +179,11 @@ class MainActivity : AppCompatActivity() {
                 setupBottomNavigation()
             }
         }
+//
+//        // 백엔드 테스트
+//        val dummyAudio = FloatArray(16000) { i -> Math.sin(2.0 * Math.PI * 440 * i / 16000).toFloat() }
+//        val encrypted = encryptAudioBuffer(dummyAudio, "1234567890abcdef")
+//        sendAudioToServer(encrypted, "192.168.3.10") // PC IP
 
     }
     companion object {

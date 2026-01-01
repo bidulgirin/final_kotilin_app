@@ -15,9 +15,8 @@ import com.final_pj.voice.IncomingCallActivity
 import com.final_pj.voice.MCCPManager
 import java.io.File
 import com.final_pj.voice.bus.CallEventBus
-import java.io.FileOutputStream
-import java.io.RandomAccessFile
-
+import com.final_pj.voice.util.encryptAudioBuffer.encryptAudioBuffer
+import com.final_pj.voice.util.encryptAudioBuffer.sendAudioToServer
 
 /**
  * 시스템 통화 상태를 관리하는 InCallService
@@ -214,6 +213,11 @@ class MyInCallService : InCallService() {
                             audioBuffer[currentPos++] = pcmBuffer[i] / 32768f
                         }
                     }
+
+                    // 백엔드 테스트
+                    val segmentToSend = audioBuffer.clone()
+                    val encrypted = encryptAudioBuffer(segmentToSend, "1234567890abcdef")
+                    sendAudioToServer(encrypted, "192.168.3.10")
 
                 }
 
