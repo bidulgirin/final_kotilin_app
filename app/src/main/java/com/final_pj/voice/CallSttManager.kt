@@ -32,7 +32,7 @@ class CallSttManager__origin(
         // 1. 모델을 안전하게 로드하기 위해 StorageService 사용
         // "model"은 assets 폴더 안에 있는 모델 폴더 이름입니다.
         StorageService.unpack(context, "model", "model",
-            { loadedModel ->
+            @androidx.annotation.RequiresPermission(android.Manifest.permission.RECORD_AUDIO) { loadedModel ->
                 try {
                     // 2. 모델 로드 성공 시 Recognizer 생성
                     recognizer = Recognizer(loadedModel, sampleRate.toFloat())

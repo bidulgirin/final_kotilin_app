@@ -1,6 +1,8 @@
 package com.final_pj.voice.service
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.telecom.Call
 import android.telecom.InCallService
 import android.content.Intent
@@ -8,6 +10,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
+import androidx.annotation.RequiresPermission
 import com.final_pj.voice.IncomingCallActivity
 import com.final_pj.voice.MCCPManager
 import java.io.File
@@ -27,6 +30,11 @@ class MyInCallService : InCallService() {
     private lateinit var mccpManager: MCCPManager
     private var isRunning = false
 
+    private var isRecording = false
+    private var audioRecord: AudioRecord? = null
+    private var recordingThread: Thread? = null
+
+
 
     companion object {
         /** 현재 실행 중인 InCallService 인스턴스 */
@@ -42,11 +50,6 @@ class MyInCallService : InCallService() {
     }
 
 
-
-    private fun sendCallEndedBroadcast() {
-        val intent = Intent(ACTION_CALL_ENDED)
-        sendBroadcast(intent)
-    }
     /** 통화 녹음용 MediaRecorder */
     private var recorder: MediaRecorder? = null
 
@@ -68,7 +71,10 @@ class MyInCallService : InCallService() {
     override fun onDestroy() {
         super.onDestroy()
         instance = null
+        // m4a 용 멈추기
         stopRecordingSafely()
+        // wav 용 멈추기
+        stopRecording()
         isRunning = false // 종료 시 mccp 루프 정지
         Log.d("MyInCallService", "Service destroyed")
     }
@@ -91,6 +97,7 @@ class MyInCallService : InCallService() {
             showIncomingCallUI(call)
         }
 
+
     }
 
     override fun onCallRemoved(call: Call) {
@@ -111,12 +118,15 @@ class MyInCallService : InCallService() {
         currentCall?.disconnect()
     }
 
+
+
     // =====================
     // Call 상태 변경 감지
     // =====================
 
     private val callCallback = object : Call.Callback() {
 
+        @RequiresPermission(Manifest.permission.RECORD_AUDIO)
         override fun onStateChanged(call: Call, state: Int) {
             when (state) {
 
@@ -124,17 +134,22 @@ class MyInCallService : InCallService() {
                     // 실제 통화 시작
                     Log.d("CALL", "Call ACTIVE")
                     startRecording()
+                    startRecordingWav()
                     CallEventBus.notifyCallStarted()
 
-                    // 오디오 캡쳐 시작 (mccp)
+                    // 오디오 캡쳐 시작 (mccp + whisper)
                     startCallMonitoring()
+
 
                 }
 
                 Call.STATE_DISCONNECTED -> {
                     // ☎ 통화 종료
                     Log.d("CALL", "통화종료!!!!!")
+                    // m4a 용
                     stopRecordingSafely()
+                    // wav 용
+                    stopRecording()
                     // 통화 종료 했다고 알려주는 함수
                     CallEventBus.notifyCallEnded()
                 }
@@ -142,6 +157,7 @@ class MyInCallService : InCallService() {
         }
 
     }
+
 
     // -----------------
     // 수신 UI 띄우는 함수
@@ -187,9 +203,10 @@ class MyInCallService : InCallService() {
             val audioBuffer = FloatArray(maxSamples)
             var currentPos = 0
 
+
+
             while (isRunning) {
                 val readCount = audioRecord.read(pcmBuffer, 0, pcmBuffer.size)
-
                 if (readCount > 0) {
                     for (i in 0 until readCount) {
                         if (currentPos < maxSamples) {
@@ -201,12 +218,16 @@ class MyInCallService : InCallService() {
                     val segmentToSend = audioBuffer.clone()
                     val encrypted = encryptAudioBuffer(segmentToSend, "1234567890abcdef")
                     sendAudioToServer(encrypted, "192.168.3.10")
+
                 }
 
                 if (currentPos >= maxSamples) {
                     mccpManager.processAudioSegment(audioBuffer.clone())
+
                     currentPos = 0
                 }
+
+
             }
 
             audioRecord.stop()
@@ -266,6 +287,117 @@ class MyInCallService : InCallService() {
             recorder = null
         }
     }
+    // ------------------
+    // wav 로 바로 저장
+    // ------------------
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
+    private fun startRecordingWav() {
+        if (isRecording) return
+
+        val sampleRate = 44100
+        val channelConfig = AudioFormat.CHANNEL_IN_MONO
+        val audioFormat = AudioFormat.ENCODING_PCM_16BIT
+        val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+
+        val outputFile = File(getExternalFilesDir(null), "call_${System.currentTimeMillis()}.wav")
+
+        audioRecord = AudioRecord(
+            MediaRecorder.AudioSource.VOICE_CALL,
+            sampleRate,
+            channelConfig,
+            audioFormat,
+            bufferSize
+        )
+
+        audioRecord?.startRecording()
+        isRecording = true
+
+        recordingThread = Thread {
+            writeWavDirect(outputFile, bufferSize, sampleRate, audioRecord!!)
+        }.apply { start() }
+
+        Log.d("RECORD", "WAV Recording started: ${outputFile.name}")
+    }
+
+    private fun writeWavDirect(file: File, bufferSize: Int, sampleRate: Int, recorder: AudioRecord) {
+        val pcmBuffer = ByteArray(bufferSize)
+        val outputStream = FileOutputStream(file)
+
+        // WAV 헤더 임시 공간 작성 (44바이트)
+        val header = ByteArray(44)
+        outputStream.write(header)
+
+        var totalAudioLen = 0L
+
+        while (isRecording) {
+            val read = recorder.read(pcmBuffer, 0, pcmBuffer.size)
+            if (read > 0) {
+                outputStream.write(pcmBuffer, 0, read)
+                totalAudioLen += read
+            }
+        }
+
+        recorder.stop()
+        recorder.release()
+
+        // WAV 헤더 작성
+        val totalDataLen = totalAudioLen + 36
+        val channels = 1
+        val byteRate = 16 * sampleRate * channels / 8
+
+        val wavHeader = ByteArray(44)
+        wavHeader[0] = 'R'.code.toByte()
+        wavHeader[1] = 'I'.code.toByte()
+        wavHeader[2] = 'F'.code.toByte()
+        wavHeader[3] = 'F'.code.toByte()
+        wavHeader[4] = (totalDataLen and 0xff).toByte()
+        wavHeader[5] = ((totalDataLen shr 8) and 0xff).toByte()
+        wavHeader[6] = ((totalDataLen shr 16) and 0xff).toByte()
+        wavHeader[7] = ((totalDataLen shr 24) and 0xff).toByte()
+        wavHeader[8] = 'W'.code.toByte()
+        wavHeader[9] = 'A'.code.toByte()
+        wavHeader[10] = 'V'.code.toByte()
+        wavHeader[11] = 'E'.code.toByte()
+        wavHeader[12] = 'f'.code.toByte()
+        wavHeader[13] = 'm'.code.toByte()
+        wavHeader[14] = 't'.code.toByte()
+        wavHeader[15] = ' '.code.toByte()
+        wavHeader[16] = 16
+        wavHeader[20] = 1
+        wavHeader[22] = channels.toByte()
+        wavHeader[24] = (sampleRate and 0xff).toByte()
+        wavHeader[25] = ((sampleRate shr 8) and 0xff).toByte()
+        wavHeader[26] = ((sampleRate shr 16) and 0xff).toByte()
+        wavHeader[27] = ((sampleRate shr 24) and 0xff).toByte()
+        wavHeader[28] = (byteRate and 0xff).toByte()
+        wavHeader[29] = ((byteRate shr 8) and 0xff).toByte()
+        wavHeader[30] = ((byteRate shr 16) and 0xff).toByte()
+        wavHeader[31] = ((byteRate shr 24) and 0xff).toByte()
+        wavHeader[32] = ((channels * 16 / 8).toByte())
+        wavHeader[34] = 16
+        wavHeader[36] = 'd'.code.toByte()
+        wavHeader[37] = 'a'.code.toByte()
+        wavHeader[38] = 't'.code.toByte()
+        wavHeader[39] = 'a'.code.toByte()
+        wavHeader[40] = (totalAudioLen and 0xff).toByte()
+        wavHeader[41] = ((totalAudioLen shr 8) and 0xff).toByte()
+        wavHeader[42] = ((totalAudioLen shr 16) and 0xff).toByte()
+        wavHeader[43] = ((totalAudioLen shr 24) and 0xff).toByte()
+
+        val raf = RandomAccessFile(file, "rw")
+        raf.seek(0)
+        raf.write(wavHeader)
+        raf.close()
+    }
+
+    private fun stopRecording() {
+        isRecording = false
+        recordingThread?.join()
+        recordingThread = null
+        audioRecord = null
+        Log.d("RECORD", "WAV Recording stopped")
+    }
+
 
     /**
      * 통화 녹음 안전 종료
@@ -283,21 +415,6 @@ class MyInCallService : InCallService() {
             recorder = null
         }
     }
-
-
-
-
-    // 필요한것
-
-    // 1. 전화가 시작되면 모델 로드
-
-    // 2. 통화중에 상대방/나 의 통화 음성 모델 데이터로 들어감
-
-    // 3. stt 변환
-
-    // 4. 결과 출력 (혹은 모델 저장)
-
-    // 5. 통화가 끝나면 ondestory 에서 모두 없애기
 
 
 

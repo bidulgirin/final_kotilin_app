@@ -24,6 +24,8 @@ import com.final_pj.voice.util.VoskModelHolder
 import com.final_pj.voice.util.encryptAudioBuffer.encryptAudioBuffer
 import com.final_pj.voice.util.encryptAudioBuffer.sendAudioToServer
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import java.io.File
+import java.io.FileOutputStream
 
 
 class MainActivity : AppCompatActivity() {
@@ -52,8 +54,6 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, CallDetectService::class.java)
         ContextCompat.startForegroundService(this, intent)
     }
-
-
 
     // ----------------------------
     // 권한
@@ -129,6 +129,9 @@ class MainActivity : AppCompatActivity() {
             finishAffinity() // 앱의 모든 Activity 종료
         }
     }
+
+
+
 
     // ----------------------------
     // 전화 관련(전화 기본 앱)
