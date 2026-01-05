@@ -240,4 +240,27 @@ class SttUploader(
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, IvParameterSpec(iv))
         return Pair(iv, cipher.doFinal(data))
     }
+
+    fun enqueueUploadFile(callId: String, file: File, onFinished: (success: Boolean) -> Unit) {
+        if (!file.exists()) {
+            Log.e("STT", "file not exists: ${file.absolutePath}")
+            onFinished(false)
+            return
+        }
+
+        val task = UploadTask(callId, file, onFinished)
+
+        if (!queue.offer(task)) {
+            val dropped = queue.poll()
+            dropped?.onFinished(false)
+            val ok = queue.offer(task)
+            if (!ok) {
+                onFinished(false)
+                return
+            }
+        }
+
+        Log.d("STT", "Enqueued file: callId=$callId name=${file.name} size=${file.length()}")
+    }
+
 }

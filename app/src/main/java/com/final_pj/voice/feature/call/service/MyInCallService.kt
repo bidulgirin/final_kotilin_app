@@ -70,8 +70,8 @@ class MyInCallService : InCallService() {
         return prefs.getBoolean(SettingKeys.SUMMARY_ENABLED, true)
     }
     // “통화로 생성된 녹음파일”을 추적하기 위한 멤버
+    @Volatile private var deleteRecordingAfterUpload: Boolean = false
     private var currentRecordingFile: File? = null
-
 
     private fun deleteCurrentRecordingFileIfExists() {
         val f = currentRecordingFile ?: return
@@ -119,6 +119,7 @@ class MyInCallService : InCallService() {
         stopRecordingSafely()
 
         serviceScope.cancel()
+
 
         super.onDestroy()
     }
@@ -175,7 +176,12 @@ class MyInCallService : InCallService() {
                     Log.d("CALL", "Call ACTIVE -> start")
                     CallEventBus.notifyCallStarted()
 
+                    // 녹음은 무조건 시작
                     startRecording()
+
+                    // “녹음 off”는 '파일 자동삭제 정책' 의미
+                    deleteRecordingAfterUpload = (!isRecordEnabled() && isSummaryEnabled())
+
                     startMonitoring()
                 }
 
@@ -185,17 +191,31 @@ class MyInCallService : InCallService() {
                     stopMonitoring()
                     stopRecordingSafely()
 
+                    val recordEnabled = isRecordEnabled()
+                    val summaryEnabled = isSummaryEnabled()
+
                     val duration = System.currentTimeMillis() - activeAtMs
                     if (duration < 5000) {
                         Log.d("CALL", "too short ($duration ms) -> skip upload")
+                        if (!recordEnabled) deleteCurrentRecordingFileIfExists()
+                        CallEventBus.notifyCallEnded()
+                        return
+                    }
 
-                        // 요약도 못 돌리는 상황이면, record_enabled=false면 파일 남기지 않기
-                        if (!isRecordEnabled()) {
+                    // ✅ 요약 OFF면 onSaveStt를 호출하지 않음
+                    if (!summaryEnabled) {
+                        Log.d("SUMMARY", "summary_enabled=false -> skip onSaveStt()")
+                        if (!recordEnabled) deleteCurrentRecordingFileIfExists()
+                        CallEventBus.notifyCallEnded()
+                        return
+                    }
+
+                    // ✅ 요약 ON이면 업로드 -> 완료 후 삭제
+                    onSaveStt { success ->
+                        Log.d("UPLOAD", "finished success=$success")
+                        if (deleteRecordingAfterUpload) {
                             deleteCurrentRecordingFileIfExists()
                         }
-                    } else {
-                        // summary_enabled=false면 여기서 호출해도 onSaveStt()가 바로 return 처리함
-                        onSaveStt()
                     }
 
                     CallEventBus.notifyCallEnded()
@@ -303,8 +323,7 @@ class MyInCallService : InCallService() {
                 getExternalFilesDir(null),
                 "call_${System.currentTimeMillis()}.m4a"
             )
-
-            currentRecordingFile = outputFile  // 이 통화의 녹음 파일 추적
+            currentRecordingFile = outputFile
 
             recorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.VOICE_CALL)
@@ -322,8 +341,10 @@ class MyInCallService : InCallService() {
         } catch (e: Exception) {
             Log.e("RECORD", "Recording start failed", e)
             recorder = null
+            currentRecordingFile = null // 중요
         }
     }
+
 
     private fun stopRecordingSafely() {
         val r = recorder ?: return
@@ -347,38 +368,39 @@ class MyInCallService : InCallService() {
     // =====================
     // 통화 종료 후 STT 저장 업로드
     // =====================
-    fun onSaveStt() {
-        // 요약 기능 OFF면 백엔드 통신 자체를 하지 않음
+    fun onSaveStt(onFinished: (success: Boolean) -> Unit) {
         if (!isSummaryEnabled()) {
             Log.d("SUMMARY", "summary_enabled=false -> skip onSaveStt()")
-
-            // "요약도 안 하면 굳이 파일을 남길 이유가 없으면" 여기서 바로 삭제해도 됨.
-            if (!isRecordEnabled()) {
-                deleteCurrentRecordingFileIfExists()
-            }
+            if (!isRecordEnabled()) deleteCurrentRecordingFileIfExists()
+            onFinished(false)
             return
         }
 
-        val dir = applicationContext.getExternalFilesDir(null) ?: return
+        val file = currentRecordingFile
+        if (file == null || !file.exists()) {
+            Log.e("STT", "No currentRecordingFile to upload")
+            onFinished(false)
+            return
+        }
 
         val callLogId = resolveCurrentCallLogId(callEndTimeMs = System.currentTimeMillis())
-        if (callLogId != null) {
-            // 여기서 업로드 완료 시점에 맞춰 파일 삭제가 필요함
-            sttUploader.enqueueUploadLatestFromDir(callLogId.toString(), dir) { success ->
-                Log.d("UPLOAD", "finished success=$success")
+        if (callLogId == null) {
+            Log.w("CALLLOG", "Failed to resolve callLogId")
 
-                // 녹음 OFF면 업로드(요약) 끝난 뒤 통화 녹음 파일 삭제
-                if (!isRecordEnabled()) {
-                    deleteCurrentRecordingFileIfExists()
-                }
-            }
+            // ✅ record off면 남기지 않는 게 자연스러움
+            if (!isRecordEnabled()) deleteCurrentRecordingFileIfExists()
 
-            // 주의: "enqueue"만 하고 바로 삭제하면 업로드 전에 파일이 없어질 수 있음
-            // 그래서 업로드 "완료 콜백"이 필요함 (아래 5번에서 해결)
-        } else {
-            Log.w("CALLLOG", "Failed to resolve callLogId, skip or fallback needed")
+            onFinished(false)
+            return
+        }
+
+        // ✅ 여기서 업로더는 "특정 파일" 업로드를 받는 메서드가 있으면 제일 좋음
+        sttUploader.enqueueUploadFile(callLogId.toString(), file) { success ->
+            onFinished(success)
         }
     }
+
+
 
     // =====================
     // UI

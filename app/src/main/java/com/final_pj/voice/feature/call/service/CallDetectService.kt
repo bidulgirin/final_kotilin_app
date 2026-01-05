@@ -38,9 +38,9 @@ class CallDetectService : Service() {
         }
 
         val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("감지중")
-            .setContentText("보이스피싱감지기능을 이용하시려면 통화녹음을 해주세요")
+            .setSmallIcon(R.drawable.ic_launcher)
+            .setContentTitle("알림")
+            .setContentText("보이스피싱 감지가 시작되었습니다")
             .build()
 
         NotificationManagerCompat.from(this).notify(100, notification)
