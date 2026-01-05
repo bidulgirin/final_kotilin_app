@@ -8,6 +8,9 @@ plugins {
 
     // Kotlin Compose 플러그인 (Compose 사용 시 필요)
     alias(libs.plugins.kotlin.compose)
+
+    // kapt 활성 ( @Entity, @Dao ) 쓸려고 함
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -86,17 +89,17 @@ android {
         }
     }
 
-    // 🔧 PyTorch / FFmpeg 관련 충돌 해결
-    packagingOptions {
-        // C++ 공유 라이브러리 중복 시 첫 번째 사용
-        pickFirst 'lib/x86/libc++_shared.so'
-        pickFirst 'lib/x86_64/libc++_shared.so'
-        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
-        pickFirst 'lib/arm64-v8a/libc++_shared.so'
-    }
-
-    // 🎧 FFmpegKit 패키지 타입 (audio 전용)
-    rootProject.ext.ffmpegKitPackage = "audio"
+//    // 🔧 PyTorch / FFmpeg 관련 충돌 해결
+//    packagingOptions {
+//        // C++ 공유 라이브러리 중복 시 첫 번째 사용
+//        pickFirst 'lib/x86/libc++_shared.so'
+//        pickFirst 'lib/x86_64/libc++_shared.so'
+//        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+//        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+//    }
+//
+//    // 🎧 FFmpegKit 패키지 타입 (audio 전용)
+//    rootProject.ext.ffmpegKitPackage = "audio"
 }
 
 dependencies {
@@ -149,7 +152,10 @@ dependencies {
     implementation libs.androidx.media3.common.ktx
 
     // 🔊 오디오 DSP 라이브러리 (JAR 직접 포함)
-    implementation files('libs/TarsosDSP-Android-latest.jar')
+    //implementation files('libs/TarsosDSP-Android-latest.jar')
+    implementation "com.github.st-h:TarsosDSP:2.4.1"
+    implementation libs.androidx.room.common.jvm
+    implementation libs.volley
 
     // 🧪 단위 테스트
     testImplementation libs.junit
@@ -167,30 +173,46 @@ dependencies {
     debugImplementation libs.androidx.compose.ui.test.manifest
 
     // 🎙 음성 인식 (VOSK)
-    implementation 'com.alphacephei:vosk-android:0.3.75'
+    // implementation 'com.alphacephei:vosk-android:0.3.75'
 
     // 🎨 Material Components
     implementation "com.google.android.material:material:1.11.0"
 
-    // 🧱 ConstraintLayout 최신 버전 (MotionLayout 필수)
+    // ConstraintLayout 최신 버전 (MotionLayout 필수)
     implementation "androidx.constraintlayout:constraintlayout:2.1.4"
 
-    // 🧭 Jetpack Navigation
+    // Jetpack Navigation
     implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")
     implementation("androidx.navigation:navigation-ui-ktx:2.5.3")
 
-    // 🌐 네트워크 통신 (OkHttp)
+    // 네트워크 통신 (OkHttp)
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
 
-    // 🔄 코루틴 (백그라운드 처리)
+    // 코루틴 (백그라운드 처리)
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 
-    // 🧠 TensorFlow Lite
+    // TensorFlow Lite
     implementation 'org.tensorflow:tensorflow-lite:2.14.0'
-    implementation 'org.tensorflow:tensorflow-lite-select-tf-ops:+'
+    implementation 'org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0'
 
-    // 🔥 PyTorch Lite (모바일 추론)
+    // PyTorch Lite (모바일 추론)
     implementation 'org.pytorch:pytorch_android_lite:1.13.1'
     implementation 'org.pytorch:pytorch_android_torchvision_lite:1.13.1'
+
+    // Room: Android 공식 로컬 DB(SQLite) ORM 라이브러리
+    // → SQL을 직접 쓰지 않고, Entity / DAO / Annotation 기반으로 DB 접근 가능
+    implementation "androidx.room:room-runtime:2.5.0"
+
+    // Room KTX: 코루틴, Flow 등 Kotlin 친화적 확장 기능 제공
+    // → suspend 함수, Flow<T> 반환 등 사용하려면 필수
+    implementation "androidx.room:room-ktx:2.5.0"
+
+    // Room Compiler (KSP)
+    // → @Entity, @Dao, @Database 어노테이션을 실제 구현 코드로 생성
+    ksp("androidx.room:room-compiler:2.5.0")
+
+    // Gson: JSON <-> 객체 직렬화/역직렬화 라이브러리
+    // → 서버 응답 파싱, 로컬 저장용 JSON 변환 등에 사용
+    implementation "com.google.code.gson:gson:2.10.1"
 }

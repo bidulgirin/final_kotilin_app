@@ -2,122 +2,272 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
+    android:background="@android:color/black"
     android:padding="20dp">
 
+    <!-- 상단: 번호 -->
     <TextView
         android:id="@+id/tvCallingNumber"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="28dp"
+        android:gravity="center"
         android:text="+82 10-1234-5678"
-        android:textSize="28sp"
-        android:textColor="@color/white"
+        android:textColor="@android:color/white"
+        android:textSize="30sp"
+        android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:gravity="center"/>
+        app:layout_constraintEnd_toEndOf="parent"/>
 
+    <!-- 상태 -->
     <TextView
         android:id="@+id/tvCallState"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
         android:text="연결 중..."
-        android:textSize="18sp"
-        android:textColor="@color/white"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:alpha="0.8"
         app:layout_constraintTop_toBottomOf="@id/tvCallingNumber"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
+    <!-- 타이머 -->
     <TextView
         android:id="@+id/tvCallTimer"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
         android:text="00:00"
+        android:textColor="@android:color/white"
         android:textSize="18sp"
-        android:textColor="@color/white"
+        android:alpha="0.9"
         app:layout_constraintTop_toBottomOf="@id/tvCallState"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <ScrollView
-        android:id="@+id/svSttContainer"
+    <!-- (중앙 공간) -->
+    <View
+        android:id="@+id/spacer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="30dp"
-        android:layout_marginBottom="30dp"
-        android:background="#22FFFFFF"
-        android:padding="12dp"
-        app:layout_constraintTop_toBottomOf="@id/llCallOptions"
+        app:layout_constraintTop_toBottomOf="@id/tvCallTimer"
+        app:layout_constraintBottom_toTopOf="@id/keypadContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- 키패드 컨테이너 (기본 숨김, 토글로 표시) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/keypadContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:cardBackgroundColor="#1FFFFFFF"
+        app:cardCornerRadius="18dp"
+        app:strokeColor="#33FFFFFF"
+        app:strokeWidth="1dp"
+        android:layout_marginBottom="18dp"
+        app:layout_constraintBottom_toTopOf="@id/controlsRow"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:alignmentMode="alignMargins"
+            android:columnCount="3"
+            android:rowCount="4"
+            android:useDefaultMargins="true">
+
+            <!-- 1~9 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn1"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="1"
+                android:textSize="20sp"
+                android:textColor="@android:color/white"
+                app:strokeColor="#55FFFFFF"
+                app:cornerRadius="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn2"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="2"
+                android:textSize="20sp"
+                android:textColor="@android:color/white"
+                app:strokeColor="#55FFFFFF"
+                app:cornerRadius="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn3"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="3"
+                android:textSize="20sp"
+                android:textColor="@android:color/white"
+                app:strokeColor="#55FFFFFF"
+                app:cornerRadius="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn4"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="4"
+                android:textSize="20sp"
+                android:textColor="@android:color/white"
+                app:strokeColor="#55FFFFFF"
+                app:cornerRadius="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn5"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="5"
+                android:textSize="20sp"
+                android:textColor="@android:color/white"
+                app:strokeColor="#55FFFFFF"
+                app:cornerRadius="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn6"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="6"
+                android:textSize="20sp"
+                android:textColor="@android:color/white"
+                app:strokeColor="#55FFFFFF"
+                app:cornerRadius="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn7"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="7"
+                android:textSize="20sp"
+                android:textColor="@android:color/white"
+                app:strokeColor="#55FFFFFF"
+                app:cornerRadius="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn8"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="8"
+                android:textSize="20sp"
+                android:textColor="@android:color/white"
+                app:strokeColor="#55FFFFFF"
+                app:cornerRadius="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn9"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="9"
+                android:textSize="20sp"
+                android:textColor="@android:color/white"
+                app:strokeColor="#55FFFFFF"
+                app:cornerRadius="16dp"/>
+
+            <!-- *, 0, # -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStar"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="*"
+                android:textSize="20sp"
+                android:textColor="@android:color/white"
+                app:strokeColor="#55FFFFFF"
+                app:cornerRadius="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn0"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="0"
+                android:textSize="20sp"
+                android:textColor="@android:color/white"
+                app:strokeColor="#55FFFFFF"
+                app:cornerRadius="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnHash"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="#"
+                android:textSize="20sp"
+                android:textColor="@android:color/white"
+                app:strokeColor="#55FFFFFF"
+                app:cornerRadius="16dp"/>
+        </GridLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 하단 컨트롤 3개 -->
+    <LinearLayout
+        android:id="@+id/controlsRow"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:weightSum="3"
+        android:layout_marginBottom="18dp"
         app:layout_constraintBottom_toTopOf="@id/btnEndCall"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:id="@+id/tvStt"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="실시간 음성 인식 자막이 여기에 표시됩니다..."
-            android:textSize="18sp"
-            android:textColor="@color/white"
-            android:lineSpacingExtra="4dp"/>
-    </ScrollView>
-
-    <LinearLayout
-        android:id="@+id/llCallOptions"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginTop="30dp"
-        app:layout_constraintTop_toBottomOf="@id/tvCallTimer"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:weightSum="3">
-
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnMute"
-            style="?android:attr/borderlessButtonStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="음소거"
-            android:textColor="@color/white"/>
+            android:textColor="@android:color/white"
+            app:icon="@drawable/ic_mic_on"
+            app:iconTint="@android:color/white"
+            app:iconGravity="textTop"
+            app:cornerRadius="18dp"
+            app:backgroundTint="#1FFFFFFF"/>
 
-        <Button
-            android:id="@+id/btnSpeaker"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="스피커"
-            android:textColor="@color/white"/>
-
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnKeypad"
-            style="?android:attr/borderlessButtonStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="키패드"
-            android:textColor="@color/white"/>
+            android:textColor="@android:color/white"
+            app:icon="@drawable/ic_dialog"
+            app:iconTint="@android:color/white"
+            app:iconGravity="textTop"
+            app:cornerRadius="18dp"
+            app:backgroundTint="#1FFFFFFF"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSpeaker"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="스피커"
+            android:textColor="@android:color/white"
+            app:icon="@drawable/ic_speaker_off"
+            app:iconTint="@android:color/white"
+            app:iconGravity="textTop"
+            app:cornerRadius="18dp"
+            app:backgroundTint="#1FFFFFFF"/>
     </LinearLayout>
 
-    <Button
+    <!-- 종료 버튼 -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnEndCall"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
+        android:layout_width="86dp"
+        android:layout_height="86dp"
         android:text="종료"
-        android:textColor="@color/white"
-        android:backgroundTint="#FF5252"
-        android:layout_marginBottom="40dp"
-        app:cornerRadius="40dp"
+        android:textColor="@android:color/white"
+        app:cornerRadius="43dp"
+        app:backgroundTint="#FF5252"
+        app:icon="@drawable/ic_cancel"
+        app:iconTint="@android:color/white"
+        app:iconGravity="textTop"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="30dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -3,39 +3,69 @@ package com.final_pj.voice.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.final_pj.voice.R
-import com.final_pj.voice.model.Contact
+import com.final_pj.voice.feature.call.model.Contact
+import com.google.android.material.button.MaterialButton
+import java.util.Locale
 
-// 기깔나게 데이터 담아주는 어뎁터
 class ContactAdapter(
     private val items: List<Contact>,
     private val onCallClick: (Contact) -> Unit
-) : RecyclerView.Adapter<ContactAdapter.ViewHolder>() {
+) : RecyclerView.Adapter<ContactAdapter.ContactViewHolder>() {
 
-    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val name = view.findViewById<TextView>(R.id.tv_name)
-        val phone = view.findViewById<TextView>(R.id.tv_number)
-        val callBtn = view.findViewById<ImageButton>(R.id.btn_call)
-    }
+    // 화면에 보여줄 리스트(검색 결과)
+    private val displayItems: MutableList<Contact> = items.toMutableList()
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_contact, parent, false)
-        return ViewHolder(view)
-    }
+    inner class ContactViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvName: TextView = itemView.findViewById(R.id.tv_name)
+        private val tvNumber: TextView = itemView.findViewById(R.id.tv_number)
+        private val btnCall: MaterialButton = itemView.findViewById(R.id.btn_call)
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val contact = items[position]
-        holder.name.text = contact.name
-        holder.phone.text = contact.phone
-
-        holder.callBtn.setOnClickListener {
-            onCallClick(contact)
+        fun bind(contact: Contact) {
+            tvName.text = contact.name
+            tvNumber.text = contact.phone
+            btnCall.setOnClickListener { onCallClick(contact) }
         }
     }
 
-    override fun getItemCount() = items.size
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ContactViewHolder {
+        val itemView = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_contact, parent, false)
+        return ContactViewHolder(itemView)
+    }
+
+    override fun onBindViewHolder(holder: ContactViewHolder, position: Int) {
+        holder.bind(displayItems[position])
+    }
+
+    override fun getItemCount(): Int = displayItems.size
+
+    /** 이름/번호 검색 */
+    fun filter(query: String) {
+        val q = query.normalize()
+
+        displayItems.clear()
+
+        if (q.isEmpty()) {
+            displayItems.addAll(items)
+        } else {
+            displayItems.addAll(
+                items.filter { c ->
+                    val name = (c.name ?: "").normalize()
+                    val phone = (c.phone ?: "").normalize()
+                    name.contains(q) || phone.contains(q)
+                }
+            )
+        }
+
+        notifyDataSetChanged()
+    }
+
+    private fun String.normalize(): String {
+        return lowercase(Locale.getDefault())
+            .replace(" ", "")
+            .replace("-", "")
+    }
 }

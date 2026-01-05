@@ -2,15 +2,34 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- android:sharedUserId="android.uid.system" -->
-    <!-- ================= 기본 ================= -->
-    <uses-permission android:name="android.permission.INTERNET" /> <!-- ================= 알림 ================= -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- ================= Foreground Service ================= -->
+    <!-- ========================================================= -->
+    <!-- Manifest 목적 -->
+    <!-- - 통화/다이얼러/포그라운드 서비스 기반 앱 설정 -->
+    <!-- - 권한/기능(Feature)/컴포넌트(Activity/Service) 선언 -->
+    <!-- ========================================================= -->
+
+    <!-- ========================================================= -->
+    <!-- 1) 권한(Permissions) -->
+    <!-- - 범주별로 묶어서 읽기/유지보수 쉽도록 정리 -->
+    <!-- ========================================================= -->
+
+    <!-- [네트워크] -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- [알림] Android 13+ 알림 권한 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- [Foreground Service] 포그라운드 서비스 실행 및 타입별 권한 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" /> <!-- ================= 오디오 / 녹음 ================= -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+
+    <!-- [오디오/녹음] -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /> <!-- (시스템 / 보호된 오디오 캡처 권한) -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!-- [오디오 캡처] 시스템/보호 권한 (일반 앱에서는 대부분 허용되지 않음) -->
+    <!-- - 빌드 시 lint 경고가 나올 수 있어 tools:ignore로 무시 -->
     <uses-permission
         android:name="android.permission.CAPTURE_AUDIO_HOTWORD"
         tools:ignore="ProtectedPermissions" />
@@ -22,104 +41,150 @@
         tools:ignore="ProtectedPermissions" />
     <uses-permission
         android:name="android.permission.CAPTURE_TUNER_AUDIO_INPUT"
-        tools:ignore="ProtectedPermissions" /> <!-- ================= 저장소 ================= -->
-    <!-- Android 13+ -->
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" /> <!-- Android 12 이하 -->
-    <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
-    <uses-permission android:name="android.permission.READ_CONTACTS" />
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- [저장소] Android 13+ / Android 12 이하 분기 -->
+    <!-- - 실제 런타임 요청은 코드에서 버전 분기 필요 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- ================= 전화 / 통화 ================= -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!-- [연락처] -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+
+    <!-- [전화/통화] -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
-    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" /> <!-- (시스템 / 보호된 권한) -->
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+
+    <!-- [전화 상태 변경] 시스템/보호 권한 (일반 앱에서는 대부분 허용되지 않음) -->
     <uses-permission
         android:name="android.permission.MODIFY_PHONE_STATE"
-        tools:ignore="ProtectedPermissions" /> <!-- ================= Feature ================= -->
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- ========================================================= -->
+    <!-- 2) 기능(Features) -->
+    <!-- - 통신(telephony) 기능을 명시하되, 필수는 아니도록 설정 -->
+    <!-- ========================================================= -->
     <uses-feature
         android:name="android.hardware.telephony"
         android:required="false" />
 
+    <!-- ========================================================= -->
+    <!-- 3) 애플리케이션(Application) -->
+    <!-- - 앱 전역 설정 + 컴포넌트(Activity/Service) 등록 -->
+    <!-- ========================================================= -->
     <application
-        android:name=".MyApp"
+        android:name=".core.App"
+        android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Voice">
-     <!-- 테스트용!!!! 꼭 나중에 삭제 android:usesCleartextTraffic="true" -->
-        <!-- ================= Launcher Activity ================= -->
+
+        <!-- ===================================================== -->
+        <!-- 앱 설정 메모 -->
+        <!-- - android:usesCleartextTraffic="true" 는 테스트용이면
+             릴리즈 전에 반드시 제거/false 검토 필요 -->
+        <!-- ===================================================== -->
+
+        <!-- ===================================================== -->
+        <!-- 3-1) Activity -->
+        <!-- - 런처/메인, 통화 화면, 수신 화면 순으로 정리 -->
+        <!-- ===================================================== -->
+
+        <!-- [Launcher/Main] 앱 진입점 + 다이얼 인텐트 처리 -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Voice">
+
+            <!-- 런처 아이콘에서 앱 실행 -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- 다이얼 액션 처리(기본 다이얼러 흐름) -->
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+
+            <!-- tel: 스킴 다이얼 처리 -->
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:scheme="tel" />
             </intent-filter>
-        </activity> <!-- ================= Dialer Activity ================= -->
-        <!-- 전화 중 화면 -->
+        </activity>
+
+        <!-- [Call UI] 통화 중 화면 -->
         <activity
-            android:name=".CallingControlActivity"
+            android:name=".feature.call.activity.CallingActivity"
             android:exported="true"
             android:screenOrientation="portrait" />
 
-        <!--  전화 수신 -->
+        <!-- [Incoming UI] 전화 수신 화면 -->
         <activity
-            android:name=".IncomingCallActivity"
+            android:name=".feature.call.activity.IncomingCallActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:excludeFromRecents="true"
-            android:taskAffinity=""
-            />
+            android:taskAffinity="" />
 
-        <!-- ================= Foreground Service ================= -->
+        <!-- ===================================================== -->
+        <!-- 3-2) Service -->
+        <!-- - 앱 자체 Foreground Service → Telecom 관련 서비스 순 -->
+        <!-- ===================================================== -->
+
+        <!-- [Foreground Service] 통화 감지/녹음 등 장기 작업 -->
         <service
-            android:name=".service.CallDetectService"
+            android:name=".feature.call.service.CallDetectService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="microphone|phoneCall" />
 
-        <!-- ================= Telecom / System Services ================= -->
-        <!-- InCallService (통화 UI/상태 감지) -->
+        <!-- ===================================================== -->
+        <!-- 3-3) Telecom/System Services -->
+        <!-- - 시스템이 바인딩하는 서비스들은 permission이 중요 -->
+        <!-- ===================================================== -->
+
+        <!-- [InCallService] 통화 상태/통화 UI 연동 -->
         <service
-            android:name=".service.MyInCallService"
+            android:name=".feature.call.service.MyInCallService"
             android:exported="true"
             android:permission="android.permission.BIND_INCALL_SERVICE">
-            <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" />
-            <meta-data android:name="android.telecom.IN_CALL_SERVICE_RINGING"
+
+            <!-- 시스템에 "UI 제공" 여부를 알림 -->
+            <meta-data
+                android:name="android.telecom.IN_CALL_SERVICE_UI"
                 android:value="true" />
+
+            <!-- 시스템에 "수신 중 상태 처리" 여부를 알림 -->
+            <meta-data
+                android:name="android.telecom.IN_CALL_SERVICE_RINGING"
+                android:value="true" />
+
             <intent-filter>
                 <action android:name="android.telecom.InCallService" />
             </intent-filter>
         </service>
 
-        <!-- ConnectionService (통화 연결 관리) -->
+        <!-- [ConnectionService] 통화 연결/제어 관리 -->
         <service
-            android:name=".service.MyConnectionService"
+            android:name=".feature.call.service.MyConnectionService"
             android:exported="true"
             android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE">
             <intent-filter>
@@ -127,9 +192,9 @@
             </intent-filter>
         </service>
 
-        <!-- 전화가 걸려올 때(수신 시) 호출 -->
+        <!-- [CallScreeningService] 수신 전화 스크리닝(차단/판단 등) -->
         <service
-            android:name=".service.MyCallScreeningService"
+            android:name=".feature.call.service.MyCallScreeningService"
             android:exported="true"
             android:permission="android.permission.BIND_SCREENING_SERVICE">
             <intent-filter>

@@ -3,20 +3,24 @@ package com.final_pj.voice.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
+import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.final_pj.voice.R
-import com.final_pj.voice.model.CallRecord
+import com.final_pj.voice.feature.call.model.CallRecord
 
 class CallLogAdapter(
     private val callRecords: List<CallRecord>,
-    private val onDetailClick: (CallRecord) -> Unit
+    private val onDetailClick: (CallRecord) -> Unit,
+    private val onBlockClick: (CallRecord) -> Unit // 추가: 차단 클릭 콜백
 ) : RecyclerView.Adapter<CallLogAdapter.CallLogViewHolder>() {
 
     inner class CallLogViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameText: TextView = itemView.findViewById(R.id.call_name)
         val numberText: TextView = itemView.findViewById(R.id.call_number)
         val summaryText: TextView = itemView.findViewById(R.id.call_summary)
+        val moreBtn: ImageButton = itemView.findViewById(R.id.btn_more) // 차단버튼
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CallLogViewHolder {
@@ -27,14 +31,31 @@ class CallLogAdapter(
 
     override fun onBindViewHolder(holder: CallLogViewHolder, position: Int) {
         val record = callRecords[position]
-        holder.nameText.text = record.name ?: "알 수 없음"
-        holder.numberText.text = record.phoneNumber
-        holder.summaryText.text = if (record.isSummaryDone) "자세히보기" else "요약중..."
 
+        holder.nameText.text = record.name ?: record.phoneNumber
+        holder.numberText.text = record.phoneNumber ?: ""
+
+
+        // 상세보기 (기존 유지)
         holder.summaryText.setOnClickListener {
-            if (record.isSummaryDone) {
-                onDetailClick(record)
+            onDetailClick(record)
+        }
+
+        // 메뉴
+        holder.moreBtn.setOnClickListener { anchor ->
+            val popup = PopupMenu(anchor.context, anchor)
+            //popup.menu.add(0, R.id.menu_block, 0, "차단") // menu xml 없이도 가능
+            popup.menuInflater.inflate(R.menu.call_item_menu, popup.menu)
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.menu_block -> {
+                        onBlockClick(record)
+                        true
+                    }
+                    else -> false
+                }
             }
+            popup.show()
         }
     }
 
