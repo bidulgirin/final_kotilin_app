@@ -1,13 +1,14 @@
-package com.final_pj.voice.fragment
+package com.final_pj.voice.feature.setting
 
 import android.content.Context
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Switch
+import androidx.fragment.app.Fragment
 import com.final_pj.voice.R
+
 class SettingFragment : Fragment() {
 
     private lateinit var switchNotifications: Switch
