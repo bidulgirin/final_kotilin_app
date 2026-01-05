@@ -4,8 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="20dp"
-    android:background="@android:color/white">
+    android:padding="20dp">
 
     <!-- 상단 액션: 저장 / 검색 (아이콘 버튼 느낌) -->
     <LinearLayout
@@ -67,7 +66,6 @@
             android:layout_height="wrap_content"
             android:hint="전화번호 입력"
             android:textSize="28sp"
-            android:textColor="@android:color/black"
             android:gravity="center"
             android:inputType="phone"
             android:focusable="false"
@@ -96,62 +94,62 @@
         >
 
         <!-- 숫자 버튼들은 스타일로 통일 -->
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn1"
             style="@style/DialKeyButton"
             android:text="1" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn2"
             style="@style/DialKeyButton"
             android:text="2" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn3"
             style="@style/DialKeyButton"
             android:text="3" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn4"
             style="@style/DialKeyButton"
             android:text="4" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn5"
             style="@style/DialKeyButton"
             android:text="5" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn6"
             style="@style/DialKeyButton"
             android:text="6" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn7"
             style="@style/DialKeyButton"
             android:text="7" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn8"
             style="@style/DialKeyButton"
             android:text="8" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn9"
             style="@style/DialKeyButton"
             android:text="9" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStar"
             style="@style/DialKeyButton"
             android:text="*" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn0"
             style="@style/DialKeyButton"
             android:text="0" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnHash"
             style="@style/DialKeyButton"
             android:text="#" />

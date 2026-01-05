@@ -36,7 +36,11 @@ class SttUploader(
 ) {
 
     // queue에는 File만이 아니라 callId도 같이 담아야 함
-    private data class UploadTask(val callId: String, val file: File)
+    private data class UploadTask(
+        val callId: String,
+        val file: File,
+        val onFinished: (success: Boolean) -> Unit
+    )
 
     private val queue = ArrayBlockingQueue<UploadTask>(3)
 
@@ -84,18 +88,30 @@ class SttUploader(
      * 통화 종료 시 호출
      * callId는 onCreate에서 만든 것을 그대로 넘겨줘야 함
      */
-    fun enqueueUploadLatestFromDir(callId: String, dir: File) {
+    fun enqueueUploadLatestFromDir(
+        callId: String,
+        dir: File,
+        onFinished: (success: Boolean) -> Unit
+    ) {
         val latest = findLatestCallM4aByName(dir)
         if (latest == null) {
             Log.e("STT", "No call_*.m4a found in ${dir.absolutePath}")
+            onFinished(false) // 반드시 호출
             return
         }
 
-        val task = UploadTask(callId, latest)
+        val task = UploadTask(callId, latest, onFinished)
 
+        // 큐가 가득 찼으면 가장 오래된 작업을 버리고 새 작업을 넣음
         if (!queue.offer(task)) {
-            queue.poll()
-            queue.offer(task)
+            val dropped = queue.poll()
+            dropped?.onFinished(false) // 버려진 작업도 실패 처리로 콜백 호출(중요)
+            val ok = queue.offer(task)
+            if (!ok) {
+                Log.e("STT", "Queue offer failed even after dropping one task")
+                onFinished(false) // 새 작업도 못 넣었으면 실패 콜백
+                return
+            }
         }
 
         Log.d("STT", "Enqueued latest m4a: callId=$callId name=${latest.name} size=${latest.length()}")

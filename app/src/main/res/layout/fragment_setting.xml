@@ -120,29 +120,13 @@
                 android:text="차단목록관리"
                 android:textSize="16sp"/>
             <Button
-                android:id="@+id/block_list_example_babo"
+                android:id="@+id/btn_block_list"
                 android:text="보기"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
         </LinearLayout>
 
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:padding="8dp">
-
-            <Button
-                android:id="@+id/btn_block_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@color/black"
-                android:text="차단 목록 관리"
-                />
-        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

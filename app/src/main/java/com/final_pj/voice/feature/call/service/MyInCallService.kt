@@ -53,6 +53,35 @@ class MyInCallService : InCallService() {
         var currentCall: Call? = null
             private set
     }
+    // 기능 on/off
+    private object SettingKeys {
+        const val PREF_NAME = "settings"
+        const val RECORD_ENABLED = "record_enabled"
+        const val SUMMARY_ENABLED = "summary_enabled"
+    }
+
+    private fun isRecordEnabled(): Boolean {
+        val prefs = getSharedPreferences(SettingKeys.PREF_NAME, MODE_PRIVATE)
+        return prefs.getBoolean(SettingKeys.RECORD_ENABLED, true)
+    }
+
+    private fun isSummaryEnabled(): Boolean {
+        val prefs = getSharedPreferences(SettingKeys.PREF_NAME, MODE_PRIVATE)
+        return prefs.getBoolean(SettingKeys.SUMMARY_ENABLED, true)
+    }
+    // “통화로 생성된 녹음파일”을 추적하기 위한 멤버
+    private var currentRecordingFile: File? = null
+
+
+    private fun deleteCurrentRecordingFileIfExists() {
+        val f = currentRecordingFile ?: return
+        if (f.exists()) {
+            val ok = f.delete()
+            Log.d("RECORD", "auto-delete=${ok}, file=${f.name}")
+        }
+        currentRecordingFile = null
+    }
+
 
     override fun onCreate() {
         super.onCreate()
@@ -151,21 +180,24 @@ class MyInCallService : InCallService() {
                 }
 
                 Call.STATE_DISCONNECTED, Call.STATE_DISCONNECTING -> {
-                    if (!started) {
-                        Log.d("CALL", "DISCONNECTED ignored (not started)")
-                    }
                     started = false
 
-                    Log.d("CALL", "Call DISCONNECTED -> stop")
                     stopMonitoring()
                     stopRecordingSafely()
 
                     val duration = System.currentTimeMillis() - activeAtMs
                     if (duration < 5000) {
                         Log.d("CALL", "too short ($duration ms) -> skip upload")
+
+                        // 요약도 못 돌리는 상황이면, record_enabled=false면 파일 남기지 않기
+                        if (!isRecordEnabled()) {
+                            deleteCurrentRecordingFileIfExists()
+                        }
                     } else {
+                        // summary_enabled=false면 여기서 호출해도 onSaveStt()가 바로 return 처리함
                         onSaveStt()
                     }
+
                     CallEventBus.notifyCallEnded()
                 }
             }
@@ -272,6 +304,8 @@ class MyInCallService : InCallService() {
                 "call_${System.currentTimeMillis()}.m4a"
             )
 
+            currentRecordingFile = outputFile  // 이 통화의 녹음 파일 추적
+
             recorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.VOICE_CALL)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
@@ -314,11 +348,33 @@ class MyInCallService : InCallService() {
     // 통화 종료 후 STT 저장 업로드
     // =====================
     fun onSaveStt() {
+        // 요약 기능 OFF면 백엔드 통신 자체를 하지 않음
+        if (!isSummaryEnabled()) {
+            Log.d("SUMMARY", "summary_enabled=false -> skip onSaveStt()")
+
+            // "요약도 안 하면 굳이 파일을 남길 이유가 없으면" 여기서 바로 삭제해도 됨.
+            if (!isRecordEnabled()) {
+                deleteCurrentRecordingFileIfExists()
+            }
+            return
+        }
+
         val dir = applicationContext.getExternalFilesDir(null) ?: return
 
         val callLogId = resolveCurrentCallLogId(callEndTimeMs = System.currentTimeMillis())
         if (callLogId != null) {
-            sttUploader.enqueueUploadLatestFromDir(callLogId.toString(), dir)
+            // 여기서 업로드 완료 시점에 맞춰 파일 삭제가 필요함
+            sttUploader.enqueueUploadLatestFromDir(callLogId.toString(), dir) { success ->
+                Log.d("UPLOAD", "finished success=$success")
+
+                // 녹음 OFF면 업로드(요약) 끝난 뒤 통화 녹음 파일 삭제
+                if (!isRecordEnabled()) {
+                    deleteCurrentRecordingFileIfExists()
+                }
+            }
+
+            // 주의: "enqueue"만 하고 바로 삭제하면 업로드 전에 파일이 없어질 수 있음
+            // 그래서 업로드 "완료 콜백"이 필요함 (아래 5번에서 해결)
         } else {
             Log.w("CALLLOG", "Failed to resolve callLogId, skip or fallback needed")
         }

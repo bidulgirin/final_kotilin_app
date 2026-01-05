@@ -14,6 +14,5 @@
         android:textSize="15sp"
         android:lineSpacingExtra="3dp"
         android:padding="12dp"
-        android:background="@drawable/bg_bubble_bot"
-        android:textColor="@android:color/black"/>
+        android:background="@drawable/bg_bubble_bot"/>
 </LinearLayout>
