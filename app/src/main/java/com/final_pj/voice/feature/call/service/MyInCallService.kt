@@ -24,8 +24,8 @@ import kotlin.String
 class MyInCallService : InCallService() {
 
     // ====== config ======
-    private val serverUrl = "http://192.168.219.105:8000/api/v1/stt/stt"
-    private val bestMfccBaseUrl = "http://192.168.219.105:8000/api/v1/mfcc"
+    private val serverUrl = "http://192.168.219.108:8000/api/v1/stt/stt"
+    private val bestMfccBaseUrl = "http://192.168.219.108:8000/api/v1/mfcc"
     private val key32 = "12345678901234567890123456789012".toByteArray()
 
     // ====== state ======

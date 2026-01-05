@@ -26,8 +26,8 @@
             android:layout_height="44dp"
             android:textAllCaps="false"
             app:icon="@drawable/ic_setting"
-            app:iconTint="@android:color/black"
-            android:backgroundTint="#22FFFFFF"
+            app:iconTint="@android:color/darker_gray"
+            android:backgroundTint="@android:color/transparent"
             app:iconPadding="8dp"
             />
 
@@ -38,8 +38,8 @@
             android:layout_height="44dp"
             android:textAllCaps="false"
             app:icon="@drawable/ic_search"
-            app:iconTint="@android:color/black"
-            android:backgroundTint="#22FFFFFF"
+            app:iconTint="@android:color/darker_gray"
+            android:backgroundTint="@android:color/transparent"
             app:iconPadding="8dp"
             />
     </LinearLayout>
@@ -176,7 +176,7 @@
             android:layout_height="56dp"
             app:icon="@drawable/ic_phone_call"
             app:iconTint="@android:color/white"
-            android:backgroundTint="#22FFFFFF"/>
+            android:backgroundTint="@android:color/transparent"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCall"
@@ -185,6 +185,7 @@
             android:layout_height="86dp"
             android:layout_marginStart="22dp"
             android:layout_marginEnd="22dp"
+            android:paddingLeft="32dp"
             app:cornerRadius="43dp"
             android:backgroundTint="#2ECC71"
             app:icon="@drawable/ic_phone_call"
@@ -206,7 +207,7 @@
             android:layout_height="56dp"
             app:icon="@drawable/ic_backspace"
             app:iconTint="@android:color/darker_gray"
-            android:backgroundTint="#22FFFFFF"/>
+            android:backgroundTint="@android:color/transparent"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
