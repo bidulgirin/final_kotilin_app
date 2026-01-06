@@ -8,7 +8,6 @@ plugins {
 
     // Kotlin Compose 플러그인 (Compose 사용 시 필요)
     alias(libs.plugins.kotlin.compose)
-
     // kapt 활성 ( @Entity, @Dao ) 쓸려고 함
     id("com.google.devtools.ksp")
 }
@@ -23,6 +22,7 @@ android {
     }
 
     defaultConfig {
+
         // 📱 실제 앱 ID (Play Store 기준)
         applicationId "com.final_pj.voice"
 
@@ -188,6 +188,7 @@ dependencies {
 
     // 네트워크 통신 (OkHttp)
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     // 코루틴 (백그라운드 처리)
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'

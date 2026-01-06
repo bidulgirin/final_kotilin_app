@@ -26,8 +26,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
-import android.widget.AdapterView
-import com.final_pj.voice.databinding.ActivityMainBinding
+import com.final_pj.voice.feature.report.network.RetrofitClient
+import com.final_pj.voice.feature.report.network.dto.VoicePhisingCreateReq
+import com.final_pj.voice.feature.report.network.dto.VoicePhisingOutRes
+import retrofit2.HttpException
 
 class DetailFragment : Fragment() {
     override fun onCreateView(
@@ -61,6 +63,13 @@ class DetailFragment : Fragment() {
             return
         }
 
+        // 번호 정규화
+        fun normalizePhone(raw: String): String {
+            // 숫자와 +만 남기기 (국제번호 고려 시 + 허용)
+            return raw.trim().replace(Regex("[^0-9+]"), "")
+        }
+
+
         val toolbar = view.findViewById<MaterialToolbar>(R.id.detailToolbar)
         toolbar.setNavigationOnClickListener {
             // NavController 쓰는 경우
@@ -74,13 +83,7 @@ class DetailFragment : Fragment() {
 
         // 챗봇버튼
         val btnOpenChatbot = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnOpenChatbot)
-//        btnOpenChatbot.setOnClickListener {
-//            parentFragmentManager.beginTransaction()
-//                .setReorderingAllowed(true)
-//                .replace(R.id.nav_host, ChatbotFragment())
-//                .addToBackStack(null)
-//                .commit()
-//        }
+
         // 누르면 call_id 요약 내용등 챗봇ai 에게 전달
         btnOpenChatbot.setOnClickListener {
             val summary = tvSummary.text?.toString().orEmpty()
@@ -106,9 +109,49 @@ class DetailFragment : Fragment() {
         // 3. 백엔드 통신 post 로 보내면 됨
         // --------------------
 
+        // 신고하기 백엔드 부분
+        suspend fun postVoicePhisingNumber(
+            number: String,
+            description: String?
+        ): VoicePhisingOutRes {
 
+            val api = RetrofitClient.voicePhisingApi
+            val req = VoicePhisingCreateReq(
+                number = normalizePhone(number),
+                description = description?.takeIf { it.isNotBlank() }
+            )
+
+            val res = api.insertNumber(req)
+
+            if (res.isSuccessful) {
+                return res.body() ?: throw IllegalStateException("응답 바디가 비어있습니다.")
+            }
+
+            if (res.code() == 409) {
+                throw IllegalStateException("이미 등록된 번호입니다.")
+            }
+
+            // 여기서 HttpException을 만들려면 Response를 기반으로 해야 하는데,
+            // 간단/안전하게는 그냥 코드와 에러바디로 예외를 던지는 게 좋음
+            val err = res.errorBody()?.string()
+            throw IllegalStateException("서버 오류 (${res.code()}): ${err ?: "unknown"}")
+        }
 
         val app = requireContext().applicationContext as App
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val out = withContext(Dispatchers.IO) {
+                    postVoicePhisingNumber("phone", "descOrNull") // 실제값을 넣어야함~~
+                }
+                Toast.makeText(requireContext(), "신고 접수 완료", Toast.LENGTH_SHORT).show()
+            } catch (e: IllegalStateException) {
+                Toast.makeText(requireContext(), e.message ?: "실패", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "네트워크 오류: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
@@ -155,7 +198,7 @@ class DetailFragment : Fragment() {
                 chipScore.visibility = View.VISIBLE
                 // 0.0~1.0 점수 가정 → 퍼센트로 표시
                 val pct = (score * 100).roundToInt()
-                chipScore.text = "점수 $pct%"
+                chipScore.text = "위험도 $pct%"
             } else {
                 chipScore.visibility = View.GONE
             }
@@ -164,25 +207,50 @@ class DetailFragment : Fragment() {
         }
 
 
+
         // 진짜 신고할꺼임? 물어보는거
         fun confirmReport(number: String, description: String) {
             AlertDialog.Builder(requireContext())
                 .setTitle("신고하기")
                 .setMessage("$number 제보하시겠습니까?")
-                .setPositiveButton("예") { d, _ ->
-                    // 실제 백엔드 통신
-                    try{
-                        Log.d("test", "신고가 되었습니다~~${number} ${description}")
-                        // 백엔드 통신 + 신고 목록에 넣기
-
-                    }catch (e: Error){
-                        Log.e("Error", "${e}")
-                    }
-
-                    d.dismiss()
-                }
+                .setPositiveButton("예", null)
                 .setNegativeButton("아니오") { d, _ -> d.dismiss() }
-                .show()
+                .create()
+                .also { dialog ->
+                    dialog.setOnShowListener {
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                            // UI 잠깐 막고 싶으면 버튼 비활성화 처리 가능
+                            val normalized = normalizePhone(number)
+                            val descOrNull = description
+                                .takeIf { it != "- 선택 -" }  // 스피너 기본값이면 null 처리
+                                ?.trim()
+                                ?.takeIf { it.isNotBlank() }
+
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                try {
+                                    val out = withContext(Dispatchers.IO) {
+                                        postVoicePhisingNumber(normalized, descOrNull)
+                                    }
+
+                                    Toast.makeText(requireContext(), "신고가 접수되었습니다.", Toast.LENGTH_SHORT).show()
+                                    Log.d("DetailFragment", "신고 성공: id=${out.id}, number=${out.number}")
+
+                                    dialog.dismiss()
+
+                                } catch (e: IllegalStateException) {
+                                    // 여기로 409(이미 등록)도 들어오게 해둠
+                                    Toast.makeText(requireContext(), e.message ?: "처리 실패", Toast.LENGTH_SHORT).show()
+                                    Log.e("DetailFragment", "신고 실패(논리): ${e.message}", e)
+
+                                } catch (e: Exception) {
+                                    Toast.makeText(requireContext(), "서버 오류: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    Log.e("DetailFragment", "신고 실패(예외)", e)
+                                }
+                            }
+                        }
+                    }
+                    dialog.show()
+                }
         }
 
 
