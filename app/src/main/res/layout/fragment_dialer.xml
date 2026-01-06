@@ -64,7 +64,7 @@
             android:id="@+id/etPhoneNumber"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="전화번호 입력"
+            android:hint=""
             android:textSize="28sp"
             android:gravity="center"
             android:inputType="phone"
@@ -174,8 +174,6 @@
             style="@style/Widget.Material3.Button.IconButton"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            app:icon="@drawable/ic_phone_call"
-            app:iconTint="@android:color/white"
             android:backgroundTint="@android:color/transparent"/>
 
         <com.google.android.material.button.MaterialButton
@@ -197,8 +195,6 @@
             android:minHeight="0dp"
 
             />
-
-
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_delete"

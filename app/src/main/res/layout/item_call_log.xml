@@ -50,9 +50,9 @@
             android:id="@+id/call_summary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="통화내용보기 > "
+            android:textColor="@color/green"
+            android:text="통화요약 > "
             android:textSize="14sp"
-            android:textColor="@color/purple_500"
             android:layout_marginTop="4dp"/>
     </LinearLayout>
 

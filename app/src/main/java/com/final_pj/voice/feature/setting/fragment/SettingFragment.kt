@@ -18,14 +18,12 @@ class SettingFragment : Fragment() {
     private lateinit var switchSummaryMode: Switch // 요약 on/off
     private lateinit var switchRecord: Switch // 녹음 on/off
 
-    // 설정 Key 상수화 (Fragment 안에 두려면 companion object 추천)
+    // 설정 Key 상수화 (Fragment 안에 두려면 companion object )
     companion object SettingKeys {
         const val PREF_NAME = "settings"
 
         const val NOTIFICATIONS = "notifications"
         const val DARK_MODE = "dark_mode"
-
-        // 플래그 용도 명확히: "enabled" 로 추천
         const val RECORD_ENABLED = "record_enabled"
         const val SUMMARY_ENABLED = "summary_enabled"
     }

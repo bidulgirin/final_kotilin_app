@@ -20,11 +20,11 @@
         android:layout_height="match_parent"
         android:fillViewport="true"
         android:padding="16dp">
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+
 
             <!-- 상단 요약 카드 -->
             <com.google.android.material.card.MaterialCardView
@@ -141,7 +141,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="STT 원문"
+                        android:text="대화내용"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp"/>
@@ -174,8 +174,34 @@
                 style="@style/Widget.Material3.Button"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"/>
-        </LinearLayout>
 
+            <!--   오른쪽으로 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                >
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+                <com.google.android.material.button.MaterialButton
+                    android:layout_gravity="right"
+                    android:id="@+id/report_button"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAllCaps="false"
+                    app:icon="@drawable/ic_alert"
+                    android:text="제보하기"
+                    android:textSize="12dp"
+                    app:iconTint="@android:color/darker_gray"
+                    android:textColor="@android:color/darker_gray"
+                    android:backgroundTint="@android:color/transparent"
+                    app:iconPadding="12dp"
+                    />
+
+            </LinearLayout>
+        </LinearLayout>
     </ScrollView>
 
 </LinearLayout>

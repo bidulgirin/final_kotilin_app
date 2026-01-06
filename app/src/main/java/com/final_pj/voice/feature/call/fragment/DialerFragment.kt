@@ -239,7 +239,6 @@ class DialerFragment : Fragment(R.layout.fragment_dialer) {
     }
 
     // 검색
-
     private fun showSearchDialog() {
         val dialogView = LayoutInflater.from(requireContext())
             .inflate(R.layout.dialog_search_contact, null)

@@ -10,8 +10,13 @@ import com.final_pj.voice.feature.chatbot.model.ChatMessage
 import com.google.android.material.chip.Chip
 import com.google.android.material.appbar.MaterialToolbar
 
+/*
+* Todo
+* 실제 챗봇 기능 붙히기 
+* 기존 코드를 활용해서 채팅창 개발
+* */
 class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
-
+    
     private lateinit var adapter: ChatAdapter
     private val messages = mutableListOf<ChatMessage>()
 

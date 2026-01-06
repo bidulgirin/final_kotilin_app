@@ -4,6 +4,7 @@
     android:layout_height="wrap_content"
     android:gravity="start"
     android:paddingTop="6dp"
+    android:paddingLeft="6dp"
     android:paddingBottom="6dp">
 
     <TextView
@@ -13,6 +14,7 @@
         android:maxWidth="280dp"
         android:textSize="15sp"
         android:lineSpacingExtra="3dp"
+        android:textColor="@color/black"
         android:padding="12dp"
         android:background="@drawable/bg_bubble_bot"/>
 </LinearLayout>

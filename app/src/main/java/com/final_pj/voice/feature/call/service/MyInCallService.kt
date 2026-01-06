@@ -24,8 +24,10 @@ import kotlin.String
 class MyInCallService : InCallService() {
 
     // ====== config ======
-    private val serverUrl = "http://192.168.219.108:8000/api/v1/stt/stt"
-    private val bestMfccBaseUrl = "http://192.168.219.108:8000/api/v1/mfcc"
+    private val baseurl = "http://192.168.3.10:8000"
+    // private val baseurl = http://192.168.219.108:8000
+    private val serverUrl = "${baseurl}/api/v1/stt/stt"
+    private val bestMfccBaseUrl = "${baseurl}/api/v1/mfcc"
     private val key32 = "12345678901234567890123456789012".toByteArray()
 
     // ====== state ======
@@ -37,8 +39,10 @@ class MyInCallService : InCallService() {
 
     private var recorder: MediaRecorder? = null
     private var monitoringJob: Job? = null
-
+    
+    // 명칭을 실시간 5초 매니저로 바꾸고 싶음
     private lateinit var mfccManager: MFCCManager
+    // 이건 sttuploader 로 쭉 진행 (요약, 점수계산)
     private lateinit var sttUploader: SttUploader
     private val sttBuffer = SttBuffer()
 
