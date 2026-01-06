@@ -12,9 +12,9 @@ class ChatAdapter(
     private val items: MutableList<ChatMessage>
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    companion object {
-        private const val TYPE_USER = 1
-        private const val TYPE_BOT = 2
+    private companion object {
+        const val TYPE_USER = 1
+        const val TYPE_BOT = 2
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -23,12 +23,9 @@ class ChatAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        return if (viewType == TYPE_USER) {
-            val v = inflater.inflate(R.layout.item_chat_user, parent, false)
-            UserVH(v)
-        } else {
-            val v = inflater.inflate(R.layout.item_chat_bot, parent, false)
-            BotVH(v)
+        return when (viewType) {
+            TYPE_USER -> UserVH(inflater.inflate(R.layout.item_chat_user, parent, false))
+            else -> BotVH(inflater.inflate(R.layout.item_chat_bot, parent, false))
         }
     }
 
@@ -36,13 +33,37 @@ class ChatAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val msg = items[position]
-        if (holder is UserVH) holder.bind(msg.text)
-        if (holder is BotVH) holder.bind(msg.text)
+        when (holder) {
+            is UserVH -> holder.bind(msg.text)
+            is BotVH -> holder.bind(msg.text)
+        }
     }
 
+    /** 단건 추가(기존 그대로) */
     fun add(message: ChatMessage) {
         items.add(message)
-        notifyItemInserted(items.lastIndex)
+        notifyItemInserted(items.size - 1)
+    }
+
+    /** ✅ 여러 개 추가(히스토리 로드 등에 사용) */
+    fun addAll(newItems: List<ChatMessage>) {
+        if (newItems.isEmpty()) return
+        val start = items.size
+        items.addAll(newItems)
+        notifyItemRangeInserted(start, newItems.size)
+    }
+
+    /** ✅ 전체 교체(대화 복원 시 가장 추천) */
+    fun setItems(newItems: List<ChatMessage>) {
+        items.clear()
+        items.addAll(newItems)
+        notifyDataSetChanged()
+    }
+
+    /** ✅ 초기화 */
+    fun clear() {
+        items.clear()
+        notifyDataSetChanged()
     }
 
     class UserVH(itemView: View) : RecyclerView.ViewHolder(itemView) {

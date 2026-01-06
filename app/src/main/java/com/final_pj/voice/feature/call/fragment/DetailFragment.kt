@@ -39,8 +39,27 @@ class DetailFragment : Fragment() {
     }
 
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val tvTitle = view.findViewById<TextView>(R.id.detail_name)
+        val tvSub = view.findViewById<TextView>(R.id.detail_number)
+
+        val chipStatus = view.findViewById<Chip>(R.id.chipStatus)
+        val chipCategory = view.findViewById<Chip>(R.id.chipCategory)
+        val chipScore = view.findViewById<Chip>(R.id.chipScore)
+
+        val tvSummary = view.findViewById<TextView>(R.id.tvSummary)
+        val tvText = view.findViewById<TextView>(R.id.tvText)
+        val tvMeta = view.findViewById<TextView>(R.id.tvMeta)
+        // 신고 버튼
+        val btnOpenReportView = view.findViewById<Button>(R.id.report_button)
+
+        val callId = arguments?.getLong("call_id") ?: run {
+            Log.e("DetailFragment", "callId is null")
+            return
+        }
 
         val toolbar = view.findViewById<MaterialToolbar>(R.id.detailToolbar)
         toolbar.setNavigationOnClickListener {
@@ -55,10 +74,27 @@ class DetailFragment : Fragment() {
 
         // 챗봇버튼
         val btnOpenChatbot = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnOpenChatbot)
+//        btnOpenChatbot.setOnClickListener {
+//            parentFragmentManager.beginTransaction()
+//                .setReorderingAllowed(true)
+//                .replace(R.id.nav_host, ChatbotFragment())
+//                .addToBackStack(null)
+//                .commit()
+//        }
+        // 누르면 call_id 요약 내용등 챗봇ai 에게 전달
         btnOpenChatbot.setOnClickListener {
+            val summary = tvSummary.text?.toString().orEmpty()
+            val text = tvText.text?.toString().orEmpty()
+
+            val bundle = Bundle().apply {
+                putLong("CALL_ID", callId)
+                putString("SUMMARY_TEXT", summary)
+                putString("CALL_TEXT", text)
+            }
+
             parentFragmentManager.beginTransaction()
                 .setReorderingAllowed(true)
-                .replace(R.id.nav_host, ChatbotFragment())
+                .replace(R.id.nav_host, ChatbotFragment().apply { arguments = bundle })
                 .addToBackStack(null)
                 .commit()
         }
@@ -69,27 +105,6 @@ class DetailFragment : Fragment() {
         // 2. 화면안에 직접 정말 신고하시겠습니까? 예
         // 3. 백엔드 통신 post 로 보내면 됨
         // --------------------
-
-        // 신고 버튼
-        val btnOpenReportView = view.findViewById<Button>(R.id.report_button)
-
-
-        val callId = arguments?.getLong("call_id") ?: run {
-            Log.e("DetailFragment", "callId is null")
-            return
-        }
-
-        val tvTitle = view.findViewById<TextView>(R.id.detail_name)
-        val tvSub = view.findViewById<TextView>(R.id.detail_number)
-
-        val chipStatus = view.findViewById<Chip>(R.id.chipStatus)
-        val chipCategory = view.findViewById<Chip>(R.id.chipCategory)
-        val chipScore = view.findViewById<Chip>(R.id.chipScore)
-
-        val tvSummary = view.findViewById<TextView>(R.id.tvSummary)
-        val tvText = view.findViewById<TextView>(R.id.tvText)
-        val tvMeta = view.findViewById<TextView>(R.id.tvMeta)
-
 
 
 

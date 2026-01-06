@@ -156,6 +156,7 @@ dependencies {
     implementation "com.github.st-h:TarsosDSP:2.4.1"
     implementation libs.androidx.room.common.jvm
     implementation libs.volley
+    implementation libs.generativeai
 
     // 🧪 단위 테스트
     testImplementation libs.junit
@@ -215,4 +216,9 @@ dependencies {
     // Gson: JSON <-> 객체 직렬화/역직렬화 라이브러리
     // → 서버 응답 파싱, 로컬 저장용 JSON 변환 등에 사용
     implementation "com.google.code.gson:gson:2.10.1"
+
+    implementation "androidx.datastore:datastore-preferences:1.1.1"
+    implementation "com.squareup.retrofit2:retrofit:2.11.0"
+    implementation "com.squareup.retrofit2:converter-gson:2.11.0"
+
 }

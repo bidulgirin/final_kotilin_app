@@ -1,70 +1,190 @@
 package com.final_pj.voice.feature.chatbot.fragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.final_pj.voice.R
 import com.final_pj.voice.feature.chatbot.adapter.ChatAdapter
+import com.final_pj.voice.feature.chatbot.data.ConversationStore
 import com.final_pj.voice.feature.chatbot.model.ChatMessage
-import com.google.android.material.chip.Chip
+import com.final_pj.voice.feature.chatbot.network.RetrofitProvider
+import com.final_pj.voice.feature.chatbot.repository.ChatRepository
+import com.final_pj.voice.feature.chatbot.util.ActionMapBuilder
+import com.google.ai.client.generativeai.type.content
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
+import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.launch
 
-/*
-* Todo
-* 실제 챗봇 기능 붙히기 
-* 기존 코드를 활용해서 채팅창 개발
-* */
 class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
-    
+
     private lateinit var adapter: ChatAdapter
     private val messages = mutableListOf<ChatMessage>()
 
-    private val actionAnswerMap: LinkedHashMap<String, String> = linkedMapOf(
-        "피해신고" to "경찰청(112) 또는 금융감독원(1332)에 즉시 신고하시길 바랍니다. 통화/문자 내역과 계좌정보를 함께 준비하면 도움이 됩니다.",
-        "지급정지" to "해당 은행 고객센터로 즉시 연락해 '지급정지'를 요청하세요. 이미 이체했다면 가능한 빨리 조치하는 것이 중요합니다.",
-        "개인정보노출등록" to "금융감독원 '개인정보 노출자 사고예방시스템' 등을 통해 노출 등록을 진행해 보세요. 추가 인증수단 변경도 권장합니다.",
-        "악성앱 점검" to "출처가 불분명한 앱 설치 여부를 확인하고, 의심 앱은 삭제하세요. 필요 시 안전모드 부팅 후 삭제를 시도하세요.",
-        "계좌/카드 조치" to "사용 중인 계좌 비밀번호 변경, 카드 분실신고/재발급을 진행하세요. 타 서비스(포털/메신저) 비밀번호도 함께 변경하는 것을 권장합니다.",
-        "앱 사용방법" to "이 화면에서 조치 버튼을 누르면 안내가 채팅 형태로 누적됩니다. 통화 상세 화면에서 '조치 안내(챗봇)' 버튼으로 진입할 수 있습니다."
+    private val repository by lazy { ChatRepository(RetrofitProvider.api) }
+    private val store by lazy { ConversationStore(requireContext()) }
+
+    // DetailFragment에서 넘어온 맥락
+    private val callId by lazy { arguments?.getLong("CALL_ID", -1L) ?: -1L }
+    private val summaryTextArg by lazy { arguments?.getString("SUMMARY_TEXT").orEmpty() }
+    private val callTextArg by lazy { arguments?.getString("CALL_TEXT").orEmpty() }
+
+    // Chip 노출 순서를 고정
+    private val actionKeysInOrder = listOf(
+        "피해신고",
+        "지급정지",
+        "개인정보노출등록",
+        "악성앱 점검",
+        "계좌/카드 조치",
+        "앱 사용방법"
     )
+
+    private lateinit var actionAnswerMap: LinkedHashMap<String, String>
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        Log.d("ChatbotFragment", "callId=$callId summaryLen=${summaryTextArg.length} textLen=${callTextArg.length}")
+
         val toolbar = view.findViewById<MaterialToolbar>(R.id.chatToolbar)
-        toolbar.setNavigationOnClickListener {
-            parentFragmentManager.popBackStack()
-        }
+        toolbar.setNavigationOnClickListener { parentFragmentManager.popBackStack() }
 
         val rv = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvChat)
         adapter = ChatAdapter(messages)
         rv.adapter = adapter
-        rv.layoutManager = LinearLayoutManager(requireContext()).apply {
-            stackFromEnd = true
+        rv.layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
+
+        // summary로 chip 답변맵 생성
+        actionAnswerMap = ActionMapBuilder.buildFromSummary(
+            summaryText = summaryTextArg,
+            fallbackKeysInOrder = actionKeysInOrder
+        )
+
+        // ✅ 1) 진입 시: callId → conversationId 로 복원 시도
+        lifecycleScope.launch {
+            restoreHistoryIfExists(rv)
+
+            // ✅ 2) 복원된 메시지가 하나도 없을 때만 초기 안내 메시지 출력
+            if (adapter.itemCount == 0) {
+                showInitialGuide()
+                rv.scrollToPosition(adapter.itemCount - 1)
+            }
         }
 
-        addBot("조치사항을 선택해주세요.")
-
-        val chipGroup = view.findViewById<com.google.android.material.chip.ChipGroup>(R.id.chipGroupActions)
+        val chipGroup = view.findViewById<ChipGroup>(R.id.chipGroupActions)
         renderActionChips(chipGroup) { selectedTitle ->
-            addUser(selectedTitle)
+            onChipSelected(selectedTitle, rv)
+        }
 
-            val answer = actionAnswerMap[selectedTitle]
-                ?: "해당 항목에 대한 안내를 준비 중입니다."
+        val et = view.findViewById<TextInputEditText>(R.id.etUserInput)
+        val btnSend = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnSend)
 
-            addBot(answer)
-
-            rv.smoothScrollToPosition(adapter.itemCount - 1)
+        btnSend.setOnClickListener {
+            val text = et.text?.toString()?.trim().orEmpty()
+            if (text.isBlank()) return@setOnClickListener
+            et.setText("")
+            onUserSend(text, rv, btnSend)
         }
     }
 
-    private fun renderActionChips(
-        chipGroup: com.google.android.material.chip.ChipGroup,
-        onClick: (String) -> Unit
-    ) {
-        chipGroup.removeAllViews()
+    /** ✅ callId 기준으로 conversationId를 가져와서 서버에서 히스토리 복원 */
+    private suspend fun restoreHistoryIfExists(rv: androidx.recyclerview.widget.RecyclerView) {
+        try {
+            val cid = store.getConversationId(callId)
+            Log.d("ChatbotFragment", "restore: callId=$callId cid=$cid")
 
+            if (cid.isNullOrBlank()) return
+
+            val history = repository.getHistory(cid, limit = 200)
+            val uiItems = history.messages.map { m ->
+                ChatMessage(isUser = (m.role == "user"), text = m.content)
+            }
+
+            adapter.setItems(uiItems)
+            rv.scrollToPosition((adapter.itemCount - 1).coerceAtLeast(0))
+        } catch (e: Exception) {
+            Log.e("ChatbotFragment", "history load failed: ${e.message}", e)
+        }
+    }
+
+    /** ✅ 초기 안내는 여기로 모음(중복 방지) */
+    private fun showInitialGuide() {
+        addBot("조치사항을 선택하거나, 궁금한 점을 입력해주세요.")
+        if (summaryTextArg.isNotBlank() || callTextArg.isNotBlank()) {
+            addBot("통화 요약/대화 내용을 참고해서 안내드릴게요.")
+        }
+    }
+
+    private fun onChipSelected(selectedTitle: String, rv: androidx.recyclerview.widget.RecyclerView) {
+        val answer = actionAnswerMap[selectedTitle] ?: "해당 항목에 대한 안내를 준비 중입니다."
+
+        // UI 누적
+        addUser(selectedTitle)
+        addBot(answer)
+        rv.smoothScrollToPosition(adapter.itemCount - 1)
+
+        // 칩은 고정 답변 → send(LLM) 불필요 / log로만 저장
+        lifecycleScope.launch {
+            try {
+                val cid = store.getConversationId(callId)
+                val newId1 = repository.log(cid, role = "user", content = selectedTitle)
+                store.setConversationId(callId, newId1)
+
+                val newId2 = repository.log(newId1, role = "assistant", content = answer)
+                store.setConversationId(callId, newId2)
+            } catch (e: Exception) {
+                Log.e("ChatbotFragment", "chip log failed: ${e.message}", e)
+            }
+        }
+    }
+
+    private fun onUserSend(
+        userText: String,
+        rv: androidx.recyclerview.widget.RecyclerView,
+        btnSend: com.google.android.material.button.MaterialButton
+    ) {
+        addUser(userText)
+        rv.smoothScrollToPosition(adapter.itemCount - 1)
+
+        btnSend.isEnabled = false
+
+        lifecycleScope.launch {
+            val summaryToSend = summaryTextArg.trim().takeIf { it.isNotBlank() }
+            val textToSend = callTextArg.trim().takeIf { it.isNotBlank() }
+            val callIdToSend = if (callId > 0) callId else null
+
+            try {
+                val cid = store.getConversationId(callId)
+                Log.d("ChatbotFragment", "send: callId=$callId cid(before)=$cid callIdToSend=$callIdToSend")
+
+                val res = repository.send(
+                    conversationId = cid,
+                    userText = userText,
+                    callId = callIdToSend,
+                    summaryText = summaryToSend,
+                    callText = textToSend
+                )
+
+                store.setConversationId(callId, res.conversationId)
+                Log.d("ChatbotFragment", "send: cid(after)=${res.conversationId}")
+
+                addBot(res.assistantText)
+                rv.smoothScrollToPosition(adapter.itemCount - 1)
+            } catch (e: Exception) {
+                addBot("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.\n(${e.localizedMessage ?: "unknown error"})")
+                Log.e("ChatbotFragment", "send failed: ${e.message}", e)
+            } finally {
+                btnSend.isEnabled = true
+            }
+        }
+    }
+
+    private fun renderActionChips(chipGroup: ChipGroup, onClick: (String) -> Unit) {
+        chipGroup.removeAllViews()
         for (title in actionAnswerMap.keys) {
             val chip = Chip(requireContext()).apply {
                 text = title
