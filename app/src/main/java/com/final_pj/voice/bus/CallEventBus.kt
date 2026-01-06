@@ -13,7 +13,7 @@ object CallEventBus {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     // 1. 통화 시작 이벤트
-    private val _callStarted = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 1)
+    val _callStarted = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 1)
     val callStarted = _callStarted.asSharedFlow()
 
     // 2. 통화 종료 이벤트
