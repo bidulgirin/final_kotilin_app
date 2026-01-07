@@ -26,8 +26,8 @@ class MyInCallService : InCallService() {
 
     // ====== config ======
     private val baseurl = Constants.BASE_URL
-    private val serverUrl = "${baseurl}/api/v1/stt"
-    private val bestMfccBaseUrl = "${baseurl}/api/v1/mfcc"
+    private val serverUrl = "${baseurl}api/v1/stt"
+    private val bestMfccBaseUrl = "${baseurl}api/v1/mfcc"
     private val key32 = "12345678901234567890123456789012".toByteArray()
 
     // ====== state ======
@@ -175,12 +175,13 @@ class MyInCallService : InCallService() {
                         return
                     }
                     started = true
+                    // 실제 전화가 걸려왔음
                     activeAtMs = System.currentTimeMillis()
 
                     Log.d("CALL", "Call ACTIVE -> start")
                     CallEventBus.notifyCallStarted()
 
-                    // 녹음은 무조건 시작
+                    // 녹음은 무조건 시작 (발화자)
                     startRecording()
 
                     // “녹음 off”는 '파일 자동삭제 정책' 의미
@@ -206,7 +207,7 @@ class MyInCallService : InCallService() {
                         return
                     }
 
-                    // ✅ 요약 OFF면 onSaveStt를 호출하지 않음
+                    // 요약 OFF면 onSaveStt를 호출하지 않음
                     if (!summaryEnabled) {
                         Log.d("SUMMARY", "summary_enabled=false -> skip onSaveStt()")
                         if (!recordEnabled) deleteCurrentRecordingFileIfExists()
@@ -214,7 +215,7 @@ class MyInCallService : InCallService() {
                         return
                     }
 
-                    // ✅ 요약 ON이면 업로드 -> 완료 후 삭제
+                    // 요약 ON이면 업로드 -> 완료 후 삭제
                     onSaveStt { success ->
                         Log.d("UPLOAD", "finished success=$success")
                         if (deleteRecordingAfterUpload) {
@@ -250,7 +251,7 @@ class MyInCallService : InCallService() {
             }
 
             val audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.VOICE_CALL,
+                MediaRecorder.AudioSource.VOICE_DOWNLINK, // 발신 발화자만 딥보이스 체크
                 sampleRate,
                 channelConfig,
                 audioFormat,
@@ -349,7 +350,7 @@ class MyInCallService : InCallService() {
         }
     }
 
-
+    
     private fun stopRecordingSafely() {
         val r = recorder ?: return
 
@@ -368,6 +369,23 @@ class MyInCallService : InCallService() {
             }
         }
     }
+
+
+    // =====================
+    // 녹음 처리 (발화자구분용) => 서버에 보낸후에 삭제할것임
+    // =====================
+    private fun startRecordingSeparateTalk(){
+
+    }
+    // =====================
+    // 발화자 구분 녹음 stop
+    // =====================
+
+    private fun StopRecordingSeparateTalk(){
+
+    }
+
+
 
     // =====================
     // 통화 종료 후 STT 저장 업로드
@@ -391,14 +409,14 @@ class MyInCallService : InCallService() {
         if (callLogId == null) {
             Log.w("CALLLOG", "Failed to resolve callLogId")
 
-            // ✅ record off면 남기지 않는 게 자연스러움
+            // record off면 남기지 않는 게 자연스러움
             if (!isRecordEnabled()) deleteCurrentRecordingFileIfExists()
 
             onFinished(false)
             return
         }
 
-        // ✅ 여기서 업로더는 "특정 파일" 업로드를 받는 메서드가 있으면 제일 좋음
+        // 여기서 업로더는 "특정 파일" 업로드를 받는 메서드가 있으면 제일 좋음
         sttUploader.enqueueUploadFile(callLogId.toString(), file) { success ->
             onFinished(success)
         }

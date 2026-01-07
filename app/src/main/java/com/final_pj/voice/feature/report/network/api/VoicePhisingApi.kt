@@ -7,7 +7,7 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 interface VoicePhisingApi {
-    @POST("voice_phising_number_list")
+    @POST("/api/v1/voice_phising_number_list")
     suspend fun insertNumber(
         @Body body: VoicePhisingCreateReq
     ): Response<VoicePhisingOutRes>

@@ -139,18 +139,6 @@ class DetailFragment : Fragment() {
 
         val app = requireContext().applicationContext as App
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val out = withContext(Dispatchers.IO) {
-                    postVoicePhisingNumber("phone", "descOrNull") // 실제값을 넣어야함~~
-                }
-                Toast.makeText(requireContext(), "신고 접수 완료", Toast.LENGTH_SHORT).show()
-            } catch (e: IllegalStateException) {
-                Toast.makeText(requireContext(), e.message ?: "실패", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "네트워크 오류: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
 
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -234,17 +222,17 @@ class DetailFragment : Fragment() {
 
                                     Toast.makeText(requireContext(), "신고가 접수되었습니다.", Toast.LENGTH_SHORT).show()
                                     Log.d("DetailFragment", "신고 성공: id=${out.id}, number=${out.number}")
-
+                                    Toast.makeText(requireContext(), "신고 접수 완료", Toast.LENGTH_SHORT).show()
                                     dialog.dismiss()
 
                                 } catch (e: IllegalStateException) {
                                     // 여기로 409(이미 등록)도 들어오게 해둠
-                                    Toast.makeText(requireContext(), e.message ?: "처리 실패", Toast.LENGTH_SHORT).show()
                                     Log.e("DetailFragment", "신고 실패(논리): ${e.message}", e)
+                                    Toast.makeText(requireContext(), e.message ?: "실패", Toast.LENGTH_SHORT).show()
 
                                 } catch (e: Exception) {
-                                    Toast.makeText(requireContext(), "서버 오류: ${e.message}", Toast.LENGTH_SHORT).show()
                                     Log.e("DetailFragment", "신고 실패(예외)", e)
+                                    Toast.makeText(requireContext(), "네트워크 오류: ${e.message}", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }

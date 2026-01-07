@@ -2,7 +2,6 @@
 plugins {
     // Android 애플리케이션 플러그인
     alias(libs.plugins.android.application)
-
     // Kotlin Android 플러그인
     alias(libs.plugins.kotlin.android)
 
