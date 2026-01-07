@@ -22,17 +22,13 @@ import kotlinx.coroutines.*
 import java.io.File
 import kotlin.String
 
-class MyInCallService : InCallService() {
+class MyInCallService____copy : InCallService() {
 
     // ====== config ======
     private val baseurl = Constants.BASE_URL
     private val serverUrl = "${baseurl}api/v1/stt"
     private val bestMfccBaseUrl = "${baseurl}api/v1/mfcc"
     private val key32 = "12345678901234567890123456789012".toByteArray()
-
-    // 발화자 2개 업로드 엔드포인트 예시
-    private val speakerUploadUrl = "${baseurl}api/v1/speakers/upload"
-
 
     // ====== state ======
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -42,13 +38,9 @@ class MyInCallService : InCallService() {
     private var activeAtMs: Long = 0L
 
     private var recorder: MediaRecorder? = null
-    // 기존 monitoringJob은 split 레코더로 통합되므로 제거
     private var monitoringJob: Job? = null
-
+    
     // 명칭을 실시간 5초 매니저로 바꾸고 싶음
-    // 명칭 변경: 실시간 5초 단위 처리 담당
-    private lateinit var realtime5sMfccManager: MFCCManager
-
     private lateinit var mfccManager: MFCCManager
     // 이건 sttuploader 로 쭉 진행 (요약, 점수계산)
     private lateinit var sttUploader: SttUploader
@@ -58,18 +50,8 @@ class MyInCallService : InCallService() {
 
     private var lastKnownCallLogId: Long? = null
 
-    // 발화자 분리 레코더 + 업로더
-    private var speakerSplitRecorder: SpeakerSplitRecorder? = null
-    private lateinit var speakerUploader: SpeakerUploader
-
-    // 임시 분리 파일들
-    private var uplinkPcmFile: File? = null
-    private var downlinkPcmFile: File? = null
-    private var uplinkWavFile: File? = null
-    private var downlinkWavFile: File? = null
-
     companion object {
-        var instance: MyInCallService? = null
+        var instance: MyInCallService____copy? = null
             private set
 
         var currentCall: Call? = null
@@ -91,9 +73,6 @@ class MyInCallService : InCallService() {
         val prefs = getSharedPreferences(SettingKeys.PREF_NAME, MODE_PRIVATE)
         return prefs.getBoolean(SettingKeys.SUMMARY_ENABLED, true)
     }
-
-
-
     // “통화로 생성된 녹음파일”을 추적하기 위한 멤버
     @Volatile private var deleteRecordingAfterUpload: Boolean = false
     private var currentRecordingFile: File? = null
@@ -106,23 +85,13 @@ class MyInCallService : InCallService() {
         }
         currentRecordingFile = null
     }
-    private fun deleteSpeakerTempFiles() {
-        listOf(uplinkPcmFile, downlinkPcmFile, uplinkWavFile, downlinkWavFile).forEach { f ->
-            try { if (f != null && f.exists()) f.delete() } catch (_: Exception) {}
-        }
-        uplinkPcmFile = null
-        downlinkPcmFile = null
-        uplinkWavFile = null
-        downlinkWavFile = null
-    }
-
 
 
     override fun onCreate() {
         super.onCreate()
         instance = this
 
-        realtime5sMfccManager = MFCCManager(this)
+        mfccManager = MFCCManager(this)
 
         sttUploader = SttUploader(
             this,
@@ -400,79 +369,7 @@ class MyInCallService : InCallService() {
             }
         }
     }
-    // 발화자 분리 시작
-    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    private fun startSpeakerSplit() {
-        stopSpeakerSplit()
 
-        // 임시 PCM 파일 생성
-        val dir = File(getExternalFilesDir(null), "tmp_split").apply { mkdirs() }
-        uplinkPcmFile = File(dir, "uplink_${System.currentTimeMillis()}.pcm")
-        downlinkPcmFile = File(dir, "downlink_${System.currentTimeMillis()}.pcm")
-
-        // downlink 5초 콜백에서 MFCC 처리 + 5초 업로드
-        speakerSplitRecorder = SpeakerSplitRecorder(
-            scope = serviceScope,
-            sampleRate = 16000,
-            chunkSeconds = 5,
-            onDownlinkChunk = { shorts, floats ->
-                if (!started) return@SpeakerSplitRecorder
-
-                try {
-                    realtime5sMfccManager.processAudioSegment(floats)
-                } catch (e: Exception) {
-                    Log.e("MFCC", "processAudioSegment failed: ${e.message}", e)
-                }
-
-                try {
-                    // callId는 여기서 임시 "1"을 쓰지 말고, 통화 단위 식별키로 바꾸는 것을 권장
-                    // 아직 callLogId가 ACTIVE 시점에는 없어서, 여기선 임시 세션키를 쓰거나 업로드를 지연해도 됨
-                    mfccUploader.uploadPcmShortChunk(callId = "session", shorts)
-                } catch (e: Exception) {
-                    Log.e("MFCC_UP", "upload failed: ${e.message}", e)
-                }
-            }
-        )
-
-        speakerSplitRecorder?.start(
-            uplinkOutPcm = uplinkPcmFile!!,
-            downlinkOutPcm = downlinkPcmFile!!
-        )
-    }
-
-    private fun stopSpeakerSplit() {
-        speakerSplitRecorder?.stop()
-        speakerSplitRecorder = null
-    }
-
-    // 통화 종료 후, uplink/downlink을 wav로 변환 후 업로드
-    private fun uploadTwoSpeakers(callId: String, onFinished: (Boolean) -> Unit) {
-        val upPcm = uplinkPcmFile
-        val dnPcm = downlinkPcmFile
-        if (upPcm == null || dnPcm == null || !upPcm.exists() || !dnPcm.exists()) {
-            onFinished(false)
-            return
-        }
-
-        try {
-            val dir = upPcm.parentFile ?: getExternalFilesDir(null)
-            uplinkWavFile = File(dir, "uplink_${callId}.wav")
-            downlinkWavFile = File(dir, "downlink_${callId}.wav")
-
-            WavUtil.pcm16leToWav(upPcm, uplinkWavFile!!, sampleRate = 16000, channels = 1)
-            WavUtil.pcm16leToWav(dnPcm, downlinkWavFile!!, sampleRate = 16000, channels = 1)
-
-            speakerUploader.uploadTwoSpeakers(
-                callId = callId,
-                uplinkWav = uplinkWavFile!!,
-                downlinkWav = downlinkWavFile!!,
-                onDone = { ok -> onFinished(ok) }
-            )
-        } catch (e: Exception) {
-            Log.e("SPLIT_UP", "wav convert/upload failed: ${e.message}", e)
-            onFinished(false)
-        }
-    }
 
     // =====================
     // 녹음 처리 (발화자구분용) => 서버에 보낸후에 삭제할것임
