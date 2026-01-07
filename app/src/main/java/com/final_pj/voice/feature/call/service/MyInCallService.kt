@@ -3,8 +3,6 @@ package com.final_pj.voice.feature.call.service
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.media.AudioFormat
-import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Handler
 import android.os.Looper
@@ -20,53 +18,58 @@ import com.final_pj.voice.feature.stt.*
 import com.google.gson.Gson
 import kotlinx.coroutines.*
 import java.io.File
-import kotlin.String
 
 class MyInCallService : InCallService() {
 
-    // ====== config ======
+    // config
     private val baseurl = Constants.BASE_URL
+
+    // 기존 단일(mixed) STT 업로드
     private val serverUrl = "${baseurl}api/v1/stt"
+
+    // MFCC(5초) 업로드
     private val bestMfccBaseUrl = "${baseurl}api/v1/mfcc"
+
+    // 새로 추가: uplink/downlink 분리 트랙 업로드 + 처리 엔드포인트(권장: wav로 받는 별도 엔드포인트)
+    private val dualWavUrl = "${baseurl}api/v1/stt/dual_wav"
+
     private val key32 = "12345678901234567890123456789012".toByteArray()
 
-    // 발화자 2개 업로드 엔드포인트 예시
-    private val speakerUploadUrl = "${baseurl}api/v1/speakers/upload"
-
-
-    // ====== state ======
+    // state
     private val mainHandler = Handler(Looper.getMainLooper())
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Volatile private var started = false
     private var activeAtMs: Long = 0L
 
-    private var recorder: MediaRecorder? = null
-    // 기존 monitoringJob은 split 레코더로 통합되므로 제거
-    private var monitoringJob: Job? = null
+    // 통화마다 유니크한 세션키 (MFCC 5초 업로드 식별용)
+    private var sessionId: String? = null
 
-    // 명칭을 실시간 5초 매니저로 바꾸고 싶음
-    // 명칭 변경: 실시간 5초 단위 처리 담당
+    // 폰에 저장될 1개 파일(mixed)
+    private var recorder: MediaRecorder? = null
+    private var currentRecordingFile: File? = null
+
+    // 5초 단위 처리 담당 (명칭 변경 반영)
     private lateinit var realtime5sMfccManager: MFCCManager
 
-    private lateinit var mfccManager: MFCCManager
-    // 이건 sttuploader 로 쭉 진행 (요약, 점수계산)
+    // mixed 파일 기반 STT/요약 업로더 (기존 유지)
     private lateinit var sttUploader: SttUploader
     private val sttBuffer = SttBuffer()
 
+    // 5초 PCM 업로더 (기존 유지)
     private lateinit var mfccUploader: BestMfccManager
 
-    private var lastKnownCallLogId: Long? = null
-
-    // 발화자 분리 레코더 + 업로더
+    // uplink/downlink 분리 레코더 + 업로더
     private var speakerSplitRecorder: SpeakerSplitRecorder? = null
-    private lateinit var speakerUploader: SpeakerUploader
+    private lateinit var dualWavUploader: DualWavUploader
 
-    // 임시 분리 파일들
+    // 분리 임시 파일들 (통화 종료 후 업로드하고 삭제)
     private var uplinkPcmFile: File? = null
     private var downlinkPcmFile: File? = null
     private var uplinkWavFile: File? = null
     private var downlinkWavFile: File? = null
+
+    private var lastKnownCallLogId: Long? = null
 
     companion object {
         var instance: MyInCallService? = null
@@ -75,11 +78,20 @@ class MyInCallService : InCallService() {
         var currentCall: Call? = null
             private set
     }
+
     // 기능 on/off
     private object SettingKeys {
         const val PREF_NAME = "settings"
         const val RECORD_ENABLED = "record_enabled"
         const val SUMMARY_ENABLED = "summary_enabled"
+
+        // 새로 추가: STT/분석 정책
+        // stt_mode: both|uplink|downlink
+        const val DUAL_STT_MODE = "dual_stt_mode"
+        // analysis_target: downlink|uplink|both|none
+        const val DUAL_ANALYSIS_TARGET = "dual_analysis_target"
+        // return_mode: compat|full
+        const val DUAL_RETURN_MODE = "dual_return_mode"
     }
 
     private fun isRecordEnabled(): Boolean {
@@ -92,20 +104,36 @@ class MyInCallService : InCallService() {
         return prefs.getBoolean(SettingKeys.SUMMARY_ENABLED, true)
     }
 
+    private fun dualSttMode(): String {
+        val prefs = getSharedPreferences(SettingKeys.PREF_NAME, MODE_PRIVATE)
+        return prefs.getString(SettingKeys.DUAL_STT_MODE, "both") ?: "both"
+    }
 
+    private fun dualAnalysisTarget(): String {
+        val prefs = getSharedPreferences(SettingKeys.PREF_NAME, MODE_PRIVATE)
+        return prefs.getString(SettingKeys.DUAL_ANALYSIS_TARGET, "downlink") ?: "downlink"
+    }
 
-    // “통화로 생성된 녹음파일”을 추적하기 위한 멤버
+    private fun dualReturnMode(): String {
+        val prefs = getSharedPreferences(SettingKeys.PREF_NAME, MODE_PRIVATE)
+        return prefs.getString(SettingKeys.DUAL_RETURN_MODE, "compat") ?: "compat"
+    }
+
+    // record off 일 때 mixed 파일 자동 삭제 정책
     @Volatile private var deleteRecordingAfterUpload: Boolean = false
-    private var currentRecordingFile: File? = null
 
     private fun deleteCurrentRecordingFileIfExists() {
         val f = currentRecordingFile ?: return
-        if (f.exists()) {
-            val ok = f.delete()
-            Log.d("RECORD", "auto-delete=${ok}, file=${f.name}")
+        try {
+            if (f.exists()) {
+                val ok = f.delete()
+                Log.d("RECORD", "auto-delete=$ok, file=${f.name}")
+            }
+        } catch (_: Exception) {
         }
         currentRecordingFile = null
     }
+
     private fun deleteSpeakerTempFiles() {
         listOf(uplinkPcmFile, downlinkPcmFile, uplinkWavFile, downlinkWavFile).forEach { f ->
             try { if (f != null && f.exists()) f.delete() } catch (_: Exception) {}
@@ -116,14 +144,14 @@ class MyInCallService : InCallService() {
         downlinkWavFile = null
     }
 
-
-
     override fun onCreate() {
         super.onCreate()
         instance = this
 
+        // 5초 단위 MFCC 로컬 처리
         realtime5sMfccManager = MFCCManager(this)
 
+        // mixed m4a 업로더 (기존 유지)
         sttUploader = SttUploader(
             this,
             serverUrl = serverUrl,
@@ -133,43 +161,33 @@ class MyInCallService : InCallService() {
         )
         sttUploader.start()
 
+        // MFCC 업로더 (기존 유지)
         val crypto: AudioCrypto = AesCbcCrypto(key32)
-
-        // baseUrl이 이미 /mfcc 라면 endpoint는 그대로, 아니면 /mfcc 붙임
         val mfccEndpoint = ensureEndsWithPath(bestMfccBaseUrl, "mfcc")
-        mfccUploader = BestMfccManager(
-            endpointUrl = mfccEndpoint,
-            crypto = crypto
-        )
+        mfccUploader = BestMfccManager(endpointUrl = mfccEndpoint, crypto = crypto)
+
+        // uplink/downlink wav 업로더
+        dualWavUploader = DualWavUploader(endpointUrl = dualWavUrl, key32 = key32)
 
         Log.d("MyInCallService", "Service created")
     }
 
     override fun onDestroy() {
-        Log.d("MyInCallService", "Service destroyed")
-
         instance = null
 
-        stopMonitoring()
+        stopSpeakerSplit()
         stopRecordingSafely()
+        deleteSpeakerTempFiles()
 
         serviceScope.cancel()
-
-
         super.onDestroy()
     }
 
-    // =====================
-    // 통화 상태 콜백
-    // =====================
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
         currentCall = call
 
-        Log.d("CALL", "Call added: ${call.details.handle}")
-
         markCallLogBaseline()
-
         call.registerCallback(callCallback)
 
         if (call.details.callDirection == Call.Details.DIRECTION_INCOMING) {
@@ -179,14 +197,13 @@ class MyInCallService : InCallService() {
 
     override fun onCallRemoved(call: Call) {
         super.onCallRemoved(call)
-
         call.unregisterCallback(callCallback)
         if (currentCall == call) currentCall = null
 
-        // 방어적으로 종료
         started = false
-        stopMonitoring()
+        stopSpeakerSplit()
         stopRecordingSafely()
+        deleteSpeakerTempFiles()
 
         Log.d("CALL", "onCallRemoved")
     }
@@ -201,30 +218,28 @@ class MyInCallService : InCallService() {
         override fun onStateChanged(call: Call, state: Int) {
             when (state) {
                 Call.STATE_ACTIVE -> {
-                    if (started) {
-                        Log.d("CALL", "ACTIVE ignored (already started)")
-                        return
-                    }
+                    if (started) return
                     started = true
-                    // 실제 전화가 걸려왔음
                     activeAtMs = System.currentTimeMillis()
+                    sessionId = activeAtMs.toString()
 
-                    Log.d("CALL", "Call ACTIVE -> start")
                     CallEventBus.notifyCallStarted()
 
-                    // 녹음은 무조건 시작 (발화자)
-                    startRecording()
+                    // 1) 폰 저장용 1파일(mixed) 녹음 시작
+                    startRecordingMixed()
 
-                    // “녹음 off”는 '파일 자동삭제 정책' 의미
+                    // record off는 mixed 파일 자동삭제 정책 의미
                     deleteRecordingAfterUpload = (!isRecordEnabled() && isSummaryEnabled())
 
-                    startMonitoring()
+                    // 2) uplink/downlink 분리 녹음 + downlink 5초 MFCC 처리/업로드 시작
+                    startSpeakerSplit()
                 }
 
                 Call.STATE_DISCONNECTED, Call.STATE_DISCONNECTING -> {
                     started = false
 
-                    stopMonitoring()
+                    // 먼저 레코더를 정지해서 파일 핸들을 닫음
+                    stopSpeakerSplit()
                     stopRecordingSafely()
 
                     val recordEnabled = isRecordEnabled()
@@ -232,26 +247,45 @@ class MyInCallService : InCallService() {
 
                     val duration = System.currentTimeMillis() - activeAtMs
                     if (duration < 5000) {
-                        Log.d("CALL", "too short ($duration ms) -> skip upload")
                         if (!recordEnabled) deleteCurrentRecordingFileIfExists()
+                        deleteSpeakerTempFiles()
                         CallEventBus.notifyCallEnded()
                         return
                     }
 
-                    // 요약 OFF면 onSaveStt를 호출하지 않음
                     if (!summaryEnabled) {
-                        Log.d("SUMMARY", "summary_enabled=false -> skip onSaveStt()")
                         if (!recordEnabled) deleteCurrentRecordingFileIfExists()
+                        deleteSpeakerTempFiles()
                         CallEventBus.notifyCallEnded()
                         return
                     }
 
-                    // 요약 ON이면 업로드 -> 완료 후 삭제
-                    onSaveStt { success ->
-                        Log.d("UPLOAD", "finished success=$success")
-                        if (deleteRecordingAfterUpload) {
-                            deleteCurrentRecordingFileIfExists()
-                        }
+                    // callLogId 확보 (통화 단위 식별)
+                    val callLogId = resolveCurrentCallLogId(callEndTimeMs = System.currentTimeMillis())
+                    if (callLogId == null) {
+                        if (!recordEnabled) deleteCurrentRecordingFileIfExists()
+                        deleteSpeakerTempFiles()
+                        CallEventBus.notifyCallEnded()
+                        return
+                    }
+
+                    // 1) mixed 파일 업로드 (기존 STT 파이프라인 유지)
+                    onSaveStt(callLogId.toString()) { sttOk ->
+                        Log.d("UPLOAD", "mixed stt ok=$sttOk")
+
+                        // 2) uplink/downlink 분리 wav 업로드 + 서버에서 STT/분석 수행(정책 파라미터 전송)
+                        uploadTwoSpeakersDual(
+                            callId = callLogId.toString(),
+                            onFinished = { dualOk ->
+                                Log.d("UPLOAD", "dual wav ok=$dualOk")
+
+                                // 분리 임시 파일은 무조건 삭제
+                                deleteSpeakerTempFiles()
+
+                                // 저장 정책에 따라 mixed 파일 삭제
+                                if (deleteRecordingAfterUpload) deleteCurrentRecordingFileIfExists()
+                            }
+                        )
                     }
 
                     CallEventBus.notifyCallEnded()
@@ -260,105 +294,12 @@ class MyInCallService : InCallService() {
         }
     }
 
-    // =====================
-    // 모니터링(5초) : MFCC 추론 + 업로드
-    // =====================
-    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    private fun startMonitoring() {
-        stopMonitoring() // 중복 방지
-
-        monitoringJob = serviceScope.launch {
-            val sampleRate = 16000
-            val seconds = 5
-            val maxSamples = sampleRate * seconds
-
-            val channelConfig = AudioFormat.CHANNEL_IN_MONO
-            val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-
-            val minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-            if (minBufferSize <= 0) {
-                Log.e("AUDIO", "Invalid bufferSize: $minBufferSize")
-                return@launch
-            }
-
-            val audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.VOICE_DOWNLINK, // 발신 발화자만 딥보이스 체크
-                sampleRate,
-                channelConfig,
-                audioFormat,
-                minBufferSize * 2
-            )
-
-            if (audioRecord.state != AudioRecord.STATE_INITIALIZED) {
-                Log.e("AUDIO", "AudioRecord init failed")
-                audioRecord.release()
-                return@launch
-            }
-
-            val pcmBuffer = ShortArray(minBufferSize)
-            val audioFloat = FloatArray(maxSamples)
-            val audioShort = ShortArray(maxSamples)
-            var currentPos = 0
-
-            try {
-                audioRecord.startRecording()
-
-                while (isActive && started) {
-                    val readCount = audioRecord.read(pcmBuffer, 0, pcmBuffer.size)
-                    if (readCount <= 0) continue
-
-                    var i = 0
-                    while (i < readCount && currentPos < maxSamples) {
-                        val s = pcmBuffer[i]
-                        audioShort[currentPos] = s
-                        audioFloat[currentPos] = s / 32768f
-                        currentPos++
-                        i++
-                    }
-
-                    if (currentPos >= maxSamples) {
-                        // 1) MFCC 추론 (로컬)
-                        try {
-                            mfccManager.processAudioSegment(audioFloat.clone())
-                        } catch (e: Exception) {
-                            Log.e("MFCC", "processAudioSegment failed: ${e.message}", e)
-                        }
-                        // 2) 5초 PCM 업로드
-                        try {
-                            // 이 callId 는 ...한번에 한통화라는 전제로 백엔드 통화 식별용으로 쓰임
-                            mfccUploader.uploadPcmShortChunk(callId="1", audioShort.clone())
-                        } catch (e: Exception) {
-                            Log.e("MFCC_UP", "upload failed: ${e.message}", e)
-                        }
-
-                        currentPos = 0
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("AUDIO", "monitoring loop error: ${e.message}", e)
-            } finally {
-                try { audioRecord.stop() } catch (_: Exception) {}
-                audioRecord.release()
-            }
-        }
-    }
-
-    private fun stopMonitoring() {
-        monitoringJob?.cancel()
-        monitoringJob = null
-    }
-
-    // =====================
-    // 녹음 처리 (저장용 m4a)
-    // =====================
-    private fun startRecording() {
+    // 폰 저장용 1파일(mixed)
+    private fun startRecordingMixed() {
         if (recorder != null) return
 
         try {
-            val outputFile = File(
-                getExternalFilesDir(null),
-                "call_${System.currentTimeMillis()}.m4a"
-            )
+            val outputFile = File(getExternalFilesDir(null), "call_${System.currentTimeMillis()}.m4a")
             currentRecordingFile = outputFile
 
             recorder = MediaRecorder().apply {
@@ -368,49 +309,34 @@ class MyInCallService : InCallService() {
                 setAudioSamplingRate(44100)
                 setAudioEncodingBitRate(128_000)
                 setOutputFile(outputFile.absolutePath)
-
                 prepare()
                 start()
             }
-
-            Log.d("RECORD", "Recording started: ${outputFile.name}")
         } catch (e: Exception) {
             Log.e("RECORD", "Recording start failed", e)
             recorder = null
-            currentRecordingFile = null // 중요
+            currentRecordingFile = null
         }
     }
 
-    
     private fun stopRecordingSafely() {
         val r = recorder ?: return
-
-        try {
-            r.stop()
-        } catch (e: Exception) {
-            Log.e("RECORD", "Recorder stop failed", e)
+        try { r.stop() } catch (_: Exception) {
         } finally {
-            try {
-                r.reset()
-                r.release()
-            } catch (e: Exception) {
-                Log.e("RECORD", "Recorder release failed", e)
-            } finally {
-                recorder = null
-            }
+            try { r.reset(); r.release() } catch (_: Exception) {}
+            recorder = null
         }
     }
-    // 발화자 분리 시작
+
+    // uplink/downlink 분리 시작
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     private fun startSpeakerSplit() {
         stopSpeakerSplit()
 
-        // 임시 PCM 파일 생성
         val dir = File(getExternalFilesDir(null), "tmp_split").apply { mkdirs() }
         uplinkPcmFile = File(dir, "uplink_${System.currentTimeMillis()}.pcm")
         downlinkPcmFile = File(dir, "downlink_${System.currentTimeMillis()}.pcm")
 
-        // downlink 5초 콜백에서 MFCC 처리 + 5초 업로드
         speakerSplitRecorder = SpeakerSplitRecorder(
             scope = serviceScope,
             sampleRate = 16000,
@@ -418,16 +344,17 @@ class MyInCallService : InCallService() {
             onDownlinkChunk = { shorts, floats ->
                 if (!started) return@SpeakerSplitRecorder
 
+                // 1) MFCC 로컬 처리
                 try {
                     realtime5sMfccManager.processAudioSegment(floats)
                 } catch (e: Exception) {
                     Log.e("MFCC", "processAudioSegment failed: ${e.message}", e)
                 }
 
+                // 2) 5초 PCM 업로드 (세션키 사용)
+                val sid = sessionId ?: "session"
                 try {
-                    // callId는 여기서 임시 "1"을 쓰지 말고, 통화 단위 식별키로 바꾸는 것을 권장
-                    // 아직 callLogId가 ACTIVE 시점에는 없어서, 여기선 임시 세션키를 쓰거나 업로드를 지연해도 됨
-                    mfccUploader.uploadPcmShortChunk(callId = "session", shorts)
+                    mfccUploader.uploadPcmShortChunk(callId = sid, shorts)
                 } catch (e: Exception) {
                     Log.e("MFCC_UP", "upload failed: ${e.message}", e)
                 }
@@ -445,8 +372,8 @@ class MyInCallService : InCallService() {
         speakerSplitRecorder = null
     }
 
-    // 통화 종료 후, uplink/downlink을 wav로 변환 후 업로드
-    private fun uploadTwoSpeakers(callId: String, onFinished: (Boolean) -> Unit) {
+    // 통화 종료 후: uplink/downlink pcm -> wav 변환 -> dual_wav 업로드
+    private fun uploadTwoSpeakersDual(callId: String, onFinished: (Boolean) -> Unit) {
         val upPcm = uplinkPcmFile
         val dnPcm = downlinkPcmFile
         if (upPcm == null || dnPcm == null || !upPcm.exists() || !dnPcm.exists()) {
@@ -462,40 +389,31 @@ class MyInCallService : InCallService() {
             WavUtil.pcm16leToWav(upPcm, uplinkWavFile!!, sampleRate = 16000, channels = 1)
             WavUtil.pcm16leToWav(dnPcm, downlinkWavFile!!, sampleRate = 16000, channels = 1)
 
-            speakerUploader.uploadTwoSpeakers(
+            val sttMode = dualSttMode()
+            val analysisTarget = dualAnalysisTarget()
+            val returnMode = dualReturnMode()
+
+            val sid = sessionId
+            dualWavUploader.uploadDualWav(
                 callId = callId,
+                mfccCallId = sid,
                 uplinkWav = uplinkWavFile!!,
                 downlinkWav = downlinkWavFile!!,
-                onDone = { ok -> onFinished(ok) }
+                llm = true,
+                sttMode = sttMode,
+                analysisTarget = analysisTarget,
+                returnMode = returnMode,
+                onDone = onFinished
             )
         } catch (e: Exception) {
-            Log.e("SPLIT_UP", "wav convert/upload failed: ${e.message}", e)
+            Log.e("DUAL_UP", "dual upload failed: ${e.message}", e)
             onFinished(false)
         }
     }
 
-    // =====================
-    // 녹음 처리 (발화자구분용) => 서버에 보낸후에 삭제할것임
-    // =====================
-    private fun startRecordingSeparateTalk(){
-
-    }
-    // =====================
-    // 발화자 구분 녹음 stop
-    // =====================
-
-    private fun StopRecordingSeparateTalk(){
-
-    }
-
-
-
-    // =====================
-    // 통화 종료 후 STT 저장 업로드
-    // =====================
-    fun onSaveStt(onFinished: (success: Boolean) -> Unit) {
+    // mixed 파일 STT 업로드 (callLogId를 외부에서 받아서 중복 resolve 방지)
+    fun onSaveStt(callId: String, onFinished: (success: Boolean) -> Unit) {
         if (!isSummaryEnabled()) {
-            Log.d("SUMMARY", "summary_enabled=false -> skip onSaveStt()")
             if (!isRecordEnabled()) deleteCurrentRecordingFileIfExists()
             onFinished(false)
             return
@@ -503,33 +421,16 @@ class MyInCallService : InCallService() {
 
         val file = currentRecordingFile
         if (file == null || !file.exists()) {
-            Log.e("STT", "No currentRecordingFile to upload")
             onFinished(false)
             return
         }
 
-        val callLogId = resolveCurrentCallLogId(callEndTimeMs = System.currentTimeMillis())
-        if (callLogId == null) {
-            Log.w("CALLLOG", "Failed to resolve callLogId")
-
-            // record off면 남기지 않는 게 자연스러움
-            if (!isRecordEnabled()) deleteCurrentRecordingFileIfExists()
-
-            onFinished(false)
-            return
-        }
-
-        // 여기서 업로더는 "특정 파일" 업로드를 받는 메서드가 있으면 제일 좋음
-        sttUploader.enqueueUploadFile(callLogId.toString(), file) { success ->
+        sttUploader.enqueueUploadFile(callId, file) { success ->
             onFinished(success)
         }
     }
 
-
-
-    // =====================
     // UI
-    // =====================
     private fun showIncomingCallUI(call: Call) {
         val intent = Intent(this, IncomingCallActivity::class.java).apply {
             addFlags(
@@ -548,9 +449,7 @@ class MyInCallService : InCallService() {
         mainHandler.postDelayed({ call.stopDtmfTone() }, 150L)
     }
 
-    // =====================
     // CallLog baseline / resolve
-    // =====================
     @SuppressLint("MissingPermission")
     fun markCallLogBaseline() {
         lastKnownCallLogId = getLatestCallLogId()
@@ -635,9 +534,7 @@ class MyInCallService : InCallService() {
         return null
     }
 
-    // =====================
     // URL helper
-    // =====================
     private fun ensureEndsWithPath(base: String, leaf: String): String {
         val b = base.trimEnd('/')
         return if (b.endsWith("/$leaf")) b else "$b/$leaf"
