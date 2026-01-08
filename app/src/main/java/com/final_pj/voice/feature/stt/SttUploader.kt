@@ -45,10 +45,10 @@ class SttUploader(
     private val queue = ArrayBlockingQueue<UploadTask>(3)
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(5, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS)
-        .readTimeout(180, TimeUnit.SECONDS)
-        .callTimeout(200, TimeUnit.SECONDS)
+        .connectTimeout(20, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(120, TimeUnit.SECONDS)   // 서버 응답 대기 넉넉히
+        .callTimeout(130, TimeUnit.SECONDS)   // 전체 호출 제한도 넉넉히
         .retryOnConnectionFailure(true)
         .build()
 

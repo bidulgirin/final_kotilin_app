@@ -3,9 +3,11 @@ package com.final_pj.voice.feature.call.service
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.CallLog
@@ -13,9 +15,12 @@ import android.telecom.Call
 import android.telecom.InCallService
 import android.util.Log
 import androidx.annotation.RequiresPermission
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.final_pj.voice.bus.CallEventBus
 import com.final_pj.voice.core.Constants
 import com.final_pj.voice.feature.call.activity.IncomingCallActivity
+import com.final_pj.voice.feature.notify.NotificationHelper
 import com.final_pj.voice.feature.stt.*
 import com.google.gson.Gson
 import kotlinx.coroutines.*
@@ -40,7 +45,6 @@ class MyInCallService : InCallService() {
     private var recorder: MediaRecorder? = null
     private var monitoringJob: Job? = null
 
-    // 명칭을 실시간 5초 매니저로 바꾸고 싶음
     private lateinit var mfccManager: MFCCManager
     // 이건 sttuploader 로 쭉 진행 (요약, 점수계산)
     private lateinit var sttUploader: SttUploader
@@ -235,6 +239,10 @@ class MyInCallService : InCallService() {
     private fun startMonitoring() {
         stopMonitoring() // 중복 방지
 
+        val cautionThreshold = 0.85
+        var lastNotifyAt = 0L
+        val cooldownMs = 30_000L
+
         monitoringJob = serviceScope.launch {
             val sampleRate = 16000
             val seconds = 5
@@ -291,10 +299,48 @@ class MyInCallService : InCallService() {
                         } catch (e: Exception) {
                             Log.e("MFCC", "processAudioSegment failed: ${e.message}", e)
                         }
-                        // 2) 5초 PCM 업로드
+
+                        // 2) 5초 PCM 업로드 + 서버 결과로 알림 판단
                         try {
-                            // 이 callId 는 ...한번에 한통화라는 전제로 백엔드 통화 식별용으로 쓰임
-                            mfccUploader.uploadPcmShortChunk(callId="1", audioShort.clone())
+                            val chunkCopy = audioShort.clone() // enqueue 비동기라 clone 고정
+                            mfccUploader.uploadPcmShortChunk(
+                                callId = "1",
+                                chunk = chunkCopy,
+                                onResult = { res ->
+                                    val now = System.currentTimeMillis()
+                                    val should = res.shouldAlert || (res.phishingScore >= cautionThreshold)
+
+                                    Log.d("VP", "server score=${res.phishingScore}, should_alert=${res.shouldAlert}")
+
+                                    if (should && (now - lastNotifyAt) >= cooldownMs) {
+
+                                        // Android 13+만 알림 런타임 권한 필요
+                                        val hasPermission =
+                                            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                                                    ContextCompat.checkSelfPermission(
+                                                        applicationContext,
+                                                        Manifest.permission.POST_NOTIFICATIONS
+                                                    ) == PackageManager.PERMISSION_GRANTED
+
+                                        if (!hasPermission) {
+                                            Log.w("VP", "POST_NOTIFICATIONS not granted -> skip notify")
+                                            return@uploadPcmShortChunk   // ✅ 람다에서 빠져나가기 (아래 설명)
+                                        }
+
+                                        lastNotifyAt = now
+
+                                        NotificationHelper.showAlert(
+                                            context = applicationContext,
+                                            title = "보이스피싱 의심",
+                                            message = "위험 점수: ${"%.2f".format(res.phishingScore)}\n통화 내용을 주의하세요."
+                                        )
+                                    }
+                                }
+                                ,
+                                onError = { e ->
+                                    Log.e("MFCC_UP", "upload/check failed: ${e.message}", e)
+                                }
+                            )
                         } catch (e: Exception) {
                             Log.e("MFCC_UP", "upload failed: ${e.message}", e)
                         }

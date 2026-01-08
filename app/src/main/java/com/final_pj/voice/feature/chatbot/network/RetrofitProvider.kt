@@ -18,6 +18,7 @@ object RetrofitProvider {
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(20, TimeUnit.SECONDS)
+        .callTimeout(70, TimeUnit.SECONDS)
         .build()
 
     val api: ChatApi by lazy {
