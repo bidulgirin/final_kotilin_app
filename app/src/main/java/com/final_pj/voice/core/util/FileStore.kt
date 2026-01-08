@@ -5,7 +5,7 @@ import java.io.File
 
 object FileStore {
     /**
-     * 서버 응답(txt)을 내부저장소 filesDir/stt/ 아래 파일로 저장
+     * 서버 응답(txt)을 내부저장소 filesDir/ 아래 파일로 저장
      * @return 저장된 파일 절대 경로 (Room에 저장)
      */
     fun saveResponseText(context: Context, callSessionId: String, text: String): String {

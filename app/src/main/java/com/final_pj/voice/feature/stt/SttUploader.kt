@@ -62,18 +62,19 @@ class SttUploader(
 
         worker = Thread {
             while (running) {
+                var task: UploadTask? = null
                 try {
-                    val task = queue.take()
-                    uploadOnce(task.callId, task.file)
+                    task = queue.take()
+                    uploadOnce(task)   // task 전체를 넘김
                 } catch (_: InterruptedException) {
-                    // stop() interrupt로 종료
                 } catch (e: Exception) {
                     Log.e("STT", "worker err: ${e.message}", e)
+                    task?.onFinished(false)   // 예외 시에도 콜백
                 } finally {
                     currentCall = null
                 }
             }
-        }.apply { start() }
+    }.apply { start() }
     }
 
     fun stop() {
@@ -156,64 +157,151 @@ class SttUploader(
     /**
      * Thread 기반이므로 suspend 제거하고 동기 처리로 깔끔하게
      */
-    private fun uploadOnce(callId: String, m4aFile: File) {
-        if (!m4aFile.exists() || !m4aFile.isFile) {
-            Log.e("STT", "File not found: ${m4aFile.absolutePath}")
-            return
-        }
+//    private fun uploadOnce(callId: String, m4aFile: File) {
+//        if (!m4aFile.exists() || !m4aFile.isFile) {
+//            Log.e("STT", "File not found: ${m4aFile.absolutePath}")
+//            return
+//        }
+//
+//        if (!waitUntilFileStable(m4aFile)) {
+//            Log.e("STT", "File not stable: ${m4aFile.name}")
+//            return
+//        }
+//
+//        val m4aBytes = m4aFile.readBytes()
+//        if (m4aBytes.isEmpty()) {
+//            Log.e("STT", "Empty m4a bytes: ${m4aFile.name}")
+//            return
+//        }
+//
+//        val (iv, encrypted) = encryptAES(m4aBytes, key32)
+//
+//        val body = MultipartBody.Builder()
+//            .setType(MultipartBody.FORM)
+//            .addFormDataPart("iv", Base64.encodeToString(iv, Base64.NO_WRAP))
+//            .addFormDataPart(
+//                "audio",
+//                "${m4aFile.name}.enc",
+//                encrypted.toRequestBody("application/octet-stream".toMediaType())
+//            )
+//            .build()
+//
+//        val req = Request.Builder()
+//            .url(serverUrl)
+//            .post(body)
+//            .build()
+//
+//        val call = client.newCall(req)
+//        currentCall = call
+//
+//        call.execute().use { resp ->
+//            val txt = resp.body?.string()
+//            Log.d("STT", "Uploaded=${m4aFile.name} callId=$callId HTTP ${resp.code} / $txt")
+//
+//            if (!resp.isSuccessful || txt.isNullOrBlank()) return@use
+//
+//            runCatching {
+//                val parsed = gson.fromJson(txt, SttResponse::class.java)
+//                val llm = parsed.llm
+//                // callId로 묶어서 임시 보관 (통화 종료 때 저장하려면 여기서 put)
+//                buffer.put(callId, parsed)
+//
+//                // DB 저장
+//                val app = context.applicationContext as App
+//
+//                CoroutineScope(Dispatchers.IO).launch {
+//                    val id = app.db.SttResultDao().insert(
+//                        SttResultEntity(
+//                            callId = callId,
+//                            text = parsed.text,
+//                            // LLM 결과 저장
+//                            isVoicephishing = llm?.isVoicephishing,
+//                            voicephishingScore = llm?.voicephishingScore,
+//                            category = llm?.category,
+//                            summary = llm?.summary
+//                        )
+//                    )
+//                    Log.d("STT", "DB 저장 완료 id=$id callId=$callId")
+//
+//                }
+//
+//            }.onFailure {
+//                Log.e("STT", "Failed to parse response: $txt", it)
+//            }
+//
+//            stop()
+//        }
+//    }
 
-        if (!waitUntilFileStable(m4aFile)) {
-            Log.e("STT", "File not stable: ${m4aFile.name}")
-            return
-        }
+    private fun uploadOnce(task: UploadTask) {
+        val callId = task.callId
+        val m4aFile = task.file
 
-        val m4aBytes = m4aFile.readBytes()
-        if (m4aBytes.isEmpty()) {
-            Log.e("STT", "Empty m4a bytes: ${m4aFile.name}")
-            return
-        }
+        try {
+            if (!m4aFile.exists() || !m4aFile.isFile) {
+                Log.e("STT", "File not found: ${m4aFile.absolutePath}")
+                task.onFinished(false)
+                return
+            }
 
-        val (iv, encrypted) = encryptAES(m4aBytes, key32)
+            if (!waitUntilFileStable(m4aFile)) {
+                Log.e("STT", "File not stable: ${m4aFile.name}")
+                task.onFinished(false)
+                return
+            }
 
-        val body = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("iv", Base64.encodeToString(iv, Base64.NO_WRAP))
-            .addFormDataPart(
-                "audio",
-                "${m4aFile.name}.enc",
-                encrypted.toRequestBody("application/octet-stream".toMediaType())
-            )
-            .build()
+            val m4aBytes = m4aFile.readBytes()
+            if (m4aBytes.isEmpty()) {
+                Log.e("STT", "Empty m4a bytes: ${m4aFile.name}")
+                task.onFinished(false)
+                return
+            }
 
-        val req = Request.Builder()
-            .url(serverUrl)
-            .post(body)
-            .build()
+            val (iv, encrypted) = encryptAES(m4aBytes, key32)
 
-        val call = client.newCall(req)
-        currentCall = call
+            val body = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("iv", Base64.encodeToString(iv, Base64.NO_WRAP))
+                .addFormDataPart(
+                    "audio",
+                    "${m4aFile.name}.enc",
+                    encrypted.toRequestBody("application/octet-stream".toMediaType())
+                )
+                .build()
 
-        call.execute().use { resp ->
-            val txt = resp.body?.string()
-            Log.d("STT", "Uploaded=${m4aFile.name} callId=$callId HTTP ${resp.code} / $txt")
+            val req = Request.Builder()
+                .url(serverUrl)
+                .post(body)
+                .build()
 
-            if (!resp.isSuccessful || txt.isNullOrBlank()) return@use
+            val call = client.newCall(req)
+            currentCall = call
 
-            runCatching {
-                val parsed = gson.fromJson(txt, SttResponse::class.java)
-                val llm = parsed.llm
-                // callId로 묶어서 임시 보관 (통화 종료 때 저장하려면 여기서 put)
+            call.execute().use { resp ->
+                val txt = resp.body?.string()
+                Log.d("STT", "Uploaded=${m4aFile.name} callId=$callId HTTP ${resp.code} / $txt")
+
+                if (!resp.isSuccessful || txt.isNullOrBlank()) {
+                    task.onFinished(false)
+                    return
+                }
+
+                val parsed = runCatching { gson.fromJson(txt, SttResponse::class.java) }
+                    .getOrElse {
+                        Log.e("STT", "Failed to parse response: $txt", it)
+                        task.onFinished(false)
+                        return
+                    }
+
                 buffer.put(callId, parsed)
 
-                // DB 저장
                 val app = context.applicationContext as App
-
                 CoroutineScope(Dispatchers.IO).launch {
+                    val llm = parsed.llm
                     val id = app.db.SttResultDao().insert(
                         SttResultEntity(
                             callId = callId,
                             text = parsed.text,
-                            // LLM 결과 저장
                             isVoicephishing = llm?.isVoicephishing,
                             voicephishingScore = llm?.voicephishingScore,
                             category = llm?.category,
@@ -221,16 +309,20 @@ class SttUploader(
                         )
                     )
                     Log.d("STT", "DB 저장 완료 id=$id callId=$callId")
-
                 }
 
-            }.onFailure {
-                Log.e("STT", "Failed to parse response: $txt", it)
+                task.onFinished(true)
             }
-
-            stop()
+        } catch (e: Exception) {
+            Log.e("STT", "uploadOnce exception: ${e.message}", e)
+            task.onFinished(false)
+        } finally {
+            currentCall = null
+            // 여기서 stop() 호출하면 다음 작업이 영원히 안 돔 -> 제거 권장
+            // stop()
         }
     }
+
 
 
     private fun encryptAES(data: ByteArray, key: ByteArray): Pair<ByteArray, ByteArray> {
@@ -242,6 +334,7 @@ class SttUploader(
     }
 
     fun enqueueUploadFile(callId: String, file: File, onFinished: (success: Boolean) -> Unit) {
+        Log.e("enqueueUploadFile","enqueueUploadFile 들어옴")
         if (!file.exists()) {
             Log.e("STT", "file not exists: ${file.absolutePath}")
             onFinished(false)
@@ -249,9 +342,11 @@ class SttUploader(
         }
 
         val task = UploadTask(callId, file, onFinished)
+        Log.e("task","${task}")
 
         if (!queue.offer(task)) {
             val dropped = queue.poll()
+            Log.e("dropped","${dropped}")
             dropped?.onFinished(false)
             val ok = queue.offer(task)
             if (!ok) {

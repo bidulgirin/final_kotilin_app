@@ -89,7 +89,6 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Voice">
-
         <!-- ===================================================== -->
         <!-- 앱 설정 메모 -->
         <!-- - android:usesCleartextTraffic="true" 는 테스트용이면

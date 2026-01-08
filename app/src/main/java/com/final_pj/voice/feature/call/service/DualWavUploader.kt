@@ -16,11 +16,14 @@ class DualWavUploader(
     private val endpointUrl: String,
     private val key32: ByteArray
 ) {
+
+
     private val client = OkHttpClient.Builder()
         .callTimeout(90, TimeUnit.SECONDS)
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(90, TimeUnit.SECONDS)
         .build()
+
 
     fun uploadDualWav(
         callId: String,
@@ -33,15 +36,19 @@ class DualWavUploader(
         returnMode: String,
         onDone: (Boolean) -> Unit
     ) {
+
+        Log.d("DUAL_WAV", "uploadDualWav called url=$endpointUrl callId=$callId mfccCallId=$mfccCallId")
+        Log.d("DUAL_WAV", "uplinkWav=${uplinkWav.absolutePath} size=${uplinkWav.length()}")
+        Log.d("DUAL_WAV", "downlinkWav=${downlinkWav.absolutePath} size=${downlinkWav.length()}")
         try {
+
             val upPlain = uplinkWav.readBytes()
             val dnPlain = downlinkWav.readBytes()
-
+            Log.d("DUAL_WAV", "uplinkWav size=${uplinkWav.length()} downlinkWav size=${downlinkWav.length()} url=$endpointUrl")
             val (ivUpB64, upEnc) = encryptAesCbcBase64Iv(upPlain, key32)
             val (ivDnB64, dnEnc) = encryptAesCbcBase64Iv(dnPlain, key32)
 
             val binType = "application/octet-stream".toMediaType()
-
             val body = MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("call_id", callId)
@@ -81,9 +88,9 @@ class DualWavUploader(
 
                 override fun onResponse(call: okhttp3.Call, response: Response) {
                     response.use {
-                        val ok = it.isSuccessful
-                        if (!ok) Log.e("DUAL_WAV", "upload not ok code=${it.code}")
-                        onDone(ok)
+                        val bodyStr = it.body?.string()
+                        Log.d("DUAL_WAV", "code=${it.code} body=$bodyStr")
+                        onDone(it.isSuccessful)
                     }
                 }
             })
