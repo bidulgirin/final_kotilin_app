@@ -156,6 +156,7 @@ dependencies {
     implementation libs.androidx.room.common.jvm
     implementation libs.volley
     implementation libs.generativeai
+    implementation libs.androidx.compose.remote.creation.compose
 
     // 🧪 단위 테스트
     testImplementation libs.junit

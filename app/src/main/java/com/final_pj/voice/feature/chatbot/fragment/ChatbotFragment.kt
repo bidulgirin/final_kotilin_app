@@ -3,11 +3,13 @@ package com.final_pj.voice.feature.chatbot.fragment
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import androidx.compose.remote.creation.compose.state.log
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.final_pj.voice.R
 import com.final_pj.voice.feature.chatbot.adapter.ChatAdapter
+import com.final_pj.voice.feature.chatbot.data.ChatFaissResponse
 import com.final_pj.voice.feature.chatbot.data.ConversationStore
 import com.final_pj.voice.feature.chatbot.model.ChatMessage
 import com.final_pj.voice.feature.chatbot.network.RetrofitProvider
@@ -19,6 +21,7 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
+
 
 class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
 
@@ -42,6 +45,8 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
         "계좌/카드 조치",
         "앱 사용방법"
     )
+    // 이 칩은 백엔드에서 보내줘야함
+    // 통화내용등을 보고 일반전화이면 암
 
     private lateinit var actionAnswerMap: LinkedHashMap<String, String>
 
@@ -64,11 +69,11 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
             fallbackKeysInOrder = actionKeysInOrder
         )
 
-        // ✅ 1) 진입 시: callId → conversationId 로 복원 시도
+        // 1) 진입 시: callId → conversationId 로 복원 시도
         lifecycleScope.launch {
             restoreHistoryIfExists(rv)
 
-            // ✅ 2) 복원된 메시지가 하나도 없을 때만 초기 안내 메시지 출력
+            // 2) 복원된 메시지가 하나도 없을 때만 초기 안내 메시지 출력
             if (adapter.itemCount == 0) {
                 showInitialGuide()
                 rv.scrollToPosition(adapter.itemCount - 1)
@@ -91,7 +96,7 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
         }
     }
 
-    /** ✅ callId 기준으로 conversationId를 가져와서 서버에서 히스토리 복원 */
+    /** callId 기준으로 conversationId를 가져와서 서버에서 히스토리 복원 */
     private suspend fun restoreHistoryIfExists(rv: androidx.recyclerview.widget.RecyclerView) {
         try {
             val cid = store.getConversationId(callId)
@@ -111,14 +116,14 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
         }
     }
 
-    /** ✅ 초기 안내는 여기로 모음(중복 방지) */
+    /** 초기 안내는 여기로 모음(중복 방지) */
     private fun showInitialGuide() {
-        addBot("조치사항을 선택하거나, 궁금한 점을 입력해주세요.")
+        addBot("궁금한 점을 입력해주세요.")
         if (summaryTextArg.isNotBlank() || callTextArg.isNotBlank()) {
             addBot("통화 요약/대화 내용을 참고해서 안내드릴게요.")
         }
     }
-
+    // 카테고리누르면 자동으로 답하는거
     private fun onChipSelected(selectedTitle: String, rv: androidx.recyclerview.widget.RecyclerView) {
         val answer = actionAnswerMap[selectedTitle] ?: "해당 항목에 대한 안내를 준비 중입니다."
 
@@ -169,10 +174,10 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
                     callText = textToSend
                 )
 
-                store.setConversationId(callId, res.conversationId)
-                Log.d("ChatbotFragment", "send: cid(after)=${res.conversationId}")
+                store.setConversationId(callId, res.sessionId)
+                Log.d("ChatbotFragment", "send: cid(after)=${res.sessionId}")
 
-                addBot(res.assistantText)
+                addBot(res.finalAnswer)
                 rv.smoothScrollToPosition(adapter.itemCount - 1)
             } catch (e: Exception) {
                 addBot("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.\n(${e.localizedMessage ?: "unknown error"})")

@@ -210,7 +210,7 @@ class MyInCallService : InCallService() {
                         return
                     }
 
-                    // ✅ 요약 OFF면 onSaveStt를 호출하지 않음
+                    // 요약 OFF면 onSaveStt를 호출하지 않음
                     if (!summaryEnabled) {
                         Log.d("SUMMARY", "summary_enabled=false -> skip onSaveStt()")
                         if (!recordEnabled) deleteCurrentRecordingFileIfExists()
@@ -218,7 +218,7 @@ class MyInCallService : InCallService() {
                         return
                     }
 
-                    // ✅ 요약 ON이면 업로드 -> 완료 후 삭제
+                    // 요약 ON이면 업로드 -> 완료 후 삭제
                     onSaveStt { success ->
                         Log.d("UPLOAD", "finished success=$success")
                         if (deleteRecordingAfterUpload) {
@@ -239,7 +239,7 @@ class MyInCallService : InCallService() {
     private fun startMonitoring() {
         stopMonitoring() // 중복 방지
 
-        val cautionThreshold = 0.85
+        val cautionThreshold = 0.90
         var lastNotifyAt = 0L
         val cooldownMs = 30_000L
 
@@ -324,15 +324,15 @@ class MyInCallService : InCallService() {
 
                                         if (!hasPermission) {
                                             Log.w("VP", "POST_NOTIFICATIONS not granted -> skip notify")
-                                            return@uploadPcmShortChunk   // ✅ 람다에서 빠져나가기 (아래 설명)
+                                            return@uploadPcmShortChunk   //람다에서 빠져나가기 (아래 설명)
                                         }
 
                                         lastNotifyAt = now
 
                                         NotificationHelper.showAlert(
                                             context = applicationContext,
-                                            title = "보이스피싱 의심",
-                                            message = "위험 점수: ${"%.2f".format(res.phishingScore)}\n통화 내용을 주의하세요."
+                                            title = "주의",
+                                            message = "딥 보이스 점수: ${"%.2f".format(res.phishingScore)}\n통화 내용을 주의하세요."
                                         )
                                     }
                                 }

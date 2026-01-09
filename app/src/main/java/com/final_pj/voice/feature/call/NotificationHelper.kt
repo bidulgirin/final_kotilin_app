@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -54,10 +55,10 @@ object NotificationHelper {
         message: String,
         notificationId: Int = DEFAULT_NOTIFICATION_ID
     ) {
-        // ✅ 권한 없으면 조용히 리턴 (서비스에서 호출해도 안전)
+        // 권한 없으면 조용히 리턴 (서비스에서 호출해도 안전)
         if (!hasNotificationPermission(context)) {
             // 필요하면 로그만 남기기
-            // Log.w("NOTI", "POST_NOTIFICATIONS permission not granted")
+            Log.w("NOTI", "POST_NOTIFICATIONS permission not granted")
             return
         }
 
