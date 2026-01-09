@@ -21,16 +21,21 @@ import com.final_pj.voice.core.App
 import com.final_pj.voice.feature.blocklist.BlocklistCache
 import com.final_pj.voice.R
 import com.final_pj.voice.adapter.CallLogAdapter
+import com.final_pj.voice.feature.call.CallUiItem
 import com.final_pj.voice.feature.call.model.CallRecord
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class HistoryFragment : Fragment() {
 
     private lateinit var adapter: CallLogAdapter
+    private val uiItems = mutableListOf<CallUiItem>()
     private val callRecords = mutableListOf<CallRecord>()
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -45,11 +50,13 @@ class HistoryFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View = inflater.inflate(R.layout.fragment_history, container, false)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        setupRecycler(view)
-        // 최초 로드
-        reloadAllCallLogs()
-    }
+
+    // 기존 코드
+//    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+//        setupRecycler(view)
+//        // 최초 로드
+//        reloadAllCallLogs()
+//    }
 
     override fun onStart() {
         super.onStart()
@@ -67,12 +74,57 @@ class HistoryFragment : Fragment() {
         reloadAllCallLogs()
     }
 
+    private val dayKeyFormat = SimpleDateFormat("yyyyMMdd", Locale.KOREA)
+    private val headerFormat = SimpleDateFormat("yyyy년 M월 d일 (E)", Locale.KOREA)
+
+    private fun buildSectionedItems(records: List<CallRecord>): List<CallUiItem> {
+        val out = mutableListOf<CallUiItem>()
+        var lastKey: String? = null
+
+        for (r in records) {
+            val key = dayKeyFormat.format(Date(r.date))
+            if (key != lastKey) {
+                lastKey = key
+                out.add(CallUiItem.DateHeader(headerFormat.format(Date(r.date))))
+            }
+            out.add(CallUiItem.CallRow(r))
+        }
+        return out
+    }
+
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val recycler = view.findViewById<RecyclerView>(R.id.history_list)
+        recycler.layoutManager = LinearLayoutManager(requireContext())
+
+        adapter = CallLogAdapter(
+            uiItems,
+            onDetailClick = {record ->
+                val bundle = Bundle().apply { putLong("call_id", record.id) }
+                findNavController().navigate(R.id.detailFragment, bundle)
+            },
+            onBlockClick = { record ->
+                showBlockConfirm(record)
+            }
+        )
+        recycler.adapter = adapter
+
+        reloadAllCallLogs()
+    }
+
+    private fun reloadAllCallLogs() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val records = withContext(Dispatchers.IO) { queryCallLogs() } // List<CallRecord>
+            val newUi = buildSectionedItems(records)                      // List<CallUiItem>
+            adapter.submit(newUi)
+        }
+    }
     private fun setupRecycler(view: View) {
         val recycler = view.findViewById<RecyclerView>(R.id.history_list)
         recycler.layoutManager = LinearLayoutManager(requireContext())
 
         adapter = CallLogAdapter(
-            callRecords,
+            uiItems,
             onDetailClick = { record ->
                 val bundle = Bundle().apply { putLong("call_id", record.id) }
                 findNavController().navigate(R.id.detailFragment, bundle)
@@ -106,6 +158,7 @@ class HistoryFragment : Fragment() {
         )
     }
 
+
     private fun unregisterCallLogObserver() {
         callLogObserver?.let {
             requireContext().contentResolver.unregisterContentObserver(it)
@@ -123,20 +176,7 @@ class HistoryFragment : Fragment() {
         }
     }
 
-    private fun reloadAllCallLogs() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            Log.d("History", "reloadAllCallLogs called")
 
-            val newList = withContext(Dispatchers.IO) {
-                queryCallLogs()
-            }
-
-            // UI 반영
-            callRecords.clear()
-            callRecords.addAll(newList)
-            adapter.notifyDataSetChanged()
-        }
-    }
 
     private fun queryCallLogs(): List<CallRecord> {
         val result = mutableListOf<CallRecord>()

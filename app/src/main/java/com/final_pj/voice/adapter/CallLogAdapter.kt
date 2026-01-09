@@ -4,70 +4,87 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
-import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.final_pj.voice.R
+import com.final_pj.voice.feature.call.CallUiItem
 import com.final_pj.voice.feature.call.model.CallRecord
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class CallLogAdapter(
-    private val callRecords: List<CallRecord>,
+    private val items: MutableList<CallUiItem>,
     private val onDetailClick: (CallRecord) -> Unit,
-    private val onBlockClick: (CallRecord) -> Unit // 추가: 차단 클릭 콜백
-) : RecyclerView.Adapter<CallLogAdapter.CallLogViewHolder>() {
+    private val onBlockClick: (CallRecord) -> Unit
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    inner class CallLogViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val nameText: TextView = itemView.findViewById(R.id.call_name)
-        val numberText: TextView = itemView.findViewById(R.id.call_number)
-        val type: TextView = itemView.findViewById(R.id.call_type)
-        val summaryText: TextView = itemView.findViewById(R.id.call_summary)
-        val moreBtn: ImageButton = itemView.findViewById(R.id.btn_more) // 차단버튼
+    companion object {
+        private const val TYPE_HEADER = 0
+        private const val TYPE_ITEM = 1
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CallLogViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_call_log, parent, false)
-        return CallLogViewHolder(view)
+    private val timeFormat = SimpleDateFormat("HH:mm", Locale.KOREA)
+
+    override fun getItemViewType(position: Int): Int {
+        return when (items[position]) {
+            is CallUiItem.DateHeader -> TYPE_HEADER
+            is CallUiItem.CallRow -> TYPE_ITEM
+        }
     }
 
-    override fun onBindViewHolder(holder: CallLogViewHolder, position: Int) {
-        val record = callRecords[position]
-
-        holder.nameText.text = record.name ?: record.phoneNumber
-        holder.numberText.text = record.phoneNumber ?: ""
-        holder.type.text = record.callType
-
-        // 상세보기 (기존 유지)
-        holder.summaryText.setOnClickListener {
-            onDetailClick(record)
-        }
-
-        // (선택) 타입별 강조
-        when (record.callType) {
-            "수신" -> holder.type.setTextColor(0xFF2E7D32.toInt())
-            "발신" -> holder.type.setTextColor(0xFF1565C0.toInt())
-            "부재중" -> holder.type.setTextColor(0xFFC62828.toInt())
-            "거절" -> holder.type.setTextColor(0xFF000000.toInt())
-            else -> holder.type.setTextColor(0xFF444444.toInt())
-        }
-
-        // 메뉴
-        holder.moreBtn.setOnClickListener { anchor ->
-            val popup = PopupMenu(anchor.context, anchor)
-            //popup.menu.add(0, R.id.menu_block, 0, "차단") // menu xml 없이도 가능
-            popup.menuInflater.inflate(R.menu.call_item_menu, popup.menu)
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.menu_block -> {
-                        onBlockClick(record)
-                        true
-                    }
-                    else -> false
-                }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return when (viewType) {
+            TYPE_HEADER -> {
+                val v = inflater.inflate(R.layout.item_call_date_header, parent, false)
+                HeaderVH(v)
             }
-            popup.show()
+            else -> {
+                val v = inflater.inflate(R.layout.item_call_log, parent, false) // ✅ 너 카드 레이아웃 파일명
+                ItemVH(v)
+            }
         }
     }
 
-    override fun getItemCount() = callRecords.size
+    override fun getItemCount(): Int = items.size
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (val item = items[position]) {
+            is CallUiItem.DateHeader -> (holder as HeaderVH).bind(item)
+            is CallUiItem.CallRow -> (holder as ItemVH).bind(item.record)
+        }
+    }
+
+    fun submit(newItems: List<CallUiItem>) {
+        items.clear()
+        items.addAll(newItems)
+        notifyDataSetChanged()
+    }
+
+    class HeaderVH(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tv = itemView.findViewById<TextView>(R.id.tv_date_header)
+        fun bind(item: CallUiItem.DateHeader) {
+            tv.text = item.title
+        }
+    }
+
+    inner class ItemVH(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val name = itemView.findViewById<TextView>(R.id.call_name)
+        private val number = itemView.findViewById<TextView>(R.id.call_number)
+        private val type = itemView.findViewById<TextView>(R.id.call_type)
+        private val time = itemView.findViewById<TextView>(R.id.call_time)
+        private val more = itemView.findViewById<ImageButton>(R.id.btn_more)
+
+        fun bind(record: CallRecord) {
+            name.text = record.name ?: "알 수 없음"
+            number.text = record.phoneNumber ?: ""
+            type.text = record.callType ?: "-"
+            time.text = timeFormat.format(Date(record.date))
+
+            itemView.setOnClickListener { onDetailClick(record) }
+            more.setOnClickListener { onBlockClick(record) }
+        }
+    }
 }
+
