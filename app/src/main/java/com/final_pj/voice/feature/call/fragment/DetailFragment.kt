@@ -80,7 +80,6 @@ class DetailFragment : Fragment() {
                 }
         }
 
-
         // 챗봇버튼
         val btnOpenChatbot = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnOpenChatbot)
 
@@ -88,11 +87,13 @@ class DetailFragment : Fragment() {
         btnOpenChatbot.setOnClickListener {
             val summary = tvSummary.text?.toString().orEmpty()
             val text = tvText.text?.toString().orEmpty()
+            val category = chipCategory.text?.toString().orEmpty() // 카테고리(챗봇에게알려줘서버튼만들것임)
 
             val bundle = Bundle().apply {
                 putLong("CALL_ID", callId)
                 putString("SUMMARY_TEXT", summary)
                 putString("CALL_TEXT", text)
+                putString("CATEGORY", category)
             }
 
             parentFragmentManager.beginTransaction()

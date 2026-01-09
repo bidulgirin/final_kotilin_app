@@ -19,6 +19,7 @@ class CallLogAdapter(
     inner class CallLogViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameText: TextView = itemView.findViewById(R.id.call_name)
         val numberText: TextView = itemView.findViewById(R.id.call_number)
+        val type: TextView = itemView.findViewById(R.id.call_type)
         val summaryText: TextView = itemView.findViewById(R.id.call_summary)
         val moreBtn: ImageButton = itemView.findViewById(R.id.btn_more) // 차단버튼
     }
@@ -34,11 +35,20 @@ class CallLogAdapter(
 
         holder.nameText.text = record.name ?: record.phoneNumber
         holder.numberText.text = record.phoneNumber ?: ""
-
+        holder.type.text = record.callType
 
         // 상세보기 (기존 유지)
         holder.summaryText.setOnClickListener {
             onDetailClick(record)
+        }
+
+        // (선택) 타입별 강조
+        when (record.callType) {
+            "수신" -> holder.type.setTextColor(0xFF2E7D32.toInt())
+            "발신" -> holder.type.setTextColor(0xFF1565C0.toInt())
+            "부재중" -> holder.type.setTextColor(0xFFC62828.toInt())
+            "거절" -> holder.type.setTextColor(0xFF000000.toInt())
+            else -> holder.type.setTextColor(0xFF444444.toInt())
         }
 
         // 메뉴

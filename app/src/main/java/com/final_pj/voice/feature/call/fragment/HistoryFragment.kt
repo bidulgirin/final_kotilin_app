@@ -178,12 +178,23 @@ class HistoryFragment : Fragment() {
         return result
     }
 
+
+    // 이거 어디서 사용...하던데...
+    //    private fun mapCallType(typeInt: Int): String =
+    //        when (typeInt) {
+    //            CallLog.Calls.INCOMING_TYPE -> "Incoming"
+    //            CallLog.Calls.OUTGOING_TYPE -> "Outgoing"
+    //            CallLog.Calls.MISSED_TYPE -> "Missed"
+    //            else -> "Unknown"
+    //        }
+
     private fun mapCallType(typeInt: Int): String =
         when (typeInt) {
-            CallLog.Calls.INCOMING_TYPE -> "Incoming"
-            CallLog.Calls.OUTGOING_TYPE -> "Outgoing"
-            CallLog.Calls.MISSED_TYPE -> "Missed"
-            else -> "Unknown"
+            CallLog.Calls.INCOMING_TYPE -> "수신"
+            CallLog.Calls.OUTGOING_TYPE -> "발신"
+            CallLog.Calls.MISSED_TYPE -> "부재중"
+            CallLog.Calls.REJECTED_TYPE -> "거절"
+            else -> "알 수 없음"
         }
 
     // 차단

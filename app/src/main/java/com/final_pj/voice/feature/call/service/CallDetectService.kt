@@ -38,7 +38,7 @@ class CallDetectService : Service() {
         }
 
         val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setSmallIcon(R.drawable.ic_alert)
             .setContentTitle("알림")
             .setContentText("보이스피싱 감지가 시작되었습니다")
             .build()
@@ -49,7 +49,7 @@ class CallDetectService : Service() {
     private fun removeCallNotification() {
         NotificationManagerCompat.from(this).cancel(100)
     }
-    // 통화상태 감지 
+    // 통화상태 감지
     private fun startCallDetection() {
         telephonyManager =
             getSystemService(TELEPHONY_SERVICE) as TelephonyManager

@@ -15,7 +15,6 @@ import com.final_pj.voice.feature.chatbot.model.ChatMessage
 import com.final_pj.voice.feature.chatbot.network.RetrofitProvider
 import com.final_pj.voice.feature.chatbot.repository.ChatRepository
 import com.final_pj.voice.feature.chatbot.util.ActionMapBuilder
-import com.google.ai.client.generativeai.type.content
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
