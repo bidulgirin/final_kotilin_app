@@ -45,7 +45,7 @@ class MyInCallService : InCallService() {
     private var recorder: MediaRecorder? = null
     private var monitoringJob: Job? = null
 
-    private lateinit var mfccManager: MFCCManager
+    //private lateinit var mfccManager: MFCCManager
     // 이건 sttuploader 로 쭉 진행 (요약, 점수계산)
     private lateinit var sttUploader: SttUploader
     private val sttBuffer = SttBuffer()
@@ -95,7 +95,7 @@ class MyInCallService : InCallService() {
         super.onCreate()
         instance = this
 
-        mfccManager = MFCCManager(this)
+        //mfccManager = MFCCManager(this)
 
         sttUploader = SttUploader(
             this,
@@ -258,7 +258,7 @@ class MyInCallService : InCallService() {
             }
 
             val audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.VOICE_CALL,
+                MediaRecorder.AudioSource.VOICE_DOWNLINK,
                 sampleRate,
                 channelConfig,
                 audioFormat,
@@ -294,11 +294,11 @@ class MyInCallService : InCallService() {
 
                     if (currentPos >= maxSamples) {
                         // 1) MFCC 추론 (로컬)
-                        try {
-                            mfccManager.processAudioSegment(audioFloat.clone())
-                        } catch (e: Exception) {
-                            Log.e("MFCC", "processAudioSegment failed: ${e.message}", e)
-                        }
+//                        try {
+//                            mfccManager.processAudioSegment(audioFloat.clone())
+//                        } catch (e: Exception) {
+//                            Log.e("MFCC", "processAudioSegment failed: ${e.message}", e)
+//                        }
 
                         // 2) 5초 PCM 업로드 + 서버 결과로 알림 판단
                         try {

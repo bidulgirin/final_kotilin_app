@@ -25,14 +25,13 @@ class MFCCManager(private val context: Context) {
     init {
         // 1. 모델 로드 (assets 폴더에서 읽어오기)
         // 모바일용으로 변환함
-        loadModel("MFCC/binary_cnn_mfcc_lite.pt")
+        //loadModel("MFCC/binary_cnn_mfcc_lite.pt") // 이제 안씀
         // 모델 안에 있는 padding 그게 문제 인듯
         // 왜 문제가 되는지 알아보고 설명해야함
     }
 
     private fun loadModel(modelName: String) {
         val modelPath = assetFilePath(context, modelName)
-        Log.d("modelPath", modelPath)
         module = LiteModuleLoader.load(modelPath)
     }
 
