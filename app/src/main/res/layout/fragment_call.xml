@@ -224,6 +224,7 @@
             app:iconTint="@android:color/white"
             app:iconGravity="textTop"
             app:cornerRadius="18dp"
+
             app:backgroundTint="#1FFFFFFF"/>
 
         <com.google.android.material.button.MaterialButton
@@ -236,6 +237,7 @@
             app:icon="@drawable/ic_dialog"
             app:iconTint="@android:color/white"
             app:iconGravity="textTop"
+            android:layout_marginHorizontal="10dp"
             app:cornerRadius="18dp"
             app:backgroundTint="#1FFFFFFF"/>
 

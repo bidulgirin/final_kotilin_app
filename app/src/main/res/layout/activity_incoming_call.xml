@@ -27,13 +27,14 @@
         android:id="@+id/name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="모르는번호"
+        android:text=""
         android:textColor="#FFFFFF"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@id/callSlideLayout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
+    <!-- 여기에 신고된 전화라면 표기함 -->
 
     <!-- 🔥 슬라이드 수락/거절 영역 -->
     <androidx.constraintlayout.motion.widget.MotionLayout
