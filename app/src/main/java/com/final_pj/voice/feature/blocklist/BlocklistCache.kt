@@ -1,6 +1,6 @@
 package com.final_pj.voice.feature.blocklist
 
-import com.final_pj.voice.core.NumberNormalizer
+import com.final_pj.voice.core.util.NumberNormalizer
 import java.util.concurrent.ConcurrentHashMap
 
 object BlocklistCache {

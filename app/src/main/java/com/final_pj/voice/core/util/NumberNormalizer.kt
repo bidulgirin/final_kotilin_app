@@ -1,4 +1,4 @@
-package com.final_pj.voice.core
+package com.final_pj.voice.core.util
 
 object NumberNormalizer {
     fun normalize(input: String?): String {
