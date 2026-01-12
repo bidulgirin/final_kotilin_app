@@ -26,8 +26,13 @@ import com.google.gson.Gson
 import kotlinx.coroutines.*
 import java.io.File
 import kotlin.String
+import kotlin.math.log10
+import kotlin.math.sqrt
+
 
 class MyInCallService : InCallService() {
+
+
 
     // ====== config ======
     private val baseurl = Constants.BASE_URL
@@ -67,7 +72,15 @@ class MyInCallService : InCallService() {
         const val RECORD_ENABLED = "record_enabled"
         const val SUMMARY_ENABLED = "summary_enabled"
     }
-
+    private fun calcDbFs(pcm: ShortArray, count: Int): Double {
+        var sum = 0.0
+        for (i in 0 until count) {
+            val v = pcm[i].toDouble()
+            sum += v * v
+        }
+        val rms = sqrt(sum / count) / 32768.0
+        return 20.0 * log10(rms + 1e-9) // -inf 방지
+    }
     private fun isRecordEnabled(): Boolean {
         val prefs = getSharedPreferences(SettingKeys.PREF_NAME, MODE_PRIVATE)
         return prefs.getBoolean(SettingKeys.RECORD_ENABLED, true)
@@ -246,7 +259,7 @@ class MyInCallService : InCallService() {
         monitoringJob = serviceScope.launch {
             val sampleRate = 16000
             val seconds = 5
-            val maxSamples = sampleRate * seconds
+            val maxSamples = sampleRate * seconds // 80,000 (5초 "소리" 누적 기준)
 
             val channelConfig = AudioFormat.CHANNEL_IN_MONO
             val audioFormat = AudioFormat.ENCODING_PCM_16BIT
@@ -276,6 +289,56 @@ class MyInCallService : InCallService() {
             val audioShort = ShortArray(maxSamples)
             var currentPos = 0
 
+            // -----------------------------
+            // VAD 파라미터 (여기 튜닝!)
+            // -----------------------------
+            val vadDbThreshold = -45.0 // 환경 따라 -50 ~ -35 사이 튜닝 권장
+
+            // 발화 시작 직전 조금 붙이기(잘림 방지)
+            val preRollMs = 200
+            val preRollSamples = sampleRate * preRollMs / 1000
+            val preRollRing = ShortArray(preRollSamples)
+            var preIdx = 0
+            var preFilled = 0
+
+            // 발화 끝난 직후 꼬리 무음 조금 포함(자연스럽게)
+            val hangoverMs = 300
+            val hangoverSamples = sampleRate * hangoverMs / 1000
+
+            var inVoice = false
+            var silenceSamples = 0
+
+            fun pushPreRoll(src: ShortArray, count: Int) {
+                for (i in 0 until count) {
+                    preRollRing[preIdx] = src[i]
+                    preIdx = (preIdx + 1) % preRollSamples
+                    if (preFilled < preRollSamples) preFilled++
+                }
+            }
+
+            fun flushPreRollToMain() {
+                val start = (preIdx - preFilled + preRollSamples) % preRollSamples
+                for (k in 0 until preFilled) {
+                    if (currentPos >= maxSamples) break
+                    val s = preRollRing[(start + k) % preRollSamples]
+                    audioShort[currentPos] = s
+                    audioFloat[currentPos] = s / 32768f
+                    currentPos++
+                }
+                preFilled = 0
+            }
+
+            fun appendToMain(src: ShortArray, count: Int) {
+                var i = 0
+                while (i < count && currentPos < maxSamples) {
+                    val s = src[i]
+                    audioShort[currentPos] = s
+                    audioFloat[currentPos] = s / 32768f
+                    currentPos++
+                    i++
+                }
+            }
+
             try {
                 audioRecord.startRecording()
 
@@ -283,26 +346,49 @@ class MyInCallService : InCallService() {
                     val readCount = audioRecord.read(pcmBuffer, 0, pcmBuffer.size)
                     if (readCount <= 0) continue
 
-                    var i = 0
-                    while (i < readCount && currentPos < maxSamples) {
-                        val s = pcmBuffer[i]
-                        audioShort[currentPos] = s
-                        audioFloat[currentPos] = s / 32768f
-                        currentPos++
-                        i++
+                    // pre-roll 링버퍼는 항상 업데이트(발화 시작 직전 포함용)
+                    if (preRollSamples > 0) pushPreRoll(pcmBuffer, readCount)
+
+                    // 현재 프레임 dB 측정
+                    val db = calcDbFs(pcmBuffer, readCount)
+                    val isVoiceFrame = db > vadDbThreshold
+
+                    // 필요하면 로그로 튜닝
+                    // Log.d("VAD", "db=$db, voice=$isVoiceFrame, pos=$currentPos")
+
+                    if (isVoiceFrame) {
+                        if (!inVoice) {
+                            // 발화 시작: 직전 pre-roll 붙이기
+                            if (preRollSamples > 0) flushPreRollToMain()
+                        }
+                        inVoice = true
+                        silenceSamples = 0
+
+                        // 발화 프레임은 누적
+                        appendToMain(pcmBuffer, readCount)
+
+                    } else {
+                        // 무음 프레임
+                        if (inVoice) {
+                            silenceSamples += readCount
+
+                            // 발화 끝부분 자연스럽게: hangover 만큼만 무음 포함
+                            if (silenceSamples < hangoverSamples) {
+                                appendToMain(pcmBuffer, readCount)
+                            } else {
+                                inVoice = false
+                                silenceSamples = 0
+                                // 이후 무음은 main에 안 넣음(=무음 제거)
+                            }
+                        }
+                        // inVoice == false 면 완전 무시(무음 제거)
                     }
 
+                    // "소리 누적" 5초 채우면 업로드
                     if (currentPos >= maxSamples) {
-                        // 1) MFCC 추론 (로컬)
-//                        try {
-//                            mfccManager.processAudioSegment(audioFloat.clone())
-//                        } catch (e: Exception) {
-//                            Log.e("MFCC", "processAudioSegment failed: ${e.message}", e)
-//                        }
-
-                        // 2) 5초 PCM 업로드 + 서버 결과로 알림 판단
                         try {
                             val chunkCopy = audioShort.clone() // enqueue 비동기라 clone 고정
+
                             mfccUploader.uploadPcmShortChunk(
                                 callId = "1",
                                 chunk = chunkCopy,
@@ -313,7 +399,6 @@ class MyInCallService : InCallService() {
                                     Log.d("VP", "server score=${res.phishingScore}, should_alert=${res.shouldAlert}")
 
                                     if (should && (now - lastNotifyAt) >= cooldownMs) {
-
                                         // Android 13+만 알림 런타임 권한 필요
                                         val hasPermission =
                                             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
@@ -324,7 +409,7 @@ class MyInCallService : InCallService() {
 
                                         if (!hasPermission) {
                                             Log.w("VP", "POST_NOTIFICATIONS not granted -> skip notify")
-                                            return@uploadPcmShortChunk   //람다에서 빠져나가기 (아래 설명)
+                                            return@uploadPcmShortChunk
                                         }
 
                                         lastNotifyAt = now
@@ -335,17 +420,16 @@ class MyInCallService : InCallService() {
                                             message = "딥 보이스 점수: ${"%.2f".format(res.phishingScore)}\n통화 내용을 주의하세요."
                                         )
                                     }
-                                }
-                                ,
+                                },
                                 onError = { e ->
                                     Log.e("MFCC_UP", "upload/check failed: ${e.message}", e)
                                 }
                             )
                         } catch (e: Exception) {
                             Log.e("MFCC_UP", "upload failed: ${e.message}", e)
+                        } finally {
+                            currentPos = 0
                         }
-
-                        currentPos = 0
                     }
                 }
             } catch (e: Exception) {
