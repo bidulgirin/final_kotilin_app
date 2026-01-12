@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 통화기록 + 통화 요약 : 메인페이지 -->
+    <item
+        android:id="@+id/navigation_history"
+        android:icon="@drawable/ic_ai"
+        android:title="Home" />
+
+    <!-- 연락처 -->
+    <item
+        android:id="@+id/navigation_home"
+        android:icon="@drawable/ic_phone_call"
+        android:title="Contact" />
+
+
+    <!--    다이얼로그 -->
+    <item
+        android:id="@+id/navigation_dialog"
+        android:icon="@drawable/ic_dialog"
+        android:title="Dialog" />
+
+    <!-- 통화 기록 -->
+    <item
+        android:id="@+id/navigation_record"
+        android:icon="@drawable/ic_audio"
+        android:title="Record" />
+
+
+    <!--  설정 -->
+    <item
+        android:id="@+id/navigation_setting"
+        android:icon="@drawable/ic_setting"
+        android:title="Setting" />
+
+</menu>

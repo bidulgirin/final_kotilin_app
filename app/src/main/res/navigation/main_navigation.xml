@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 앱의 모든 화면과 화면간의 이동경로(트랜지션)을 정의하는 XML파일 -->
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_navigation"
+    app:startDestination="@id/navigation_history">
+    <!-- 홈 -->
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.final_pj.voice.feature.call.fragment.HomeFragment"
+        android:label="Home" >
+    </fragment>
+    <!-- 녹음기록 -->
+    <fragment
+        android:id="@+id/navigation_record"
+        android:name="com.final_pj.voice.feature.call.fragment.AudioListFragment"
+        android:label="Record" >
+    </fragment>
+
+    <!-- 통화기록 -->
+    <fragment
+        android:id="@+id/navigation_history"
+        android:name="com.final_pj.voice.feature.call.fragment.HistoryFragment"
+        android:label="History" >
+        <action
+            android:id="@+id/action_home_to_detail"
+            app:destination="@id/detailFragment" />
+    </fragment>
+    <!--  통화기록 상세보기 -->
+    <fragment
+        android:id="@+id/detailFragment"
+        android:name="com.final_pj.voice.feature.call.fragment.DetailFragment"
+        android:label="상세보기">
+        <argument
+            android:name="call_id"
+            app:argType="long" />
+    </fragment>
+    <!--  다이얼로그 -->
+    <fragment
+        android:id="@+id/navigation_dialog"
+        android:name="com.final_pj.voice.feature.call.fragment.DialerFragment"
+        android:label="Dialer"
+        tools:layout="@layout/fragment_dialer" />
+
+    <!-- 설정 -->
+    <fragment
+        android:id="@+id/navigation_setting"
+        android:name="com.final_pj.voice.feature.setting.fragment.SettingFragment"
+        android:label="Setting"
+        tools:layout="@layout/fragment_dialer">
+        <action
+            android:id="@+id/action_setting_to_blockList"
+            app:destination="@id/blockListFragment" />
+
+    </fragment>
+    <!--  차단목록 -->
+    <fragment
+        android:id="@+id/blockListFragment"
+        android:name="com.final_pj.voice.feature.blocklist.fragement.BlockListFragment"
+        android:label="차단 목록" />
+
+</navigation>
