@@ -24,10 +24,10 @@ interface ChatApi {
     ): ConversationDto
     
     // 이건 faiss 기반 챗봇 위에껀 openai 만 사용한거
-    @POST("/chat-faiss/chat")
+    @POST("/api/v1/chat-faiss/chat")
     suspend fun chat(@Body req: ChatFaissRequest): ChatFaissResponse
 
-    @GET("/chat-faiss/sessions/{sessionId}/messages")
+    @GET("/api/v1/chat-faiss/sessions/{sessionId}/messages")
     suspend fun getSessionMessages(
         @Path("sessionId") sessionId: String,
         @Query("limit") limit: Int = 200

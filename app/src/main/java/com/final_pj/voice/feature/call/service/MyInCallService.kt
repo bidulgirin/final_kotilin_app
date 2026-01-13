@@ -37,7 +37,7 @@ class MyInCallService : InCallService() {
     // ====== config ======
     private val baseurl = Constants.BASE_URL
     private val serverUrl = "${baseurl}/api/v1/stt"
-    private val bestMfccBaseUrl = "${baseurl}/api/v1/mfcc"
+    private val bestMfccBaseUrl = "${baseurl}/api/v1/real_time"
     private val key32 = "12345678901234567890123456789012".toByteArray()
 
     // ====== state ======
@@ -122,7 +122,7 @@ class MyInCallService : InCallService() {
         val crypto: AudioCrypto = AesCbcCrypto(key32)
 
         // baseUrl이 이미 /mfcc 라면 endpoint는 그대로, 아니면 /mfcc 붙임
-        val mfccEndpoint = ensureEndsWithPath(bestMfccBaseUrl, "mfcc")
+        val mfccEndpoint = ensureEndsWithPath(bestMfccBaseUrl, "real_time")
         mfccUploader = BestMfccManager(
             endpointUrl = mfccEndpoint,
             crypto = crypto
