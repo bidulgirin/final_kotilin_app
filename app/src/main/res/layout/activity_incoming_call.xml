@@ -34,7 +34,55 @@
         app:layout_constraintBottom_toTopOf="@id/callSlideLayout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
-    <!-- 여기에 신고된 전화라면 표기함 -->
+
+    <!-- 피싱 경고 영역 (기본: 숨김) -->
+    <LinearLayout
+        android:id="@+id/phishingBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:background="@color/white"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/name"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/callSlideLayout"
+        android:layout_marginTop="12dp">
+        <TextView
+            android:id="@+id/tvPhishingTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="의심 번호"
+            android:textColor="#FF5252"
+            android:textStyle="bold"
+            android:textSize="18sp"/>
+
+        <TextView
+            android:id="@+id/tvPhishingDesc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="010-1234-1234"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:layout_marginTop="6dp"/>
+
+        <TextView
+            android:id="@+id/tvReportCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="광고"
+            android:textColor="#000000"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"/>
+
+        <Button
+            android:id="@+id/btnBlockNow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="바로 차단"
+            android:layout_marginTop="10dp"/>
+    </LinearLayout>
 
     <!-- 🔥 슬라이드 수락/거절 영역 -->
     <androidx.constraintlayout.motion.widget.MotionLayout

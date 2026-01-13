@@ -189,7 +189,7 @@ class DetailFragment : Fragment() {
                 chipScore.visibility = View.VISIBLE
                 // 0.0~1.0 점수 가정 → 퍼센트로 표시
                 val pct = (score * 100).roundToInt()
-                chipScore.text = "위험도 $pct%"
+                chipScore.text = "딥 보이스 점수 $pct%"
             } else {
                 chipScore.visibility = View.GONE
             }
@@ -350,11 +350,6 @@ class DetailFragment : Fragment() {
 
             showSaveDialog(defaultPhone)
         }
-
-        // 백엔드랑 통신하는 함수
-        fun saveReportBackend(){
-        }
-
     }
 
 

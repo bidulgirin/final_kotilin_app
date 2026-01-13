@@ -1,5 +1,6 @@
 package com.final_pj.voice.core.util
 
+// 한국번호 기준
 object NumberNormalizer {
     fun normalize(input: String?): String {
         if (input.isNullOrBlank()) return ""
