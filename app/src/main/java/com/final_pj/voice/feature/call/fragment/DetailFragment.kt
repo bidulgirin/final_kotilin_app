@@ -63,6 +63,8 @@ class DetailFragment : Fragment() {
             return
         }
 
+        val passedNumber = arguments?.getString("phone_number")
+
         // 번호 정규화
         fun normalizePhone(raw: String): String {
             // 숫자와 +만 남기기 (국제번호 고려 시 + 허용)
@@ -340,7 +342,13 @@ class DetailFragment : Fragment() {
         }
         // 신고하기 버튼 이벤트
         btnOpenReportView.setOnClickListener {
-            showSaveDialog("010-4909-9553") // 테스트용
+            val defaultPhone = passedNumber?.takeIf { it.isNotBlank() }
+                ?: run {
+                    Toast.makeText(requireContext(), "전화번호 정보가 없습니다.", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+            showSaveDialog(defaultPhone)
         }
 
         // 백엔드랑 통신하는 함수

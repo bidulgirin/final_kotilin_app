@@ -99,8 +99,11 @@ class HistoryFragment : Fragment() {
 
         adapter = CallLogAdapter(
             uiItems,
-            onDetailClick = {record ->
-                val bundle = Bundle().apply { putLong("call_id", record.id) }
+            onDetailClick = { record ->
+                val bundle = Bundle().apply {
+                    putLong("call_id", record.id)
+                    putString("phone_number", record.phoneNumber)  // ✅ 추가
+                }
                 findNavController().navigate(R.id.detailFragment, bundle)
             },
             onBlockClick = { record ->

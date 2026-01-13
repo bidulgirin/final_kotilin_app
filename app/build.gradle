@@ -27,6 +27,7 @@ android {
 
         // ⬇ 최소 지원 Android 버전 (Android 13)
         minSdk 33
+        // minSdk 28 // 안드로이드 9를 위한 수정
 
         // 🎯 타겟 SDK (Android 15/16 대응)
         targetSdk 36
@@ -35,7 +36,7 @@ android {
         versionCode 1
 
         // 🏷 사용자에게 보이는 버전 이름
-        versionName "1.0"
+        versionName "1.2"
 
         // 🧪 테스트 러너 설정
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
