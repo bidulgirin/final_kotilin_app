@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.CallLog
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,10 +17,10 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.final_pj.voice.core.App
-import com.final_pj.voice.feature.blocklist.BlocklistCache
+import com.final_pj.voice.feature.blocklist.service.BlocklistCache
 import com.final_pj.voice.R
-import com.final_pj.voice.adapter.CallLogAdapter
-import com.final_pj.voice.feature.call.CallUiItem
+import com.final_pj.voice.feature.call.adapter.CallLogAdapter
+import com.final_pj.voice.feature.call.fragment.CallUiItem
 import com.final_pj.voice.feature.call.model.CallRecord
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

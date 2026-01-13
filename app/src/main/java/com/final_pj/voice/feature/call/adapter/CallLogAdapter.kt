@@ -1,4 +1,4 @@
-package com.final_pj.voice.adapter
+package com.final_pj.voice.feature.call.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -7,7 +7,7 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.final_pj.voice.R
-import com.final_pj.voice.feature.call.CallUiItem
+import com.final_pj.voice.feature.call.fragment.CallUiItem
 import com.final_pj.voice.feature.call.model.CallRecord
 import java.text.SimpleDateFormat
 import java.util.Date

@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.final_pj.voice.feature.call.activity.CallingActivity
 import com.final_pj.voice.R
-import com.final_pj.voice.adapter.ContactAdapter
+import com.final_pj.voice.feature.call.adapter.ContactAdapter
 import com.final_pj.voice.feature.call.model.Contact
 
 class HomeFragment : Fragment(R.layout.fragment_home) {

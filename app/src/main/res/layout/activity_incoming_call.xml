@@ -10,79 +10,124 @@
     <!-- 전화번호 -->
     <TextView
         android:id="@+id/tvNumber"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="010-0000-0000"
+        android:text="010-1234-5678"
         android:textColor="#FFFFFF"
-        android:textSize="24sp"
+        android:textSize="26sp"
         android:textStyle="bold"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:letterSpacing="0.02"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/name"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_chainStyle="packed"/>
-
-    <!-- 이름 -->
-    <TextView
-        android:id="@+id/name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="#FFFFFF"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@id/callSlideLayout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- 피싱 경고 영역 (기본: 숨김) -->
-    <LinearLayout
+    <!-- 이름(또는 저장된 이름) -->
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="홍길동"
+        android:textColor="#BDBDBD"
+        android:textSize="18sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        app:layout_constraintTop_toBottomOf="@id/tvNumber"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <!-- 피싱 경고 카드 (기본: 숨김) -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/phishingBox"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp"
-        android:background="@color/white"
-        android:visibility="gone"
+        android:padding="14dp"
+        android:background="@drawable/bg_phishing_card"
+        android:elevation="8dp"
         app:layout_constraintTop_toBottomOf="@id/name"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/callSlideLayout"
-        android:layout_marginTop="12dp">
+        android:layout_marginTop="14dp">
+
+        <!-- 경고 아이콘 -->
+        <TextView
+            android:id="@+id/tvWarnIcon"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:text="!"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_warn_circle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <!-- 타이틀 -->
         <TextView
             android:id="@+id/tvPhishingTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="의심 번호"
-            android:textColor="#FF5252"
+            android:textColor="#FF6B6B"
             android:textStyle="bold"
-            android:textSize="18sp"/>
+            android:textSize="18sp"
+            app:layout_constraintStart_toEndOf="@id/tvWarnIcon"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tvWarnIcon"
+            android:layout_marginStart="10dp"/>
 
+        <!-- 설명 -->
         <TextView
             android:id="@+id/tvPhishingDesc"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="010-1234-1234"
-            android:textColor="#000000"
-            android:textSize="16sp"
+            android:text=""
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            app:layout_constraintStart_toStartOf="@id/tvPhishingTitle"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvPhishingTitle"
             android:layout_marginTop="6dp"/>
 
+        <!-- 신고 건수 (칩 느낌) -->
         <TextView
             android:id="@+id/tvReportCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="광고"
-            android:textColor="#000000"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp"/>
+            android:text="신고 0건"
+            android:textColor="#FFD6D6"
+            android:textSize="13sp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:background="@drawable/bg_chip_red"
+            app:layout_constraintStart_toStartOf="@id/tvPhishingTitle"
+            app:layout_constraintTop_toBottomOf="@id/tvPhishingDesc"
+            android:layout_marginTop="10dp"/>
 
+        <!-- 바로 차단 버튼 -->
         <Button
             android:id="@+id/btnBlockNow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
             android:text="바로 차단"
-            android:layout_marginTop="10dp"/>
-    </LinearLayout>
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_block_button"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            app:layout_constraintStart_toStartOf="@id/tvPhishingTitle"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvReportCount"
+            android:layout_marginTop="12dp"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- 🔥 슬라이드 수락/거절 영역 -->
     <androidx.constraintlayout.motion.widget.MotionLayout
@@ -92,7 +137,6 @@
         app:layoutDescription="@xml/scene_call_slide"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <!-- 거절 -->
         <TextView
             android:id="@+id/tvReject"
             android:layout_width="wrap_content"
@@ -104,7 +148,6 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
-        <!-- 수락 -->
         <TextView
             android:id="@+id/tvAccept"
             android:layout_width="wrap_content"
@@ -116,7 +159,6 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
-        <!-- 슬라이더 -->
         <ImageView
             android:id="@+id/slider"
             android:layout_width="90dp"

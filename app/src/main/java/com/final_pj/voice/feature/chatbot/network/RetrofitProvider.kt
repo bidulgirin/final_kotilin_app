@@ -10,8 +10,6 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitProvider {
 
-    // TODO: 실제 서버 주소로 변경
-    // private const val BASE_URL = "http://192.168.219.110:8000"
     val BASE_URL = Constants.BASE_URL
 
     private val okHttp = OkHttpClient.Builder()

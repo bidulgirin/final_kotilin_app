@@ -1,6 +1,8 @@
-package com.final_pj.voice.feature.blocklist
+package com.final_pj.voice.feature.blocklist.re
 
 import com.final_pj.voice.core.util.NumberNormalizer
+import com.final_pj.voice.feature.blocklist.network.dao.BlockedNumberDao
+import com.final_pj.voice.feature.blocklist.network.entity.BlockedNumberEntity
 
 class BlocklistRepository(private val dao: BlockedNumberDao) {
 

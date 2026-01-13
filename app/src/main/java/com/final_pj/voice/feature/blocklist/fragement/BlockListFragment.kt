@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.final_pj.voice.R
 import com.final_pj.voice.core.App
-import com.final_pj.voice.feature.blocklist.BlocklistCache
+import com.final_pj.voice.feature.blocklist.service.BlocklistCache
 import com.final_pj.voice.feature.blocklist.adapter.BlockListAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

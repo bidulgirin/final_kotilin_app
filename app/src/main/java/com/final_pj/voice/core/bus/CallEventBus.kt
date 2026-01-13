@@ -1,4 +1,4 @@
-package com.final_pj.voice.bus
+package com.final_pj.voice.core.bus
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

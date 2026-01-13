@@ -1,4 +1,4 @@
-package com.final_pj.voice.feature.blocklist
+package com.final_pj.voice.feature.blocklist.service
 
 import com.final_pj.voice.core.util.NumberNormalizer
 import java.util.concurrent.ConcurrentHashMap

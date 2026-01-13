@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.final_pj.voice.MainActivity
 import com.final_pj.voice.R
-import com.final_pj.voice.bus.CallEventBus
+import com.final_pj.voice.core.bus.CallEventBus
 import com.final_pj.voice.core.util.CallUtils
 import com.final_pj.voice.feature.call.service.MyInCallService
 import com.google.android.material.button.MaterialButton

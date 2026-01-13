@@ -2,8 +2,8 @@ package com.final_pj.voice.core
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.final_pj.voice.feature.blocklist.BlockedNumberDao
-import com.final_pj.voice.feature.blocklist.BlockedNumberEntity
+import com.final_pj.voice.feature.blocklist.network.dao.BlockedNumberDao
+import com.final_pj.voice.feature.blocklist.network.entity.BlockedNumberEntity
 import com.final_pj.voice.feature.report.entity.PhishingNumberEntity
 import com.final_pj.voice.feature.report.network.dto.PhishingDao
 import com.final_pj.voice.feature.stt.SttResultDao
@@ -24,7 +24,7 @@ import com.final_pj.voice.feature.stt.SttResultEntity
         PhishingNumberEntity::class
 
     ],
-    version = 3, // 이거 올리고 마이그레이션 하는 듯
+    version = 4, // 이거 올리고 마이그레이션 하는 듯
     exportSchema = false
 )
 

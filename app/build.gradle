@@ -106,7 +106,8 @@ dependencies {
 
     // 🔹 Android 기본 KTX 확장
     implementation libs.androidx.core.ktx
-
+    // 하루 1회 자동 동기화
+    implementation "androidx.work:work-runtime-ktx:2.9.0"
     // 🔹 Lifecycle (런타임)
     implementation libs.androidx.lifecycle.runtime.ktx
 

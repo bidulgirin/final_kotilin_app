@@ -1,10 +1,10 @@
-package com.final_pj.voice.feature.blocklist
+package com.final_pj.voice.feature.blocklist.network.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.final_pj.voice.feature.blocklist.BlockedNumberEntity
+import com.final_pj.voice.feature.blocklist.network.entity.BlockedNumberEntity
 
 @Dao
 interface BlockedNumberDao {

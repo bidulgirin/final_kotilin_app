@@ -1,4 +1,4 @@
-package com.final_pj.voice.feature.blocklist
+package com.final_pj.voice.feature.blocklist.network.entity
 
 import androidx.room.Entity
 import androidx.room.Index

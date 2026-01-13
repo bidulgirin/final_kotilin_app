@@ -4,7 +4,7 @@ import android.os.Build
 import android.telecom.Call
 import android.telecom.CallScreeningService
 import android.provider.BlockedNumberContract
-import com.final_pj.voice.feature.blocklist.BlocklistCache
+import com.final_pj.voice.feature.blocklist.service.BlocklistCache
 
 /**
  * 수/발신 통화를 “시스템이 전화 앱으로 연결하기 직전”에 스크리닝해서

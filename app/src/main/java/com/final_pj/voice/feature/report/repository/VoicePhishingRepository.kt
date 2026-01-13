@@ -1,4 +1,4 @@
-package com.final_pj.voice.feature.report
+package com.final_pj.voice.feature.report.repository
 data class VoicePhishingLookup(
     val number: String,
     val description: String?,

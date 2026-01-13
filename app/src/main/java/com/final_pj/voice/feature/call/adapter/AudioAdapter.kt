@@ -1,4 +1,4 @@
-package com.final_pj.voice.adapter
+package com.final_pj.voice.feature.call.adapter
 
 import android.view.LayoutInflater
 import android.view.View

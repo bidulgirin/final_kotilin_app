@@ -1,4 +1,4 @@
-package com.final_pj.voice.feature.call
+package com.final_pj.voice.feature.call.fragment
 
 import com.final_pj.voice.feature.call.model.CallRecord
 

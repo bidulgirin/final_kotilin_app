@@ -12,10 +12,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.final_pj.voice.R
-import com.final_pj.voice.adapter.AudioAdapter
+import com.final_pj.voice.feature.call.adapter.AudioAdapter
 import com.final_pj.voice.databinding.FragmentMainRecodeListBinding
 import com.final_pj.voice.feature.call.model.AudioItem
-import com.final_pj.voice.feature.call.AudioRepository
+import com.final_pj.voice.feature.call.repository.AudioRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

@@ -1,9 +1,10 @@
-package com.final_pj.voice.feature.report
+package com.final_pj.voice.feature.report.repository
 
 import com.final_pj.voice.core.util.NumberNormalizer
 import com.final_pj.voice.feature.report.network.api.VoicePhisingApi
 import com.final_pj.voice.feature.report.network.dto.PhishingDao
 import com.final_pj.voice.feature.report.network.dto.VoicePhisingCreateReq
+import com.final_pj.voice.feature.report.toEntity
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

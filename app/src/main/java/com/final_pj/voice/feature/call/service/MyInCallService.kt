@@ -17,7 +17,7 @@ import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.final_pj.voice.bus.CallEventBus
+import com.final_pj.voice.core.bus.CallEventBus
 import com.final_pj.voice.core.Constants
 import com.final_pj.voice.feature.call.activity.IncomingCallActivity
 import com.final_pj.voice.feature.notify.NotificationHelper
