@@ -46,8 +46,8 @@
     <!-- [저장소] Android 13+ / Android 12 이하 분기 -->
     <!-- - 실제 런타임 요청은 코드에서 버전 분기 필요 -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
     <!-- [연락처] -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />

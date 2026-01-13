@@ -26,8 +26,8 @@ android {
         applicationId "com.final_pj.voice"
 
         // ⬇ 최소 지원 Android 버전 (Android 13)
-        minSdk 33
-        // minSdk 28 // 안드로이드 9를 위한 수정
+        // minSdk 33
+        minSdk 28 // 안드로이드 9를 위한 수정
 
         // 🎯 타겟 SDK (Android 15/16 대응)
         targetSdk 36
