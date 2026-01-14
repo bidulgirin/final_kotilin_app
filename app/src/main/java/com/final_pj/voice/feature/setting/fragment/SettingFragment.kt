@@ -1,15 +1,19 @@
 package com.final_pj.voice.feature.setting.fragment
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.Switch
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.final_pj.voice.R
+import com.final_pj.voice.feature.login.LoginActivity
+import com.final_pj.voice.feature.login.TokenStore
 
 class SettingFragment : Fragment() {
 
@@ -17,6 +21,8 @@ class SettingFragment : Fragment() {
     private lateinit var switchDarkMode: Switch // 다크 모드
     private lateinit var switchSummaryMode: Switch // 요약 on/off
     private lateinit var switchRecord: Switch // 녹음 on/off
+
+    private lateinit var tokenStore: TokenStore
 
     // 설정 Key 상수화 (Fragment 안에 두려면 companion object )
     companion object SettingKeys {
@@ -41,7 +47,7 @@ class SettingFragment : Fragment() {
         switchDarkMode = view.findViewById(R.id.switch_dark_mode)
         switchRecord = view.findViewById(R.id.switch_record_mode)
         switchSummaryMode = view.findViewById(R.id.switch_summury_mode)
-
+        tokenStore = TokenStore(requireContext())
         // 기존 설정 불러오기 (상수 사용)
         val prefs = requireContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
@@ -81,5 +87,26 @@ class SettingFragment : Fragment() {
         view.findViewById<View>(R.id.btn_block_list).setOnClickListener {
             findNavController().navigate(R.id.action_setting_to_blockList)
         }
+
+
+        // 로그아웃 버튼
+        view.findViewById<Button>(R.id.btnLogout).setOnClickListener {
+            // 1) 토큰 삭제 (예: SharedPreferences에 저장한 경우)
+            clearToken()
+
+            // 2) 로그인 화면으로 이동 (백스택 제거)
+            val intent = Intent(requireContext(), LoginActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
+
+            // 3) 현재 Activity 종료
+            requireActivity().finish()
+        }
+
+    }
+
+    private fun clearToken() {
+        tokenStore.clear()
     }
 }

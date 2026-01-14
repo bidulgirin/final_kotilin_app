@@ -29,4 +29,7 @@ app/src/main/assets/
 # Don't commit local jars
 app/libs/
 *.jar
-
+.env
+.env.release
+android/app/release.keystore
+android/app/debug.keystore

@@ -160,6 +160,8 @@ dependencies {
     implementation libs.generativeai
     implementation libs.androidx.compose.remote.creation.compose
     implementation libs.filament.android
+    implementation libs.androidx.annotation
+    implementation libs.androidx.activity
 
     // 🧪 단위 테스트
     testImplementation libs.junit
@@ -224,5 +226,10 @@ dependencies {
     implementation "androidx.datastore:datastore-preferences:1.1.1"
     implementation "com.squareup.retrofit2:retrofit:2.11.0"
     implementation "com.squareup.retrofit2:converter-gson:2.11.0"
+
+    implementation("androidx.credentials:credentials:1.6.0-rc01")
+    implementation("androidx.credentials:credentials-play-services-auth:1.6.0-rc01")
+    implementation("com.google.android.libraries.identity.googleid:googleid:<latest version>")
+
 
 }

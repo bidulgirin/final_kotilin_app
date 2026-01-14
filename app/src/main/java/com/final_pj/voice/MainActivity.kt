@@ -17,7 +17,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import com.final_pj.voice.feature.login.TokenStore
 import com.final_pj.voice.feature.call.service.CallDetectService
+import com.final_pj.voice.feature.login.LoginActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
@@ -25,12 +27,19 @@ class MainActivity : AppCompatActivity() {
     // 기본 전화(Dialer) 역할(Role) 요청 결과를 받기 위한 런처
     // - Android 10(Q) 이상에서 RoleManager를 통해 기본 다이얼러 설정을 요청할 때 사용
     private lateinit var dialerRoleRequestLauncher: ActivityResultLauncher<Intent>
+    val tokenStore: TokenStore by lazy { TokenStore(this) }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        requireLogin() // 토큰 없으면 로그인으로 보냄
+
         // 화면 레이아웃 연결
         setContentView(R.layout.activity_main)
+
+
+
 
         // Q 이상에서 Role 요청 결과를 받기 위한 런처 등록
         // - registerForActivityResult는 onCreate에서 등록하는 것이 안전함
@@ -48,6 +57,18 @@ class MainActivity : AppCompatActivity() {
         // - 회전 등으로 재생성될 때 중복 요청/실행을 줄이기 위해 유지
         if (savedInstanceState == null) {
             checkAndRequestPermissions()
+        }
+    }
+
+    protected fun requireLogin() {
+        if (!tokenStore.isLoggedInValid()) {
+            tokenStore.clear()
+
+            val intent = Intent(this, LoginActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
+            finish()
         }
     }
 
