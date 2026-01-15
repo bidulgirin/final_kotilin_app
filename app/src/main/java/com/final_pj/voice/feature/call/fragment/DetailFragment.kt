@@ -1,5 +1,6 @@
 package com.final_pj.voice.feature.call.fragment
 
+import android.annotation.SuppressLint
 import android.content.ContentProviderOperation
 import android.os.Bundle
 import android.provider.ContactsContract
@@ -42,6 +43,7 @@ class DetailFragment : Fragment() {
 
 
 
+    @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -185,11 +187,11 @@ class DetailFragment : Fragment() {
 
             // 점수
             val score = result.voicephishingScore
-            if (score != null) {
+            if (score != null && score > 0.5) {
                 chipScore.visibility = View.VISIBLE
                 // 0.0~1.0 점수 가정 → 퍼센트로 표시
                 val pct = (score * 100).roundToInt()
-                chipScore.text = "딥 보이스 점수 $pct%"
+                "${pct}%".also { chipScore.text = it }
             } else {
                 chipScore.visibility = View.GONE
             }

@@ -25,14 +25,13 @@ import com.final_pj.voice.feature.stt.*
 import com.google.gson.Gson
 import kotlinx.coroutines.*
 import java.io.File
+import java.util.UUID
 import kotlin.String
 import kotlin.math.log10
 import kotlin.math.sqrt
 
 
 class MyInCallService : InCallService() {
-
-
 
     // ====== config ======
     private val baseurl = Constants.BASE_URL
@@ -50,14 +49,13 @@ class MyInCallService : InCallService() {
     private var recorder: MediaRecorder? = null
     private var monitoringJob: Job? = null
 
-    //private lateinit var mfccManager: MFCCManager
-    // 이건 sttuploader 로 쭉 진행 (요약, 점수계산)
     private lateinit var sttUploader: SttUploader
     private val sttBuffer = SttBuffer()
 
     private lateinit var mfccUploader: BestMfccManager
 
     private var lastKnownCallLogId: Long? = null
+    private var currentCallSessionId: String? = null
 
     companion object {
         var instance: MyInCallService? = null
@@ -108,8 +106,6 @@ class MyInCallService : InCallService() {
         super.onCreate()
         instance = this
 
-        //mfccManager = MFCCManager(this)
-
         sttUploader = SttUploader(
             this,
             serverUrl = serverUrl,
@@ -121,7 +117,6 @@ class MyInCallService : InCallService() {
 
         val crypto: AudioCrypto = AesCbcCrypto(key32)
 
-        // baseUrl이 이미 /mfcc 라면 endpoint는 그대로, 아니면 /mfcc 붙임
         val mfccEndpoint = ensureEndsWithPath(bestMfccBaseUrl, "real_time")
         mfccUploader = BestMfccManager(
             endpointUrl = mfccEndpoint,
@@ -193,8 +188,10 @@ class MyInCallService : InCallService() {
                     }
                     started = true
                     activeAtMs = System.currentTimeMillis()
+                    currentCallSessionId = UUID.randomUUID().toString()
 
-                    Log.d("CALL", "Call ACTIVE -> start")
+                    Log.d("CALL", "Call ACTIVE -> start. Session ID: $currentCallSessionId")
+                    // 통화 내용 탐지 시작~
                     CallEventBus.notifyCallStarted()
 
                     // 녹음은 무조건 시작
@@ -202,12 +199,13 @@ class MyInCallService : InCallService() {
 
                     // “녹음 off”는 '파일 자동삭제 정책' 의미
                     deleteRecordingAfterUpload = (!isRecordEnabled() && isSummaryEnabled())
-
+                    
                     startMonitoring()
                 }
 
                 Call.STATE_DISCONNECTED, Call.STATE_DISCONNECTING -> {
                     started = false
+                    currentCallSessionId = null // Clear session ID
 
                     stopMonitoring()
                     stopRecordingSafely()
@@ -257,6 +255,13 @@ class MyInCallService : InCallService() {
         val cooldownMs = 30_000L
 
         monitoringJob = serviceScope.launch {
+            val callId = currentCallSessionId
+            if (callId == null) {
+                Log.e("MFCC_UP", "Call session ID null 로 들어옴 Aborting monitoring.")
+                return@launch
+            }
+            Log.d("MFCC_UP", "Monitoring with call session ID: $callId")
+
             val sampleRate = 16000
             val seconds = 5
             val maxSamples = sampleRate * seconds // 80,000 (5초 "소리" 누적 기준)
@@ -301,7 +306,7 @@ class MyInCallService : InCallService() {
             var preIdx = 0
             var preFilled = 0
 
-            // 발화 끝난 직후 꼬리 무음 조금 포함(자연스럽게)
+            // 발화 끝난 직후 꼬리 무음 조금 포함=> 자연스럽게 하려고
             val hangoverMs = 300
             val hangoverSamples = sampleRate * hangoverMs / 1000
 
@@ -346,67 +351,55 @@ class MyInCallService : InCallService() {
                     val readCount = audioRecord.read(pcmBuffer, 0, pcmBuffer.size)
                     if (readCount <= 0) continue
 
-                    // pre-roll 링버퍼는 항상 업데이트(발화 시작 직전 포함용)
                     if (preRollSamples > 0) pushPreRoll(pcmBuffer, readCount)
 
-                    // 현재 프레임 dB 측정
                     val db = calcDbFs(pcmBuffer, readCount)
                     val isVoiceFrame = db > vadDbThreshold
 
-                    // 필요하면 로그로 튜닝
-                    // Log.d("VAD", "db=$db, voice=$isVoiceFrame, pos=$currentPos")
-
                     if (isVoiceFrame) {
                         if (!inVoice) {
-                            // 발화 시작: 직전 pre-roll 붙이기
                             if (preRollSamples > 0) flushPreRollToMain()
                         }
                         inVoice = true
                         silenceSamples = 0
 
-                        // 발화 프레임은 누적
                         appendToMain(pcmBuffer, readCount)
 
                     } else {
-                        // 무음 프레임
                         if (inVoice) {
                             silenceSamples += readCount
 
-                            // 발화 끝부분 자연스럽게: hangover 만큼만 무음 포함
                             if (silenceSamples < hangoverSamples) {
                                 appendToMain(pcmBuffer, readCount)
                             } else {
                                 inVoice = false
                                 silenceSamples = 0
-                                // 이후 무음은 main에 안 넣음(=무음 제거)
                             }
                         }
-                        // inVoice == false 면 완전 무시(무음 제거)
                     }
 
-                    // "소리 누적" 5초 채우면 업로드
                     if (currentPos >= maxSamples) {
                         try {
-                            val chunkCopy = audioShort.clone() // enqueue 비동기라 clone 고정
+                            val chunkCopy = audioShort.clone()
 
                             mfccUploader.uploadPcmShortChunk(
-                                callId = "1",
-                                chunk = chunkCopy,
+                                callId = callId, // 보이스피싱점수 누적하려고 기준점 잡은거임
+                                chunk = chunkCopy, // 당연하게 원본데이터는 건드리면 안되니껜~ 클론해서 쓴 값이 들어가고용
                                 onResult = { res ->
                                     val now = System.currentTimeMillis()
-                                    val should = res.shouldAlert || (res.phishingScore >= cautionThreshold)
+                                    //val should = res.shouldAlert && (res.phishingScore >= cautionThreshold) // 임계치가 넘으면서 모델이 알리라고 하면~ 
+                                    val should = res.phishingScore >= cautionThreshold // 임계치만 체크... 뭔가 불안
 
                                     Log.d("VP", "server score=${res.phishingScore}, should_alert=${res.shouldAlert}")
-
+                                    // 사전 알림 서비스에 대한 권한 체큰
                                     if (should && (now - lastNotifyAt) >= cooldownMs) {
-                                        // Android 13+만 알림 런타임 권한 필요
                                         val hasPermission =
                                             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
                                                     ContextCompat.checkSelfPermission(
                                                         applicationContext,
                                                         Manifest.permission.POST_NOTIFICATIONS
                                                     ) == PackageManager.PERMISSION_GRANTED
-
+                                        // 퍼미션 없으면 바~~~~로 return 해주기
                                         if (!hasPermission) {
                                             Log.w("VP", "POST_NOTIFICATIONS not granted -> skip notify")
                                             return@uploadPcmShortChunk
@@ -519,22 +512,18 @@ class MyInCallService : InCallService() {
 
         val callLogId = resolveCurrentCallLogId(callEndTimeMs = System.currentTimeMillis())
         if (callLogId == null) {
-            Log.w("CALLLOG", "Failed to resolve callLogId")
+            Log.w("CALLLOG", "Failed to resolve callLogId for STT upload")
 
-            // ✅ record off면 남기지 않는 게 자연스러움
             if (!isRecordEnabled()) deleteCurrentRecordingFileIfExists()
 
             onFinished(false)
             return
         }
 
-        // ✅ 여기서 업로더는 "특정 파일" 업로드를 받는 메서드가 있으면 제일 좋음
         sttUploader.enqueueUploadFile(callLogId.toString(), file) { success ->
             onFinished(success)
         }
     }
-
-
 
     // =====================
     // UI
@@ -652,16 +641,3 @@ class MyInCallService : InCallService() {
         return if (b.endsWith("/$leaf")) b else "$b/$leaf"
     }
 }
-
-
-/*
-* 현재 문제 20260108
-* 1. 발화자 구분을 해서 수신자/발신자 중 발신자를 탐지하는 모델에 돌려야 하는 상황
-* 2. 무조건 uplink 가 나라는 보장이 없음
-* 3. 그러므로 발신일때 수신일때 라는 조건이 붙어야함
-* 4. 애초에 백엔드와 통신이 안되고 있음 
-* 5. 로직도 2번 돌아.
-* 6. open 도 다시 해야함
-* 7. 일단 faiss search 기능먼저 하자
-* 백엔드 부분은 제쳐두고 이것을 기반으로 다시 작성해야함
-* */
