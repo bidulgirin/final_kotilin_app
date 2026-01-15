@@ -56,6 +56,10 @@
             android:id="@+id/action_setting_to_blockList"
             app:destination="@id/blockListFragment" />
 
+        <action
+            android:id="@+id/action_setting_to_myPage"
+            app:destination="@id/myPageFragment" />
+
     </fragment>
     <!--  차단목록 -->
     <fragment
@@ -67,5 +71,8 @@
         android:id="@+id/chatbotFragment"
         android:name="com.final_pj.voice.feature.chatbot.fragment.ChatbotFragment"
         android:label="fragment_chatbot" />
-
+    <fragment
+        android:id="@+id/myPageFragment"
+        android:name="com.final_pj.voice.feature.mypage.MyPageFragment"
+        android:label="fragment_chatbot" />
 </navigation>

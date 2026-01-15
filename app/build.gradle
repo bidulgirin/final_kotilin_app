@@ -162,6 +162,7 @@ dependencies {
     implementation libs.filament.android
     implementation libs.androidx.annotation
     implementation libs.androidx.activity
+    implementation libs.androidx.compose.runtime
 
     // 🧪 단위 테스트
     testImplementation libs.junit
