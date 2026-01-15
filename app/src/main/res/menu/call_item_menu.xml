@@ -3,4 +3,7 @@
     <item
         android:id="@+id/menu_block"
         android:title="차단" />
+    <item
+        android:id="@+id/action_delete"
+        android:title="삭제" />
 </menu>

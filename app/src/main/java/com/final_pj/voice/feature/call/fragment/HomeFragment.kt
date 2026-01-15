@@ -3,13 +3,11 @@ package com.final_pj.voice.feature.call.fragment
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.provider.ContactsContract
 import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.SearchView
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -83,25 +81,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 putExtra("is_outgoing", true)
             }
             startActivity(intent)
-        }
-    }
-
-    private fun callContact(phone: String) {
-        val intent = Intent(Intent.ACTION_CALL).apply {
-            data = Uri.parse("tel:$phone")
-        }
-
-        if (ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.CALL_PHONE
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            startActivity(intent)
-        } else {
-            requestPermissions(
-                arrayOf(Manifest.permission.CALL_PHONE),
-                PERMISSION_REQUEST
-            )
         }
     }
 

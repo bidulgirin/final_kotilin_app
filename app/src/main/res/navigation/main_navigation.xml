@@ -35,6 +35,9 @@
         <argument
             android:name="call_id"
             app:argType="long" />
+        <action
+            android:id="@+id/action_detailFragment_to_chatbotFragment"
+            app:destination="@id/chatbotFragment" />
     </fragment>
     <!--  다이얼로그 -->
     <fragment
@@ -59,5 +62,10 @@
         android:id="@+id/blockListFragment"
         android:name="com.final_pj.voice.feature.blocklist.fragement.BlockListFragment"
         android:label="차단 목록" />
+
+    <fragment
+        android:id="@+id/chatbotFragment"
+        android:name="com.final_pj.voice.feature.chatbot.fragment.ChatbotFragment"
+        android:label="fragment_chatbot" />
 
 </navigation>

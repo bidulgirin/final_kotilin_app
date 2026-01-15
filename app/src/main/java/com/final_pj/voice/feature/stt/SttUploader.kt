@@ -154,85 +154,6 @@ class SttUploader(
         return false
     }
 
-    /**
-     * Thread 기반이므로 suspend 제거하고 동기 처리로 깔끔하게
-     */
-//    private fun uploadOnce(callId: String, m4aFile: File) {
-//        if (!m4aFile.exists() || !m4aFile.isFile) {
-//            Log.e("STT", "File not found: ${m4aFile.absolutePath}")
-//            return
-//        }
-//
-//        if (!waitUntilFileStable(m4aFile)) {
-//            Log.e("STT", "File not stable: ${m4aFile.name}")
-//            return
-//        }
-//
-//        val m4aBytes = m4aFile.readBytes()
-//        if (m4aBytes.isEmpty()) {
-//            Log.e("STT", "Empty m4a bytes: ${m4aFile.name}")
-//            return
-//        }
-//
-//        val (iv, encrypted) = encryptAES(m4aBytes, key32)
-//
-//        val body = MultipartBody.Builder()
-//            .setType(MultipartBody.FORM)
-//            .addFormDataPart("iv", Base64.encodeToString(iv, Base64.NO_WRAP))
-//            .addFormDataPart(
-//                "audio",
-//                "${m4aFile.name}.enc",
-//                encrypted.toRequestBody("application/octet-stream".toMediaType())
-//            )
-//            .build()
-//
-//        val req = Request.Builder()
-//            .url(serverUrl)
-//            .post(body)
-//            .build()
-//
-//        val call = client.newCall(req)
-//        currentCall = call
-//
-//        call.execute().use { resp ->
-//            val txt = resp.body?.string()
-//            Log.d("STT", "Uploaded=${m4aFile.name} callId=$callId HTTP ${resp.code} / $txt")
-//
-//            if (!resp.isSuccessful || txt.isNullOrBlank()) return@use
-//
-//            runCatching {
-//                val parsed = gson.fromJson(txt, SttResponse::class.java)
-//                val llm = parsed.llm
-//                // callId로 묶어서 임시 보관 (통화 종료 때 저장하려면 여기서 put)
-//                buffer.put(callId, parsed)
-//
-//                // DB 저장
-//                val app = context.applicationContext as App
-//
-//                CoroutineScope(Dispatchers.IO).launch {
-//                    val id = app.db.SttResultDao().insert(
-//                        SttResultEntity(
-//                            callId = callId,
-//                            text = parsed.text,
-//                            // LLM 결과 저장
-//                            isVoicephishing = llm?.isVoicephishing,
-//                            voicephishingScore = llm?.voicephishingScore,
-//                            category = llm?.category,
-//                            summary = llm?.summary
-//                        )
-//                    )
-//                    Log.d("STT", "DB 저장 완료 id=$id callId=$callId")
-//
-//                }
-//
-//            }.onFailure {
-//                Log.e("STT", "Failed to parse response: $txt", it)
-//            }
-//
-//            stop()
-//        }
-//    }
-
     private fun uploadOnce(task: UploadTask) {
         val callId = task.callId
         val m4aFile = task.file
@@ -298,19 +219,19 @@ class SttUploader(
                 val app = context.applicationContext as App
                 CoroutineScope(Dispatchers.IO).launch {
                     val llm = parsed.llm
-                    val id = app.db.SttResultDao().insert(
+                      val id = app.db.SttResultDao().insert(
                         SttResultEntity(
                             callId = callId,
                             text = parsed.text,
                             isVoicephishing = llm?.isVoicephishing,
                             voicephishingScore = llm?.voicephishingScore,
                             category = llm?.category,
-                            summary = llm?.summary
+                            summary = llm?.summary,
+                            keywords = llm?.keywords,
                         )
                     )
                     Log.d("STT", "DB 저장 완료 id=$id callId=$callId")
                 }
-
                 task.onFinished(true)
             }
         } catch (e: Exception) {
@@ -318,8 +239,6 @@ class SttUploader(
             task.onFinished(false)
         } finally {
             currentCall = null
-            // 여기서 stop() 호출하면 다음 작업이 영원히 안 돔 -> 제거 권장
-            // stop()
         }
     }
 

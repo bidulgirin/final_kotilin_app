@@ -41,6 +41,7 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.WRITE_CALL_LOG" />
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" /> <!-- [전화 상태 변경] 시스템/보호 권한 (일반 앱에서는 대부분 허용되지 않음) -->
     <uses-permission
         android:name="android.permission.MODIFY_PHONE_STATE"

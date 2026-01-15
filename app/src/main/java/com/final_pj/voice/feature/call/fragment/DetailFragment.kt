@@ -15,6 +15,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -23,6 +24,7 @@ import com.final_pj.voice.core.App
 import com.final_pj.voice.feature.chatbot.fragment.ChatbotFragment
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -53,6 +55,8 @@ class DetailFragment : Fragment() {
         val chipStatus = view.findViewById<Chip>(R.id.chipStatus)
         val chipCategory = view.findViewById<Chip>(R.id.chipCategory)
         val chipScore = view.findViewById<Chip>(R.id.chipScore)
+        val chipGroupKeywords = view.findViewById<ChipGroup>(R.id.chipGroupKeywords)
+        val keywordCard = view.findViewById<CardView>(R.id.keywordCard)
 
         val tvSummary = view.findViewById<TextView>(R.id.tvSummary)
         val tvText = view.findViewById<TextView>(R.id.tvText)
@@ -61,7 +65,7 @@ class DetailFragment : Fragment() {
         val btnOpenReportView = view.findViewById<Button>(R.id.report_button)
 
         val callId = arguments?.getLong("call_id") ?: run {
-            Log.e("DetailFragment", "callId is null")
+            Log.e("c", "callId is null")
             return
         }
 
@@ -84,30 +88,35 @@ class DetailFragment : Fragment() {
                 }
         }
 
+        val app = requireContext().applicationContext as App
+
         // 챗봇버튼
         val btnOpenChatbot = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnOpenChatbot)
 
         // 누르면 call_id 요약 내용등 챗봇ai 에게 전달
         btnOpenChatbot.setOnClickListener {
-            val summary = tvSummary.text?.toString().orEmpty()
-            val text = tvText.text?.toString().orEmpty()
-            val category = chipCategory.text?.toString().orEmpty() // 카테고리(챗봇에게알려줘서버튼만들것임)
+            viewLifecycleOwner.lifecycleScope.launch {
+                val result = withContext(Dispatchers.IO) {
+                    app.db.SttResultDao().getById(callId.toString())
+                }
+                val summary = tvSummary.text?.toString().orEmpty()
+                val text = tvText.text?.toString().orEmpty()
+                val keywords = result?.keywords
 
-            val bundle = Bundle().apply {
-                putLong("CALL_ID", callId)
-                putString("SUMMARY_TEXT", summary)
-                putString("CALL_TEXT", text)
-                putString("CATEGORY", category)
+                val bundle = Bundle().apply {
+                    putLong("CALL_ID", callId)
+                    putString("SUMMARY_TEXT", summary)
+                    putString("CALL_TEXT", text)
+                    if (keywords != null) {
+                        putStringArrayList("KEYWORDS", ArrayList(keywords))
+                    }
+                }
+
+                findNavController().navigate(R.id.action_detailFragment_to_chatbotFragment, bundle)
             }
-
-            parentFragmentManager.beginTransaction()
-                .setReorderingAllowed(true)
-                .replace(R.id.nav_host, ChatbotFragment().apply { arguments = bundle })
-                .addToBackStack(null)
-                .commit()
         }
 
-        // --------------------
+        // -------------------- 
         // 절차
         // 1. 신고 버튼 누르면 화면 나옴 (number은 자동입력 + 신고 사유 선택해야함 )
         // 2. 화면안에 직접 정말 신고하시겠습니까? 예
@@ -142,24 +151,24 @@ class DetailFragment : Fragment() {
             throw IllegalStateException("서버 오류 (${res.code()}): ${err ?: "unknown"}")
         }
 
-        val app = requireContext().applicationContext as App
-
 
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
                 app.db.SttResultDao().getById(callId.toString())
             }
+            Log.d("DetailFragment", "DB Keywords: ${result?.keywords}")
 
             if (result == null) {
                 tvTitle.text = "통화 상세"
                 tvSub.text = "callId: $callId"
-                tvSummary.text = "-"
-                tvText.text = "-"
+                tvSummary.text = ""
+                tvText.text = ""
                 chipStatus.text = "결과없음"
                 chipCategory.visibility = View.GONE
                 chipScore.visibility = View.GONE
-                tvMeta.text = "-"
+                keywordCard.visibility = View.GONE
+                tvMeta.text = ""
                 return@launch
             }
 
@@ -194,6 +203,23 @@ class DetailFragment : Fragment() {
                 "${pct}%".also { chipScore.text = it }
             } else {
                 chipScore.visibility = View.GONE
+            }
+
+            // 키워드
+            val keywords = result.keywords
+            if (keywords.isNullOrEmpty()) {
+                keywordCard.visibility = View.GONE
+            } else {
+                keywordCard.visibility = View.VISIBLE
+                chipGroupKeywords.removeAllViews()
+                keywords.forEach { keyword ->
+                    val chip = Chip(requireContext()).apply {
+                        text = keyword
+                        isClickable = false
+                        isCheckable = false
+                    }
+                    chipGroupKeywords.addView(chip)
+                }
             }
 
             tvMeta.text = "createdAt: ${result.createdAt}"

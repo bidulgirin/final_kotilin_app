@@ -13,10 +13,10 @@ object RetrofitProvider {
     val BASE_URL = Constants.BASE_URL
 
     private val okHttp = OkHttpClient.Builder()
-        .connectTimeout(20, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(20, TimeUnit.SECONDS)
-        .callTimeout(70, TimeUnit.SECONDS)
+        .connectTimeout(30, TimeUnit.SECONDS) // 연결 시간도 약간 늘림
+        .readTimeout(120, TimeUnit.SECONDS)   // 읽기 시간 대폭 늘림 (2분)
+        .writeTimeout(30, TimeUnit.SECONDS)  // 쓰기 시간도 약간 늘림
+        .callTimeout(130, TimeUnit.SECONDS)    // 전체 호출 시간 대폭 늘림
         .build()
 
     val api: ChatApi by lazy {

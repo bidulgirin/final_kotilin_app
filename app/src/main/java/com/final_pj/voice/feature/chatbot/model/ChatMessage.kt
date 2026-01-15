@@ -1,7 +1,15 @@
 package com.final_pj.voice.feature.chatbot.model
 
+//data class ChatMessage(
+//    val isUser: Boolean,
+//    val text: String,
+//    val createdAt: Long = System.currentTimeMillis()
+//)
+
+
 data class ChatMessage(
     val isUser: Boolean,
-    val text: String,
-    val createdAt: Long = System.currentTimeMillis()
+    val text: String = "",
+    val isLoading: Boolean = false,
+    val id: Long = System.nanoTime()
 )

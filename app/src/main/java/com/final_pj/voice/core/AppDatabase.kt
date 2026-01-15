@@ -21,10 +21,11 @@ import com.final_pj.voice.feature.stt.SttResultEntity
         // 새로 추가된 STT 결과 테이블
         SttResultEntity::class,
         // 신고된번호 테이블
-        PhishingNumberEntity::class
-
+        PhishingNumberEntity::class,
+        // 새로 추가
+        CallSummaryEntity::class 
     ],
-    version = 4, // 이거 올리고 마이그레이션 하는 듯
+    version = 6, // 버전 증가
     exportSchema = false
 )
 
@@ -32,4 +33,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun blockedNumberDao(): BlockedNumberDao
     abstract fun SttResultDao(): SttResultDao
     abstract fun phishingDao(): PhishingDao
+    // 새로 추가
+    abstract fun callSummaryDao(): CallSummaryDao 
 }

@@ -1,5 +1,8 @@
 package com.final_pj.voice.feature.call.fragment
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Bundle
@@ -11,6 +14,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -19,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.final_pj.voice.core.App
 import com.final_pj.voice.feature.blocklist.service.BlocklistCache
 import com.final_pj.voice.R
+import com.final_pj.voice.feature.call.activity.CallingActivity
 import com.final_pj.voice.feature.call.adapter.CallLogAdapter
 import com.final_pj.voice.feature.call.fragment.CallUiItem
 import com.final_pj.voice.feature.call.model.CallRecord
@@ -37,6 +43,11 @@ class HistoryFragment : Fragment() {
     private val uiItems = mutableListOf<CallUiItem>()
     private val callRecords = mutableListOf<CallRecord>()
 
+    private val REQ_CONTACTS = 1001
+    private val REQ_CALL = 1002
+
+    private var pendingCallNumber: String? = null
+
     private val mainHandler = Handler(Looper.getMainLooper())
     private var callLogObserver: ContentObserver? = null
 
@@ -48,14 +59,6 @@ class HistoryFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View = inflater.inflate(R.layout.fragment_history, container, false)
-
-
-    // 기존 코드
-//    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-//        setupRecycler(view)
-//        // 최초 로드
-//        reloadAllCallLogs()
-//    }
 
     override fun onStart() {
         super.onStart()
@@ -99,14 +102,26 @@ class HistoryFragment : Fragment() {
         adapter = CallLogAdapter(
             uiItems,
             onDetailClick = { record ->
-                val bundle = Bundle().apply {
-                    putLong("call_id", record.id)
-                    putString("phone_number", record.phoneNumber)  // ✅ 추가
+                // summary가 있을 때만 detailFragment로 이동
+                if (!record.summary.isNullOrEmpty()) {
+                    val bundle = Bundle().apply {
+                        putLong("call_id", record.id)
+                        putString("phone_number", record.phoneNumber)
+                    }
+                    findNavController().navigate(R.id.detailFragment, bundle)
+                } else {
+                    // 요약이 없는 경우 클릭 시 피드백 (선택 사항)
+                    Toast.makeText(requireContext(), "분석된 요약 내용이 없습니다.", Toast.LENGTH_SHORT).show()
                 }
-                findNavController().navigate(R.id.detailFragment, bundle)
             },
             onBlockClick = { record ->
                 showBlockConfirm(record)
+            },
+            onCallClick = { number ->
+                callPhone(number) //  1. 전화 걸기 호출
+            },
+            onDeleteClick = { record ->
+                showDeleteConfirm(record) // 2. 삭제 확인 창 호출
             }
         )
         recycler.adapter = adapter
@@ -114,28 +129,59 @@ class HistoryFragment : Fragment() {
         reloadAllCallLogs()
     }
 
+    // 1. 전화 걸기 로직
+    // 전화 거는 화면으로 이동 (발신)
+    private fun callPhone(number: String) {
+        if (number.isNotEmpty()) {
+            val intent = Intent(requireContext(), CallingActivity::class.java).apply {
+                putExtra("phone_number", number)
+                putExtra("is_outgoing", true)   // ⭐ 발신 표시
+            }
+            startActivity(intent)
+        }
+    }
+    // 2. 삭제 확인 다이얼로그
+    private fun showDeleteConfirm(record: CallRecord) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("기록 삭제")
+            .setMessage("이 통화 기록을 삭제하시겠습니까?")
+            .setPositiveButton("삭제") { _, _ ->
+                deleteCallLog(record)
+            }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
+    // 3. 실제 시스템 데이터베이스에서 삭제
+    private fun deleteCallLog(record: CallRecord) {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val rows = requireContext().contentResolver.delete(
+                    CallLog.Calls.CONTENT_URI,
+                    "${CallLog.Calls._ID} = ?",
+                    arrayOf(record.id.toString())
+                )
+
+                withContext(Dispatchers.Main) {
+                    if (rows > 0) {
+                        Toast.makeText(context, "기록이 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                        // 삭제 후 리스트 새로고침은 ContentObserver가 감지하여 자동으로 reloadAllCallLogs()를 실행함
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "삭제 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     private fun reloadAllCallLogs() {
         viewLifecycleOwner.lifecycleScope.launch {
             val records = withContext(Dispatchers.IO) { queryCallLogs() } // List<CallRecord>
             val newUi = buildSectionedItems(records)                      // List<CallUiItem>
-            adapter.submit(newUi)
+            adapter.submitItems(newUi)
         }
-    }
-    private fun setupRecycler(view: View) {
-        val recycler = view.findViewById<RecyclerView>(R.id.history_list)
-        recycler.layoutManager = LinearLayoutManager(requireContext())
-
-        adapter = CallLogAdapter(
-            uiItems,
-            onDetailClick = { record ->
-                val bundle = Bundle().apply { putLong("call_id", record.id) }
-                findNavController().navigate(R.id.detailFragment, bundle)
-            },
-            onBlockClick = { record ->
-                showBlockConfirm(record)
-            }
-        )
-        recycler.adapter = adapter
     }
 
     private fun registerCallLogObserver() {
@@ -180,8 +226,10 @@ class HistoryFragment : Fragment() {
 
 
 
-    private fun queryCallLogs(): List<CallRecord> {
+    private suspend fun queryCallLogs(): List<CallRecord> {
         val result = mutableListOf<CallRecord>()
+        val app = requireActivity().application as App
+        val summaryDao = app.db.callSummaryDao()
 
         val cursor = requireContext().contentResolver.query(
             CallLog.Calls.CONTENT_URI,
@@ -197,27 +245,40 @@ class HistoryFragment : Fragment() {
             "${CallLog.Calls.DATE} DESC"
         )
 
+        val tempRecords = mutableListOf<CallRecord>()
+        val callIds = mutableListOf<String>()
+
         cursor?.use { c ->
             while (c.moveToNext()) {
-                val id = c.getLong(0)
+                val id = c.getLong(0).toString() // Room의 callId가 String이므로 변환
                 val name = c.getString(1)
                 val number = c.getString(2)
                 val typeInt = c.getInt(3)
                 val date = c.getLong(4)
 
-                result.add(
+                tempRecords.add(
                     CallRecord(
-                        id = id,
+                        id = id.toLong(),
                         name = name,
                         phoneNumber = number,
                         callType = mapCallType(typeInt),
-                        date = date
+                        date = date,
+                        summary = null // 일단 비워둠
                     )
                 )
+                callIds.add(id)
             }
         }
 
-        return result
+        // [중요] DB에서 해당 ID들의 요약본을 한꺼번에 가져옴
+        val summaries = summaryDao.getSummariesByCallIds(callIds)
+        // 빠른 조회를 위해 Map으로 변환 (Key: callId, Value: summary)
+        val summaryMap = summaries.associate { it.callId to it.summary }
+
+        // 생성된 Record들에 summary 매핑
+        return tempRecords.map { record ->
+            record.copy(summary = summaryMap[record.id.toString()])
+        }
     }
 
 

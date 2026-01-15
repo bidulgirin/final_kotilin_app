@@ -6,6 +6,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.final_pj.voice.R
 import com.final_pj.voice.feature.chatbot.adapter.ChatAdapter
 import com.final_pj.voice.feature.chatbot.data.ConversationStore
@@ -13,6 +14,7 @@ import com.final_pj.voice.feature.chatbot.model.ChatMessage
 import com.final_pj.voice.feature.chatbot.network.RetrofitProvider
 import com.final_pj.voice.feature.chatbot.repository.ChatRepository
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
@@ -30,6 +32,7 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
     private val callId by lazy { arguments?.getLong("CALL_ID", -1L) ?: -1L }
     private val summaryTextArg by lazy { arguments?.getString("SUMMARY_TEXT").orEmpty() }
     private val callTextArg by lazy { arguments?.getString("CALL_TEXT").orEmpty() }
+    private val keywords by lazy { arguments?.getStringArrayList("KEYWORDS") }
 
     data class PredefinedQA(
         val id: Int,
@@ -44,14 +47,14 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
         PredefinedQA(
             id = 1,
             category = "기관사칭(검찰/경찰)",
-            userQuery = "검찰청에서 내가 범죄에 연루됐다고 연락 왔어. 내 통장이 대포통장이라는데?",
+            userQuery = "검찰청에서 내가 범죄에 연루됐다고 연락 왔어요. 내 통장이 대포통장이래요!",
             answer = "100% 보이스피싱입니다. 검찰은 절대 전화로 수사 협조를 구하거나 범죄 연루 사실을 통보하지 않습니다. 즉시 전화를 끊으세요. 확인이 필요하다면 검찰청 대표번호(1301)로 직접 전화하십시오.",
             metadata = mapOf("action" to "즉시종료", "contact" to "1301", "urgency" to "high")
         ),
         PredefinedQA(
             id = 2,
             category = "기관사칭(금감원)",
-            userQuery = "금감원 직원이 자산 보호를 위해서 돈을 현금으로 찾아서 자기들한테 맡기라는데?",
+            userQuery = "금감원 직원이 자산 보호를 위해서 돈을 현금으로 찾아서 자신들에게 맡기래요",
             answer = "절대 응하지 마세요. 금융감독원이나 은행 직원은 어떤 경우에도 고객에게 현금을 직접 전달받거나 특정 계좌로 이체를 요구하지 않습니다. 전화를 끊고 해당 은행 공식 고객센터로 확인하세요.",
             metadata = mapOf("action" to "현금전달금지", "contact" to "1332", "urgency" to "high")
         ),
@@ -65,7 +68,7 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
         PredefinedQA(
             id = 4,
             category = "지인사칭(가족)",
-            userQuery = "딸이 폰 액정이 깨졌다고 링크를 보냈는데 눌러도 돼?",
+            userQuery = "가족이 폰 액정이 깨졌다고 링크를 보냈는데 눌러도 되나요?",
             answer = "절대 누르지 마세요. 전형적인 '메신저 피싱' 수법입니다. 자녀의 원래 번호로 직접 통화를 시도해 사실을 확인하세요. 자녀가 전화를 안 받는다면 절대 링크를 클릭하거나 돈을 보내지 마세요.",
             metadata = mapOf("action" to "클릭금지", "target" to "가족", "urgency" to "high")
         ),
@@ -93,21 +96,21 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
         PredefinedQA(
             id = 8,
             category = "협박형(미납)",
-            userQuery = "전기세가 미납돼서 곧 단전된다고 입금하라는 문자가 왔어.",
+            userQuery = "전기세가 미납돼서 곧 단전된다고 입금하라는 문자가 왔어요.",
             answer = "가짜 공공기관 문자입니다. 한전이나 수도공사는 개인 계좌로 입금을 요구하지 않습니다. 해당 기관 공식 앱이나 홈페이지에서 미납 여부를 직접 확인하세요.",
             metadata = mapOf("action" to "확인후결제", "type" to "공과금", "urgency" to "medium")
         ),
         PredefinedQA(
             id = 9,
             category = "구인사칭(대포통장)",
-            userQuery = "알바 지원했는데, 월급 입금용이라며 체크카드를 택배로 보내달래.",
+            userQuery = "알바 지원했는데, 월급 입금용이라며 체크카드를 택배로 보내달래요.",
             answer = "절대 보내지 마세요. 체크카드나 비밀번호를 공유하는 행위는 본인이 모르는 사이에 '보이스피싱 인출책'으로 연루되어 처벌받을 수 있는 매우 위험한 행동입니다.",
             metadata = mapOf("action" to "카드전달금지", "risk" to "형사처벌", "urgency" to "high")
         ),
         PredefinedQA(
             id = 10,
             category = "해외결제스미싱",
-            userQuery = "[국제발신] 990,000원 결제완료라는 문자가 왔는데 나는 산 적이 없어.",
+            userQuery = "[국제발신] 990,000원 결제완료라는 문자가 왔는데요 저는 구매한적이 없어요.",
             answer = "문자에 적힌 고객센터 번호로 전화하지 마세요! 가짜 번호입니다. 전화를 거는 순간 사기꾼에게 연결됩니다. 실제 카드사 공식 번호로 전화해 결제 내역을 확인하세요.",
             metadata = mapOf("action" to "가짜번호주의", "type" to "스미싱", "urgency" to "high")
         ),
@@ -135,7 +138,7 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
         PredefinedQA(
             id = 14,
             category = "택배사칭",
-            userQuery = "[CJ대한통운] 주소지 불명으로 물품 미배송. 주소 수정 부탁드립니다.",
+            userQuery = "[CJ대한통운] 주소지 불명으로 물품 미배송. 주소 수정 부탁드립니다. 라는 문자가 왔어요",
             answer = "택배사를 사칭한 스미싱입니다. 링크를 누르면 개인정보 입력 창이 나오거나 악성 앱이 설치됩니다. 택배 상태는 해당 쇼핑몰이나 택배사 공식 앱에서 직접 조회하세요.",
             metadata = mapOf("action" to "송장번호조회", "type" to "택배스미싱", "urgency" to "medium")
         ),
@@ -268,7 +271,7 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
         val toolbar = view.findViewById<MaterialToolbar>(R.id.chatToolbar)
         toolbar.setNavigationOnClickListener { parentFragmentManager.popBackStack() }
 
-        val rv = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvChat)
+        val rv = view.findViewById<RecyclerView>(R.id.rvChat)
         adapter = ChatAdapter(messages)
         rv.adapter = adapter
         rv.layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
@@ -278,17 +281,23 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
 
             if (adapter.itemCount == 0) {
                 showInitialGuide()
-                rv.scrollToPosition(adapter.itemCount - 1)
+                rv.scrollToPosition((adapter.itemCount - 1).coerceAtLeast(0))
             }
         }
 
         val chipGroup = view.findViewById<ChipGroup>(R.id.chipGroupActions)
-        renderCategoryChips(chipGroup) { selectedCategory ->
-            onCategoryChipSelected(selectedCategory, rv)
+        if (keywords != null) {
+            renderKeywordChips(chipGroup, keywords!!) { selectedKeyword ->
+                onKeywordChipSelected(selectedKeyword, rv)
+            }
+        } else {
+            renderCategoryChips(chipGroup) { selectedCategory ->
+                onCategoryChipSelected(selectedCategory, rv)
+            }
         }
 
         val et = view.findViewById<TextInputEditText>(R.id.etUserInput)
-        val btnSend = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnSend)
+        val btnSend = view.findViewById<MaterialButton>(R.id.btnSend)
 
         btnSend.setOnClickListener {
             val text = et.text?.toString()?.trim().orEmpty()
@@ -298,8 +307,9 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
         }
     }
 
+
     /** callId 기준으로 conversationId를 가져와서 서버에서 히스토리 복원 */
-    private suspend fun restoreHistoryIfExists(rv: androidx.recyclerview.widget.RecyclerView) {
+    private suspend fun restoreHistoryIfExists(rv: RecyclerView) {
         try {
             val cid = store.getConversationId(callId)
             Log.d("ChatbotFragment", "restore: callId=$callId cid=$cid")
@@ -308,7 +318,7 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
 
             val history = repository.getHistory(cid, limit = 200)
             val uiItems = history.messages.map { m ->
-                ChatMessage(isUser = (m.role == "user"), text = m.content)
+                ChatMessage(isUser = (m.role == "user"), text = m.content, isLoading = false)
             }
 
             adapter.setItems(uiItems)
@@ -326,7 +336,7 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
         }
     }
 
-    // ✅ category 칩 클릭 → user_query / answer 자동 출력
+    // category 칩 클릭 → user_query / answer 자동 출력
     private fun onCategoryChipSelected(selectedCategory: String, rv: androidx.recyclerview.widget.RecyclerView) {
         val qa = categoryMap[selectedCategory]
         if (qa == null) {
@@ -362,15 +372,24 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
         }
     }
 
+    private fun onKeywordChipSelected(selectedKeyword: String, rv: RecyclerView) {
+        // 키워드를 사용자가 입력한 것처럼 처리
+        onUserSend(selectedKeyword, rv, view!!.findViewById(R.id.btnSend))
+    }
+
     private fun onUserSend(
         userText: String,
-        rv: androidx.recyclerview.widget.RecyclerView,
-        btnSend: com.google.android.material.button.MaterialButton
+        rv: RecyclerView,
+        btnSend: MaterialButton
     ) {
         addUser(userText)
         rv.smoothScrollToPosition(adapter.itemCount - 1)
 
         btnSend.isEnabled = false
+
+        // ✅ 로딩 말풍선 추가
+        val loadingId = adapter.addLoading()
+        rv.smoothScrollToPosition(adapter.itemCount - 1)
 
         lifecycleScope.launch {
             val summaryToSend = summaryTextArg.trim().takeIf { it.isNotBlank() }
@@ -392,10 +411,22 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
                 store.setConversationId(callId, res.sessionId)
                 Log.d("ChatbotFragment", "send: cid(after)=${res.sessionId}")
 
-                addBot(res.finalAnswer)
+                // ✅ 로딩을 봇 답변으로 교체
+                adapter.replaceById(
+                    loadingId,
+                    ChatMessage(isUser = false, text = res.finalAnswer, isLoading = false)
+                )
                 rv.smoothScrollToPosition(adapter.itemCount - 1)
+
             } catch (e: Exception) {
-                addBot("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.\n(${e.localizedMessage ?: "unknown error"})")
+                adapter.replaceById(
+                    loadingId,
+                    ChatMessage(
+                        isUser = false,
+                        text = "네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.\n(${e.localizedMessage ?: "unknown error"})",
+                        isLoading = false
+                    )
+                )
                 Log.e("ChatbotFragment", "send failed: ${e.message}", e)
             } finally {
                 btnSend.isEnabled = true
@@ -403,8 +434,22 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
         }
     }
 
+    private fun renderKeywordChips(chipGroup: ChipGroup, keywords: List<String>, onClick: (String) -> Unit) {
+        chipGroup.removeAllViews()
+        for (keyword in keywords) {
+            val chip = Chip(requireContext()).apply {
+                text = keyword
+                isCheckable = false
+                isClickable = true
+                setOnClickListener { onClick(keyword) }
+            }
+            chipGroup.addView(chip)
+        }
+    }
+
     private fun renderCategoryChips(chipGroup: ChipGroup, onClick: (String) -> Unit) {
         chipGroup.removeAllViews()
+        // categoryMap은 네 코드 그대로 사용
         for (category in categoryMap.keys) {
             val chip = Chip(requireContext()).apply {
                 text = category

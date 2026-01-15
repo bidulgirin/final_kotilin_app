@@ -123,6 +123,36 @@
                         android:textIsSelectable="true"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+            
+            <!-- 키워드 카드 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/keywordCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardUseCompatPadding="true"
+                app:cardCornerRadius="16dp"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="핵심 키워드"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp"/>
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupKeywords"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- 원문 카드 -->
             <com.google.android.material.card.MaterialCardView
@@ -193,7 +223,7 @@
                     android:textAllCaps="false"
                     app:icon="@drawable/ic_alert"
                     android:text="제보하기"
-                    android:textSize="12dp"
+                    android:textSize="12sp"
                     app:iconTint="@android:color/darker_gray"
                     android:textColor="@android:color/darker_gray"
                     android:backgroundTint="@android:color/transparent"

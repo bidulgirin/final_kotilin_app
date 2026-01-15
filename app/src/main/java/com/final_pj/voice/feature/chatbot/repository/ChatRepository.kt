@@ -7,7 +7,6 @@ import com.final_pj.voice.feature.chatbot.network.dto.ChatApi
 import com.final_pj.voice.feature.chatbot.network.dto.*
 
 class ChatRepository(private val api: ChatApi) {
-
     suspend fun send(
         conversationId: String?, // = sessionId
         userText: String,
@@ -29,7 +28,6 @@ class ChatRepository(private val api: ChatApi) {
             )
         )
     }
-
     suspend fun getHistory(conversationId: String, limit: Int = 200): SessionHistoryResponse {
         return api.getSessionMessages(sessionId = conversationId, limit = limit)
     }
@@ -39,9 +37,5 @@ class ChatRepository(private val api: ChatApi) {
         return res.conversationId
     }
 
-    // 대화 히스토리 조회
-//    suspend fun getHistory(conversationId: String, limit: Int = 200): ConversationDto {
-//        return api.getHistory(conversationId = conversationId, limit = limit)
-//    }
 }
 
