@@ -70,25 +70,25 @@ class LoginActivity : AppCompatActivity() {
             try {
                 Log.e(TAG, "request built. WEB_CLIENT_ID=$WEB_CLIENT_ID")
 
-                // ✅ 버튼 플로우용 옵션
+                // 버튼 플로우용 옵션
                 val option = GetSignInWithGoogleOption.Builder(WEB_CLIENT_ID).build()
                 val request = GetCredentialRequest.Builder()
                     .addCredentialOption(option)
                     .build()
 
                 Log.e(TAG, "before getCredential()")
-                val result = withTimeout(15_000) { // ✅ 15초 안에 응답 없으면 실패 처리
+                val result = withTimeout(15_000) { // 15초 안에 응답 없으면 실패 처리
                     credentialManager.getCredential(
                         request = request,
                         context = this@LoginActivity
                     )
                 }
 
-                Log.e(TAG, "after getCredential() ✅ result=$result")
+                Log.e(TAG, "after getCredential() result=$result")
 
                 val credential = result.credential
 
-                // ✅ GetSignInWithGoogleOption 결과는 CustomCredential로 오는 경우가 많음
+                // GetSignInWithGoogleOption 결과는 CustomCredential로 오는 경우가 많음
                 val idToken = if (credential is CustomCredential &&
                     credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
                 ) {
@@ -97,15 +97,15 @@ class LoginActivity : AppCompatActivity() {
                     throw IllegalStateException("Unexpected credential type: ${credential.type}")
                 }
 
-                // ✅ 서버 호출: 등록 여부 판단(isNewUser)
+                // 서버 호출: 등록 여부 판단(isNewUser)
                 val resp = withContext(Dispatchers.IO) {
                     ApiClient.api.googleLogin(GoogleLoginRequest(idToken = idToken))
                 }
 
-                // ✅ 토큰 저장
+                // 토큰 저장
                 tokenStore.saveAccessToken(resp.accessToken)
 
-                // ✅ “등록된게 없다면(신규)” → 회원가입 화면
+                // “등록된게 없다면(신규)” → 회원가입 화면
                 if (resp.isNewUser) {
                     startActivity(Intent(this@LoginActivity, SignupActivity::class.java))
                 } else {
