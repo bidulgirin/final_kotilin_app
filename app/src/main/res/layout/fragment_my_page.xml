@@ -60,12 +60,12 @@
             android:layout_width="match_parent"
             android:layout_height="12dp" />
 
-        <Button
-            android:id="@+id/btnEditProfile"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="프로필 수정(추후)"
-            android:enabled="false" />
+<!--        <Button-->
+<!--            android:id="@+id/btnEditProfile"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="프로필 수정(추후)"-->
+<!--            android:enabled="false" />-->
 
         <View
             android:layout_width="match_parent"

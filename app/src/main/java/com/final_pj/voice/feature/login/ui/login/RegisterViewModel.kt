@@ -1,5 +1,6 @@
 package com.final_pj.voice.feature.login.ui.login
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,7 +10,7 @@ import com.final_pj.voice.feature.login.TokenStore
 import com.final_pj.voice.feature.login.data.RegisterRepository
 import com.final_pj.voice.feature.login.data.Result
 import com.final_pj.voice.feature.login.dto.RegisterRequest
-import com.final_pj.voice.feature.login.dto.LoginResponse as ApiLoginResponse // DTO 이름 충돌 방지
+import com.final_pj.voice.feature.login.dto.LoginResponse as ApiLoginResponse
 import kotlinx.coroutines.launch
 
 class RegisterViewModel(
@@ -20,9 +21,6 @@ class RegisterViewModel(
     private val _registerResult = MutableLiveData<LoginResult>()
     val registerResult: LiveData<LoginResult> = _registerResult
     
-    // UI 로직에서 사용할 데이터 클래스 정의
-    data class LoginResponse(val accessToken: String, val isNewUser: Boolean = false)
-
     fun register(email: String, password: String, nickname: String?) {
         viewModelScope.launch {
             val request = RegisterRequest(
@@ -33,17 +31,21 @@ class RegisterViewModel(
             val result = registerRepository.register(request)
 
             if (result is Result.Success) {
-                // 백엔드 응답(ApiLoginResponse)에서 정보를 꺼내옴
                 val response = result.data as? ApiLoginResponse
                 if (response != null) {
-                    // response.user.email 과 같이 계층 구조 반영
+                    Log.d("RegisterViewModel", "Registration Success: $response")
+                    
+                    // 백엔드 응답에서 정보를 가져오거나, 입력받은 정보를 사용
+                    // 백엔드 구조: {"accessToken": "...", "user": {"id": "...", "email": "..."}}
                     tokenStore.saveAuthInfo(
                         token = response.accessToken,
-                        name = nickname ?: response.user.id, // 입력한 닉네임이 없으면 id 사용
+                        name = nickname ?: response.user.id,
                         email = response.user.email
                     )
+                    
                     _registerResult.value = LoginResult(success = LoggedInUserView(displayName = nickname ?: response.user.email))
                 } else {
+                    Log.e("RegisterViewModel", "Cast to ApiLoginResponse failed")
                     _registerResult.value = LoginResult(error = R.string.login_failed)
                 }
             } else {
@@ -51,4 +53,7 @@ class RegisterViewModel(
             }
         }
     }
+
+    // **주의**: LoginViewModel에서 사용되던 유효성 검사 로직이 여기서는 사용되지 않으므로,
+    // RegisterActivity에서 직접 이메일/비밀번호 길이 검사를 해야 합니다.
 }

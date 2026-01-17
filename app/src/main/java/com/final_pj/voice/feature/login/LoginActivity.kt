@@ -63,7 +63,7 @@ class LoginActivity : AppCompatActivity() {
         // View 초기화
         btnGoogle = findViewById(R.id.btnGoogle)
         btnLogin = findViewById(R.id.btnLogin) 
-        btnRegister = findViewById(R.id.btnRegister) // ★★★ 회원가입 버튼 초기화 추가 ★★★
+        btnRegister = findViewById(R.id.btnRegister) // 회원가입 버튼 초기화 추가
         etEmail = findViewById(R.id.etEmail) 
         etPassword = findViewById(R.id.etPassword) 
         progress = findViewById(R.id.progress)
@@ -76,7 +76,7 @@ class LoginActivity : AppCompatActivity() {
                 setLoading(false)
             }
             loginResult?.success?.let {
-                // 성공 시, Google 로그인과 마찬가지로 MainActivity로 이동
+                // 성공 시, MainActivity로 이동
                 startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                 finish()
             }
@@ -102,7 +102,6 @@ class LoginActivity : AppCompatActivity() {
             }
         }
         
-        // ★★★ 회원가입 버튼 리스너 추가 ★★★
         btnRegister.setOnClickListener {
             tvError.visibility = View.GONE
             startActivity(Intent(this@LoginActivity, RegisterActivity::class.java))
@@ -123,12 +122,9 @@ class LoginActivity : AppCompatActivity() {
         etPassword.isEnabled = !isLoading
     }
 
-    // *** Google 로그인 로직은 네트워크 호출이 Activity 내에 직접 남아있으므로, 
-    // *** setLoading/에러 처리 부분을 기존 Google 로직과 동기화해야 함 (아래에서 일부 수정)
-
     private fun startGoogleSignIn() {
         scope.launch {
-            setLoading(true) // <-- 이 시점에서 Google 로그인도 Loading 상태로 들어감
+            setLoading(true)
 
             try {
                 Log.e(TAG, "request built. WEB_CLIENT_ID=$WEB_CLIENT_ID")
@@ -140,7 +136,7 @@ class LoginActivity : AppCompatActivity() {
                     .build()
 
                 Log.e(TAG, "before getCredential()")
-                val result = withTimeout(15_000) { // 15초 안에 응답 없으면 실패 처리
+                val result = withTimeout(15_000) {
                     credentialManager.getCredential(
                         request = request,
                         context = this@LoginActivity
@@ -151,7 +147,6 @@ class LoginActivity : AppCompatActivity() {
 
                 val credential = result.credential
 
-                // GetSignInWithGoogleOption 결과는 CustomCredential로 오는 경우가 많음
                 val idToken = if (credential is CustomCredential &&
                     credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
                 ) {
@@ -165,8 +160,13 @@ class LoginActivity : AppCompatActivity() {
                     ApiClient.api.googleLogin(GoogleLoginRequest(idToken = idToken))
                 }
 
-                // 토큰 저장
-                tokenStore.saveAccessToken(resp.accessToken)
+
+                // 토큰 및 사용자 정보 저장
+                tokenStore.saveAuthInfo(
+                    token = resp.accessToken,
+                    name = resp.user.nickname ?: resp.user.name ?: resp.user.id,
+                    email = resp.user.email
+                )
 
                 // “등록된게 없다면(신규)” → 회원가입 화면
                 if (resp.isNewUser) {
@@ -177,12 +177,10 @@ class LoginActivity : AppCompatActivity() {
                 finish()
 
             } catch (e: NoCredentialException) {
-                // 기기에서 사용 가능한 Google 자격증명이 없음(계정 없거나, 제공자 문제 등)
                 showError("이 기기에 사용 가능한 Google 계정이 없습니다. (Google 계정 추가/Play 서비스 확인)")
                 Log.e(TAG, "NoCredentialException: ${e.message}", e)
 
             } catch (e: GetCredentialCancellationException) {
-                // 사용자가 취소했거나, 재인증(reauth) 실패([16])도 여기로 들어올 수 있음
                 showError("구글 로그인 재인증에 실패했어요. (SHA-1/Play services/계정 상태 확인)\n${e.message}")
                 Log.e(TAG, "GetCredentialCancellationException: ${e.message}", e)
 
@@ -195,9 +193,6 @@ class LoginActivity : AppCompatActivity() {
                 Log.e(TAG, "Exception: ${e.message}", e)
 
             } finally {
-                // Google 로그인 성공/실패 시점에 setLoading(false) 호출
-                // 단, ViewModel Observer를 통해 처리되는 일반 로그인 성공 건과 분리해야 함.
-                // 여기서는 일단 setLoading(false)를 유지합니다.
                 setLoading(false)
             }
         }

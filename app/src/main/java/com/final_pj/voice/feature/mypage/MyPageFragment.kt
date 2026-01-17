@@ -40,7 +40,7 @@ class MyPageFragment : Fragment() {
     private val dailyCallsProducer = CartesianChartModelProducer()
     private val dailySuspiciousProducer = CartesianChartModelProducer()
 
-    // ✅ 라벨 저장용 key (Vico 2개만)
+    // 라벨 저장용 key (Vico 2개만)
     private val callsLabelsKey = ExtraStore.Key<List<String>>()
     private val suspiciousLabelsKey = ExtraStore.Key<List<String>>()
 
@@ -67,17 +67,17 @@ class MyPageFragment : Fragment() {
         binding.tvUserEmail.text = "이메일: $email"
 
         binding.btnBackSetting.setOnClickListener { findNavController().popBackStack() }
-        binding.btnEditProfile.setOnClickListener { /* TODO */ }
+        //binding.btnEditProfile.setOnClickListener { /* TODO */ }
 
-        // ✅ Vico 차트 producer 연결 (2개만)
+        // Vico 차트 producer 연결 (2개만)
         binding.chartDailyCalls.modelProducer = dailyCallsProducer
         binding.chartDailySuspiciousCalls.modelProducer = dailySuspiciousProducer
 
-        // ✅ Vico 차트 2개만 라벨 포매터 적용
+        // Vico 차트 2개만 라벨 포매터 적용
         attachBottomAxisLabelFormatter(binding.chartDailyCalls, callsLabelsKey)
         attachBottomAxisLabelFormatter(binding.chartDailySuspiciousCalls, suspiciousLabelsKey)
 
-        // ✅ PieChart(도넛) 기본 설정 (한번만)
+        // PieChart(도넛) 기본 설정 (한번만)
         setupDonutChart(binding.chartTopCategories)
 
         // 토글 초기값: 일별

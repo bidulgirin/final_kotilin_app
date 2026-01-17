@@ -4,7 +4,7 @@ import java.time.Instant
 import java.util.UUID
 
 data class GoogleLoginRequest(
-    val idToken: String
+    val idToken: String,
 )
 
 data class UserDto(

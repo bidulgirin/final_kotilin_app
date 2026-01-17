@@ -7,9 +7,9 @@ class TokenStore(context: Context) {
     private val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
 
     fun saveAuthInfo(token: String, name: String?, email: String?) {
-        Log.d("token", "${token}")
-        Log.d("name", "${name}")
-        Log.d("email", "${email}")
+        Log.d("saveAuthInfo", "${token}")
+        Log.d("saveAuthInfo", "${name}")
+        Log.d("saveAuthInfo", "${email}")
         prefs.edit().apply {
             putString("accessToken", token)
             putString("name", name)
