@@ -19,7 +19,8 @@ class CallLogAdapter(
     private val onDetailClick: (CallRecord) -> Unit,
     private val onBlockClick: (CallRecord) -> Unit,
     private val onCallClick: (String) -> Unit,
-    private val onDeleteClick: (CallRecord) -> Unit
+    private val onDeleteClick: (CallRecord) -> Unit,
+    private val onReportClick: (CallRecord) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -92,7 +93,7 @@ class CallLogAdapter(
                 if (phone.isNotBlank()) onCallClick(phone)
             }
 
-            // ✅ 더보기 -> 팝업 메뉴(차단/삭제)
+            // ✅ 더보기 -> 팝업 메뉴(신고/차단/삭제)
             binding.btnMore.setOnClickListener { anchor ->
                 showMoreMenu(anchor, record)
             }
@@ -103,6 +104,10 @@ class CallLogAdapter(
                 menuInflater.inflate(R.menu.call_item_menu, menu)
                 setOnMenuItemClickListener { item ->
                     when (item.itemId) {
+                        R.id.menu_report -> {
+                            onReportClick(record)
+                            true
+                        }
                         R.id.menu_block -> {
                             onBlockClick(record)
                             true

@@ -29,10 +29,16 @@ import com.final_pj.voice.feature.stt.SttResultEntity
     exportSchema = false
 )
 
+// 로컬 저장 데이터 베이스 dao
 abstract class AppDatabase : RoomDatabase() {
+    // 차단목록
     abstract fun blockedNumberDao(): BlockedNumberDao
+    // callid 별 요약내용
     abstract fun SttResultDao(): SttResultDao
+    // 보이스 피싱 데이터피싱
     abstract fun phishingDao(): PhishingDao
-    // 새로 추가
+    // 이게 문제네... ㅠㅠㅠㅠㅠ아아ㅏ아아아앙
+    // 이 요약 문서는...필요없어
+    // sttResultDao 에 컬럼하나 더 추가하면 됨...
     abstract fun callSummaryDao(): CallSummaryDao 
 }

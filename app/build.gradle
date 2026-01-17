@@ -44,9 +44,14 @@ android {
 
     // 🏗 빌드 타입 설정
     buildTypes {
+        debug {
+            debuggable true
+        }
         release {
             // 🔐 코드 난독화 비활성
             minifyEnabled false
+            // 디버그 모드
+            debuggable false
 
             // 📜 Proguard 설정 파일
             proguardFiles getDefaultProguardFile(
@@ -210,15 +215,15 @@ dependencies {
 
     // Room: Android 공식 로컬 DB(SQLite) ORM 라이브러리
     // → SQL을 직접 쓰지 않고, Entity / DAO / Annotation 기반으로 DB 접근 가능
-    implementation "androidx.room:room-runtime:2.5.0"
+    implementation "androidx.room:room-runtime:2.7.0"
 
     // Room KTX: 코루틴, Flow 등 Kotlin 친화적 확장 기능 제공
     // → suspend 함수, Flow<T> 반환 등 사용하려면 필수
-    implementation "androidx.room:room-ktx:2.5.0"
+    implementation "androidx.room:room-ktx:2.7.0"
 
     // Room Compiler (KSP)
     // → @Entity, @Dao, @Database 어노테이션을 실제 구현 코드로 생성
-    ksp("androidx.room:room-compiler:2.5.0")
+    ksp("androidx.room:room-compiler:2.7.0")
 
     // Gson: JSON <-> 객체 직렬화/역직렬화 라이브러리
     // → 서버 응답 파싱, 로컬 저장용 JSON 변환 등에 사용
@@ -230,7 +235,7 @@ dependencies {
 
     implementation("androidx.credentials:credentials:1.6.0-rc01")
     implementation("androidx.credentials:credentials-play-services-auth:1.6.0-rc01")
-    implementation("com.google.android.libraries.identity.googleid:googleid:<latest version>")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     // 시각화 도구
     // For Jetpack Compose.
@@ -247,6 +252,5 @@ dependencies {
 
     // For the view system.
     implementation("com.patrykandpatrick.vico:views:1.12.0")
-
 
 }

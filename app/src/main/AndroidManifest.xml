@@ -54,6 +54,7 @@
         android:required="false" />
 
     <application
+        android:debuggable="true"
         android:name=".core.App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -64,7 +65,8 @@
         android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.Voice"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        tools:ignore="HardcodedDebugMode">
         <activity
             android:name=".feature.login.SignupActivity"
             android:exported="false" />

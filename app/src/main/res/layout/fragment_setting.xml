@@ -55,26 +55,26 @@
                 android:layout_marginBottom="16dp" />
 
             <!-- 예: 알림 토글 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="8dp">
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:orientation="horizontal"-->
+<!--                android:gravity="center_vertical"-->
+<!--                android:padding="8dp">-->
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="알림 켜기"
-                    android:textSize="16sp" />
+<!--                <TextView-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:text="알림 켜기"-->
+<!--                    android:textSize="16sp" />-->
 
-                <Switch
-                    android:id="@+id/switch_notifications"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    tools:ignore="UseSwitchCompatOrMaterialXml" />
-            </LinearLayout>
+<!--                <Switch-->
+<!--                    android:id="@+id/switch_notifications"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    tools:ignore="UseSwitchCompatOrMaterialXml" />-->
+<!--            </LinearLayout>-->
 
             <!-- 테마 설정 -->
             <LinearLayout

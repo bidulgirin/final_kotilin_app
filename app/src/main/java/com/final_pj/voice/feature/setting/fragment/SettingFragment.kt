@@ -51,7 +51,7 @@ class SettingFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        switchNotifications = view.findViewById(R.id.switch_notifications)
+        //switchNotifications = view.findViewById(R.id.switch_notifications)
         switchDarkMode = view.findViewById(R.id.switch_dark_mode)
         switchRecord = view.findViewById(R.id.switch_record_mode)
         switchSummaryMode = view.findViewById(R.id.switch_summury_mode)
@@ -65,7 +65,7 @@ class SettingFragment : Fragment() {
         val prefs = requireContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
         // 기존 설정 불러오기
-        switchNotifications.isChecked = prefs.getBoolean(NOTIFICATIONS, false)
+        //switchNotifications.isChecked = prefs.getBoolean(NOTIFICATIONS, false)
         switchDarkMode.isChecked = prefs.getBoolean(DARK_MODE, false)
         switchRecord.isChecked = prefs.getBoolean(RECORD_ENABLED, true)
         switchSummaryMode.isChecked = prefs.getBoolean(SUMMARY_ENABLED, true)
@@ -78,9 +78,9 @@ class SettingFragment : Fragment() {
         tvUserEmail.text = "이메일: $userEmail"
 
         // 토글 저장 + 다크모드 즉시 반영
-        switchNotifications.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean(NOTIFICATIONS, isChecked).apply()
-        }
+//        switchNotifications.setOnCheckedChangeListener { _, isChecked ->
+//            prefs.edit().putBoolean(NOTIFICATIONS, isChecked).apply()
+//        }
 
         switchDarkMode.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean(DARK_MODE, isChecked).apply()

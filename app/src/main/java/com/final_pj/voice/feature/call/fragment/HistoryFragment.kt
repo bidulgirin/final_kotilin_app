@@ -9,9 +9,13 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.CallLog
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.EditText
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -26,8 +30,10 @@ import com.final_pj.voice.feature.blocklist.service.BlocklistCache
 import com.final_pj.voice.R
 import com.final_pj.voice.feature.call.activity.CallingActivity
 import com.final_pj.voice.feature.call.adapter.CallLogAdapter
-import com.final_pj.voice.feature.call.fragment.CallUiItem
 import com.final_pj.voice.feature.call.model.CallRecord
+import com.final_pj.voice.feature.report.network.RetrofitClient
+import com.final_pj.voice.feature.report.network.dto.VoicePhisingCreateReq
+import com.final_pj.voice.feature.report.network.dto.VoicePhisingOutRes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -122,6 +128,14 @@ class HistoryFragment : Fragment() {
             },
             onDeleteClick = { record ->
                 showDeleteConfirm(record) // 2. 삭제 확인 창 호출
+            },
+            onReportClick = { record ->
+                val number = record.phoneNumber ?: ""
+                if (number.isNotBlank()) {
+                    showReportDialog(number)
+                } else {
+                    Toast.makeText(requireContext(), "전화번호 정보가 없습니다.", Toast.LENGTH_SHORT).show()
+                }
             }
         )
         recycler.adapter = adapter
@@ -333,5 +347,101 @@ class HistoryFragment : Fragment() {
                 ).show()
             }
         }
+    }
+
+    // --- 신고 기능 추가 ---
+
+    private fun normalizePhone(raw: String): String {
+        return raw.trim().replace(Regex("[^0-9+]"), "")
+    }
+
+    private suspend fun postVoicePhisingNumber(number: String, description: String?): VoicePhisingOutRes {
+        val api = RetrofitClient.voicePhisingApi
+        val req = VoicePhisingCreateReq(
+            number = normalizePhone(number),
+            description = description?.takeIf { it.isNotBlank() }
+        )
+        val res = api.insertNumber(req)
+        if (res.isSuccessful) {
+            return res.body() ?: throw IllegalStateException("응답 바디가 비어있습니다.")
+        }
+        if (res.code() == 409) {
+            throw IllegalStateException("이미 등록된 번호입니다.")
+        }
+        val err = res.errorBody()?.string()
+        throw IllegalStateException("서버 오류 (${res.code()}): ${err ?: "unknown"}")
+    }
+
+    private fun confirmReport(number: String, description: String) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("신고하기")
+            .setMessage("$number 제보하시겠습니까?")
+            .setPositiveButton("예", null)
+            .setNegativeButton("아니오") { d, _ -> d.dismiss() }
+            .create()
+            .also { dialog ->
+                dialog.setOnShowListener {
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val normalized = normalizePhone(number)
+                        val descOrNull = description
+                            .takeIf { it != "- 선택 -" }
+                            ?.trim()
+                            ?.takeIf { it.isNotBlank() }
+
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            try {
+                                withContext(Dispatchers.IO) {
+                                    postVoicePhisingNumber(normalized, descOrNull)
+                                }
+                                Toast.makeText(requireContext(), "신고가 접수되었습니다.", Toast.LENGTH_SHORT).show()
+                                dialog.dismiss()
+                            } catch (e: IllegalStateException) {
+                                Toast.makeText(requireContext(), e.message ?: "실패", Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(requireContext(), "네트워크 오류: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
+                dialog.show()
+            }
+    }
+
+    private fun showReportDialog(defaultPhone: String) {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.save_report_contact, null)
+
+        val etPhone = dialogView.findViewById<EditText>(R.id.etDialogPhone)
+        val spinner = dialogView.findViewById<Spinner>(R.id.report_reason_spinner)
+
+        etPhone.setText(defaultPhone)
+
+        val data = listOf("- 선택 -", "광고/마케팅", "기관사칭", "금융사기", "가족/지인 사칭")
+        val adapter = ArrayAdapter(requireContext(), R.layout.report_reason_item, data)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("신고하기")
+            .setView(dialogView)
+            .setNegativeButton("취소", null)
+            .setPositiveButton("확인", null)
+            .create()
+
+        dialog.setOnShowListener {
+            val positiveBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positiveBtn.setOnClickListener {
+                val phone = etPhone.text.toString().trim()
+                val description = spinner.selectedItem.toString().trim()
+
+                if (phone.isEmpty()) {
+                    etPhone.error = "연락처를 입력하세요"
+                    return@setOnClickListener
+                }
+                confirmReport(phone, description)
+                dialog.dismiss()
+            }
+        }
+        dialog.show()
     }
 }
