@@ -21,7 +21,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.final_pj.voice.R
 import com.final_pj.voice.core.App
-import com.final_pj.voice.feature.chatbot.fragment.ChatbotFragment
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -32,7 +31,6 @@ import kotlin.math.roundToInt
 import com.final_pj.voice.feature.report.network.RetrofitClient
 import com.final_pj.voice.feature.report.network.dto.VoicePhisingCreateReq
 import com.final_pj.voice.feature.report.network.dto.VoicePhisingOutRes
-import retrofit2.HttpException
 
 class DetailFragment : Fragment() {
     override fun onCreateView(
@@ -97,7 +95,7 @@ class DetailFragment : Fragment() {
         btnOpenChatbot.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
                 val result = withContext(Dispatchers.IO) {
-                    app.db.SttResultDao().getById(callId.toString())
+                    app.db.sttSummaryDao().getById(callId.toString())
                 }
                 val summary = tvSummary.text?.toString().orEmpty()
                 val text = tvText.text?.toString().orEmpty()
@@ -155,7 +153,7 @@ class DetailFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
-                app.db.SttResultDao().getById(callId.toString())
+                app.db.sttSummaryDao().getById(callId.toString())
             }
             Log.d("DetailFragment", "DB Keywords: ${result?.keywords}")
 

@@ -7,61 +7,55 @@
     android:padding="24dp">
 
     <TextView
-        android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="로그인"
+        android:text="일반 회원가입"
         android:textSize="24sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:layout_marginBottom="32dp"/>
 
     <EditText
-        android:id="@+id/etEmail"
+        android:id="@+id/etRegisterEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="이메일 또는 사용자 이름"
+        android:hint="이메일"
         android:inputType="textEmailAddress"
         android:minHeight="48dp"
-        android:layout_marginTop="32dp" />
+        android:layout_marginTop="8dp" />
 
     <EditText
-        android:id="@+id/etPassword"
+        android:id="@+id/etRegisterPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="비밀번호"
+        android:hint="비밀번호 (최소 6자)"
         android:inputType="textPassword"
         android:minHeight="48dp"
         android:layout_marginTop="16dp" />
 
-    <Button
-        android:id="@+id/btnLogin"
+    <EditText
+        android:id="@+id/etRegisterNickname"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="일반 로그인"
-        android:layout_marginTop="24dp" />
-
-    <Button
-        android:id="@+id/btnGoogle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Google로 계속하기"
+        android:hint="닉네임"
+        android:minHeight="48dp"
         android:layout_marginTop="16dp" />
 
     <Button
         android:id="@+id/btnRegister"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="일반 회원가입"
-        android:layout_marginTop="16dp" />
+        android:text="회원가입 완료"
+        android:layout_marginTop="32dp" />
 
     <ProgressBar
-        android:id="@+id/progress"
+        android:id="@+id/progressRegister"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
         android:layout_marginTop="16dp" />
 
     <TextView
-        android:id="@+id/tvError"
+        android:id="@+id/tvRegisterError"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="#D32F2F"

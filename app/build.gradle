@@ -9,16 +9,16 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     // kapt 활성 ( @Entity, @Dao ) 쓸려고 함
     id("com.google.devtools.ksp")
+    // Dagger Hilt Plugin
+    id("com.google.dagger.hilt.android") version "2.58"
 }
 
 android {
     // 📦 앱의 패키지 네임스페이스
     namespace 'com.final_pj.voice'
+    compileSdk 36
 
     // 🧱 컴파일 SDK 버전 (빌드 시 기준 Android API)
-    compileSdk {
-        version = release(35)
-    }
 
     defaultConfig {
 
@@ -81,10 +81,6 @@ android {
     }
 
     // 📦 AAPT 옵션 (압축 제외 파일)
-    aaptOptions {
-        // TensorFlow Lite 모델 압축 방지
-        noCompress "tflite"
-    }
 
     // 📦 패키징 설정
     packaging {
@@ -92,6 +88,9 @@ android {
             // 구형 JNI 패키징 방식 사용 (ML 라이브러리 호환)
             useLegacyPackaging = true
         }
+    }
+    androidResources {
+        noCompress 'tflite'
     }
 
 //    // 🔧 PyTorch / FFmpeg 관련 충돌 해결
@@ -112,7 +111,7 @@ dependencies {
     // 🔹 Android 기본 KTX 확장
     implementation libs.androidx.core.ktx
     // 하루 1회 자동 동기화
-    implementation "androidx.work:work-runtime-ktx:2.9.0"
+    implementation libs.androidx.work.runtime.ktx
     // 🔹 Lifecycle (런타임)
     implementation libs.androidx.lifecycle.runtime.ktx
 
@@ -159,7 +158,7 @@ dependencies {
 
     // 🔊 오디오 DSP 라이브러리 (JAR 직접 포함)
     //implementation files('libs/TarsosDSP-Android-latest.jar')
-    implementation "com.github.st-h:TarsosDSP:2.4.1"
+    implementation libs.tarsosdsp
     implementation libs.androidx.room.common.jvm
     implementation libs.volley
     implementation libs.generativeai
@@ -168,6 +167,7 @@ dependencies {
     implementation libs.androidx.annotation
     implementation libs.androidx.activity
     implementation libs.androidx.compose.runtime
+    implementation libs.transport.runtime
 
     // 🧪 단위 테스트
     testImplementation libs.junit
@@ -188,69 +188,54 @@ dependencies {
     // implementation 'com.alphacephei:vosk-android:0.3.75'
 
     // 🎨 Material Components
-    implementation "com.google.android.material:material:1.11.0"
+    implementation libs.material.v1110
 
     // ConstraintLayout 최신 버전 (MotionLayout 필수)
-    implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+    implementation libs.androidx.constraintlayout.v214
 
     // Jetpack Navigation
-    implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")
-    implementation("androidx.navigation:navigation-ui-ktx:2.5.3")
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
 
     // 네트워크 통신 (OkHttp)
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
 
     // 코루틴 (백그라운드 처리)
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    implementation libs.kotlinx.coroutines.core
+    implementation libs.kotlinx.coroutines.android
 
-    // TensorFlow Lite
-    implementation 'org.tensorflow:tensorflow-lite:2.14.0'
-    implementation 'org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0'
-
-    // PyTorch Lite (모바일 추론)
-    implementation 'org.pytorch:pytorch_android_lite:1.13.1'
-    implementation 'org.pytorch:pytorch_android_torchvision_lite:1.13.1'
 
     // Room: Android 공식 로컬 DB(SQLite) ORM 라이브러리
     // → SQL을 직접 쓰지 않고, Entity / DAO / Annotation 기반으로 DB 접근 가능
-    implementation "androidx.room:room-runtime:2.7.0"
+    implementation libs.androidx.room.runtime
 
     // Room KTX: 코루틴, Flow 등 Kotlin 친화적 확장 기능 제공
     // → suspend 함수, Flow<T> 반환 등 사용하려면 필수
-    implementation "androidx.room:room-ktx:2.7.0"
+    implementation libs.androidx.room.ktx
 
     // Room Compiler (KSP)
     // → @Entity, @Dao, @Database 어노테이션을 실제 구현 코드로 생성
-    ksp("androidx.room:room-compiler:2.7.0")
+    ksp(libs.androidx.room.compiler)
 
     // Gson: JSON <-> 객체 직렬화/역직렬화 라이브러리
     // → 서버 응답 파싱, 로컬 저장용 JSON 변환 등에 사용
-    implementation "com.google.code.gson:gson:2.10.1"
+    implementation libs.gson
 
-    implementation "androidx.datastore:datastore-preferences:1.1.1"
-    implementation "com.squareup.retrofit2:retrofit:2.11.0"
-    implementation "com.squareup.retrofit2:converter-gson:2.11.0"
+    implementation libs.androidx.datastore.preferences
+    implementation libs.retrofit
+    implementation libs.converter.gson
 
-    implementation("androidx.credentials:credentials:1.6.0-rc01")
-    implementation("androidx.credentials:credentials-play-services-auth:1.6.0-rc01")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.views)
 
-    // 시각화 도구
-    // For Jetpack Compose.
-    implementation("com.patrykandpatrick.vico:compose:1.12.0")
 
-    // For `compose`. Creates a `ChartStyle` based on an M2 Material Theme.
-    implementation("com.patrykandpatrick.vico:compose-m2:1.12.0")
-
-    // For `compose`. Creates a `ChartStyle` based on an M3 Material Theme.
-    implementation("com.patrykandpatrick.vico:compose-m3:1.12.0")
-
-    // Houses the core logic for charts and other elements. Included in all other modules.
-    implementation("com.patrykandpatrick.vico:core:1.12.0")
-
-    // For the view system.
-    implementation("com.patrykandpatrick.vico:views:1.12.0")
-
+    implementation(libs.mpandroidchart)
+    // Dagger Hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel)
 }

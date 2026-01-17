@@ -16,6 +16,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import com.final_pj.voice.feature.report.worker.VoicePhishingSyncScheduler
+
 class App : Application() {
 
     lateinit var db: AppDatabase
@@ -29,6 +30,7 @@ class App : Application() {
 
     lateinit var phishingNumber: VoicePhishingRepository
         private set
+
 
     override fun onCreate() {
         super.onCreate()

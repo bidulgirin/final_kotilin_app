@@ -219,7 +219,7 @@ class SttUploader(
                 val app = context.applicationContext as App
                 CoroutineScope(Dispatchers.IO).launch {
                     val llm = parsed.llm
-                      val id = app.db.SttResultDao().insert(
+                      val id = app.db.sttSummaryDao().insert(
                         SttResultEntity(
                             callId = callId,
                             text = parsed.text,

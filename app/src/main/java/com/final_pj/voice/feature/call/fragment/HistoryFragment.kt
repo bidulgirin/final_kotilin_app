@@ -105,8 +105,10 @@ class HistoryFragment : Fragment() {
         val recycler = view.findViewById<RecyclerView>(R.id.history_list)
         recycler.layoutManager = LinearLayoutManager(requireContext())
 
+        // isSummaryFeatureEnabled() 함수를 MyInCallService.instance에서 가져오도록 가정
         adapter = CallLogAdapter(
-            uiItems,
+            items = uiItems,
+            isSummaryFeatureEnabled = { com.final_pj.voice.feature.call.service.MyInCallService.instance?.isSummaryEnabled() ?: false },
             onDetailClick = { record ->
                 // summary가 있을 때만 detailFragment로 이동
                 if (!record.summary.isNullOrEmpty()) {
@@ -130,11 +132,11 @@ class HistoryFragment : Fragment() {
                 showDeleteConfirm(record) // 2. 삭제 확인 창 호출
             },
             onReportClick = { record ->
-                val number = record.phoneNumber ?: ""
-                if (number.isNotBlank()) {
+                val number = record.phoneNumber.takeIf { it.isNotBlank() }
+                if (number != null) {
                     showReportDialog(number)
                 } else {
-                    Toast.makeText(requireContext(), "전화번호 정보가 없습니다.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "신고할 전화번호 정보가 없습니다.", Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -274,10 +276,11 @@ class HistoryFragment : Fragment() {
                     CallRecord(
                         id = id.toLong(),
                         name = name,
-                        phoneNumber = number,
+                        phoneNumber = number ?: "", // getString이 null일 경우 빈 문자열로 안전하게 처리
                         callType = mapCallType(typeInt),
                         date = date,
-                        summary = null // 일단 비워둠
+                        summary = null, // 일단 비워둠
+                        isSummaryDone = false // 새로 조회된 항목은 아직 요약 안됨
                     )
                 )
                 callIds.add(id)
@@ -289,9 +292,13 @@ class HistoryFragment : Fragment() {
         // 빠른 조회를 위해 Map으로 변환 (Key: callId, Value: summary)
         val summaryMap = summaries.associate { it.callId to it.summary }
 
-        // 생성된 Record들에 summary 매핑
+        // 생성된 Record들에 summary 매핑 및 isSummaryDone 설정
         return tempRecords.map { record ->
-            record.copy(summary = summaryMap[record.id.toString()])
+            val summary = summaryMap[record.id.toString()]
+            record.copy(
+                summary = summary,
+                isSummaryDone = summary != null // Summary가 있으면 완료된 것으로 간주
+            )
         }
     }
 

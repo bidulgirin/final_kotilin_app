@@ -11,32 +11,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- 사용자 정보 표시 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tv_user_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="이름: -"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/tv_user_email"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="이메일: -"
-                android:textSize="16sp" />
-
-            <Button
-                android:id="@+id/btn_my_page"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="마이페이지 가기" />
-        </LinearLayout>
 
         <!-- 설정 -->
         <LinearLayout
@@ -75,7 +50,17 @@
 <!--                    android:layout_height="wrap_content"-->
 <!--                    tools:ignore="UseSwitchCompatOrMaterialXml" />-->
 <!--            </LinearLayout>-->
-
+            <!-- 사용자 정보 표시 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <Button
+                    android:id="@+id/btn_my_page"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="마이페이지 가기" />
+            </LinearLayout>
             <!-- 테마 설정 -->
             <LinearLayout
                 android:layout_width="match_parent"

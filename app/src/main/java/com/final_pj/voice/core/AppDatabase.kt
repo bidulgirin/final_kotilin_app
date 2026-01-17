@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.final_pj.voice.feature.blocklist.network.dao.BlockedNumberDao
 import com.final_pj.voice.feature.blocklist.network.entity.BlockedNumberEntity
+import com.final_pj.voice.feature.mypage.dao.SttResultStatsDao
 import com.final_pj.voice.feature.report.entity.PhishingNumberEntity
 import com.final_pj.voice.feature.report.network.dto.PhishingDao
 import com.final_pj.voice.feature.stt.SttResultDao
@@ -25,7 +26,7 @@ import com.final_pj.voice.feature.stt.SttResultEntity
         // 새로 추가
         CallSummaryEntity::class 
     ],
-    version = 6, // 버전 증가
+    version = 7, // 버전 증가
     exportSchema = false
 )
 
@@ -34,11 +35,10 @@ abstract class AppDatabase : RoomDatabase() {
     // 차단목록
     abstract fun blockedNumberDao(): BlockedNumberDao
     // callid 별 요약내용
-    abstract fun SttResultDao(): SttResultDao
+    abstract fun sttSummaryDao(): SttResultDao
     // 보이스 피싱 데이터피싱
     abstract fun phishingDao(): PhishingDao
-    // 이게 문제네... ㅠㅠㅠㅠㅠ아아ㅏ아아아앙
-    // 이 요약 문서는...필요없어
-    // sttResultDao 에 컬럼하나 더 추가하면 됨...
-    abstract fun callSummaryDao(): CallSummaryDao 
+    abstract fun callSummaryDao(): CallSummaryDao
+    // 통계/시각화용 DAO 추가
+    abstract fun sttResultStatsDao(): SttResultStatsDao
 }

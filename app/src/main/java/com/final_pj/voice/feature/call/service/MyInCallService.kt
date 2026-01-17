@@ -79,12 +79,12 @@ class MyInCallService : InCallService() {
         val rms = sqrt(sum / count) / 32768.0
         return 20.0 * log10(rms + 1e-9) // -inf 방지
     }
-    private fun isRecordEnabled(): Boolean {
+    fun isRecordEnabled(): Boolean {
         val prefs = getSharedPreferences(SettingKeys.PREF_NAME, MODE_PRIVATE)
         return prefs.getBoolean(SettingKeys.RECORD_ENABLED, true)
     }
 
-    private fun isSummaryEnabled(): Boolean {
+    fun isSummaryEnabled(): Boolean {
         val prefs = getSharedPreferences(SettingKeys.PREF_NAME, MODE_PRIVATE)
         return prefs.getBoolean(SettingKeys.SUMMARY_ENABLED, true)
     }
@@ -203,33 +203,47 @@ class MyInCallService : InCallService() {
                     startMonitoring()
                 }
 
-                Call.STATE_DISCONNECTED, Call.STATE_DISCONNECTING -> {
+                Call.STATE_DISCONNECTING -> {
                     started = false
-                    currentCallSessionId = null // Clear session ID
-
                     stopMonitoring()
+                    
+                    Log.d("CALL", "Call DISCONNECTING -> Stop monitoring.")
+                    
+                    val duration = System.currentTimeMillis() - activeAtMs
+                    if (duration < 5000) {
+                        Log.d("CALL", "too short ($duration ms) -> skip upload/cleanup")
+                        if (!isRecordEnabled()) deleteCurrentRecordingFileIfExists()
+                        CallEventBus.notifyCallEnded()
+                        return
+                    }
+                    
+                    // DISCONNECTING 상태에서는 일단 녹음만 멈추고,
+                    // DISCONNECTED 상태에서 업로드 로직을 수행하여 중복을 방지합니다.
                     stopRecordingSafely()
+                    CallEventBus.notifyCallEnded()
+                }
 
-                    val recordEnabled = isRecordEnabled()
-                    val summaryEnabled = isSummaryEnabled()
-
+                Call.STATE_DISCONNECTED -> {
+                    // DISCONNECTING에서 이미 stopRecordingSafely()를 호출했을 수 있으므로 안전하게 처리
+                    stopRecordingSafely() 
+                    
                     val duration = System.currentTimeMillis() - activeAtMs
                     if (duration < 5000) {
                         Log.d("CALL", "too short ($duration ms) -> skip upload")
-                        if (!recordEnabled) deleteCurrentRecordingFileIfExists()
+                        if (!isRecordEnabled()) deleteCurrentRecordingFileIfExists()
                         CallEventBus.notifyCallEnded()
                         return
                     }
 
                     // 요약 OFF면 onSaveStt를 호출하지 않음
-                    if (!summaryEnabled) {
+                    if (!isSummaryEnabled()) {
                         Log.d("SUMMARY", "summary_enabled=false -> skip onSaveStt()")
-                        if (!recordEnabled) deleteCurrentRecordingFileIfExists()
+                        if (!isRecordEnabled()) deleteCurrentRecordingFileIfExists()
                         CallEventBus.notifyCallEnded()
                         return
                     }
 
-                    // 요약 ON이면 업로드 -> 완료 후 삭제
+                    // 요약 ON일 때만 업로드 로직 실행
                     onSaveStt { success ->
                         Log.d("UPLOAD", "finished success=$success")
                         if (deleteRecordingAfterUpload) {

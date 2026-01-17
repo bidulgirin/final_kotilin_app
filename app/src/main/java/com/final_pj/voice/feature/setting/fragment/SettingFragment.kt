@@ -23,10 +23,6 @@ class SettingFragment : Fragment() {
     private lateinit var switchSummaryMode: Switch
     private lateinit var switchRecord: Switch
 
-    // 사용자 정보 표시용
-    private lateinit var tvUserName: TextView
-    private lateinit var tvUserEmail: TextView
-
     private lateinit var tokenStore: TokenStore
 
     companion object SettingKeys {
@@ -56,10 +52,6 @@ class SettingFragment : Fragment() {
         switchRecord = view.findViewById(R.id.switch_record_mode)
         switchSummaryMode = view.findViewById(R.id.switch_summury_mode)
 
-        // 사용자 정보 뷰 바인딩
-        tvUserName = view.findViewById(R.id.tv_user_name)
-        tvUserEmail = view.findViewById(R.id.tv_user_email)
-
         tokenStore = TokenStore(requireContext())
 
         val prefs = requireContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -70,12 +62,7 @@ class SettingFragment : Fragment() {
         switchRecord.isChecked = prefs.getBoolean(RECORD_ENABLED, true)
         switchSummaryMode.isChecked = prefs.getBoolean(SUMMARY_ENABLED, true)
 
-        // 사용자 정보 불러와 표시 (없으면 "-" 처리)
-        val userName = prefs.getString(USER_NAME, null) ?: "-"
-        val userEmail = prefs.getString(USER_EMAIL, null) ?: "-"
 
-        tvUserName.text = "이름: $userName"
-        tvUserEmail.text = "이메일: $userEmail"
 
         // 토글 저장 + 다크모드 즉시 반영
 //        switchNotifications.setOnCheckedChangeListener { _, isChecked ->

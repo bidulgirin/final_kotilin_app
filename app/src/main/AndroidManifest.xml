@@ -77,6 +77,9 @@
 
         <!-- 회원가입(추가정보) -->
         <activity
+            android:name=".feature.login.RegisterActivity"
+            android:exported="false" />
+        <activity
             android:name=".feature.login.SignupActivity"
             android:exported="false"
             tools:ignore="DuplicateActivity" />

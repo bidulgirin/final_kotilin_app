@@ -16,5 +16,4 @@ data class SttResultEntity(
     val summary: String? = null,
     val keywords: List<String>? = null,
     val createdAt: Long = System.currentTimeMillis()
-    // 추가로 오잉? 포린키로 연결되어있는데여...
 )

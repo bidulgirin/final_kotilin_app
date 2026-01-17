@@ -14,5 +14,11 @@
 
         <item name="rippleColor">?attr/colorControlHighlight</item>
     </style>
-
+        <style name="MyPageColumnChartStyle">
+            <item name="layers">column</item>
+            <item name="showBottomAxis">true</item>
+            <item name="showStartAxis">true</item>
+            <item name="scrollEnabled">false</item>
+            <item name="zoomEnabled">false</item>
+        </style>
 </resources>
