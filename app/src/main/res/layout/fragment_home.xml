@@ -6,19 +6,53 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="@color/app_background"
     tools:context=".feature.call.fragment.HomeFragment">
 
-    <!-- 상단 타이틀 -->
-    <TextView
-        android:id="@+id/title_home"
-        style="@style/FragmentTitleStyle"
-        android:text="연락처"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+    <!-- 상단 헤더 영역 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/header_home"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/app_background"
+        app:layout_constraintTop_toTopOf="parent">
 
-    <!-- 검색창 추가 -->
+        <TextView
+            android:id="@+id/title_home"
+            style="@style/FragmentTitleStyle"
+            android:text="연락처"
+            android:background="@android:color/transparent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <ImageButton
+            android:id="@+id/btn_search_toggle"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_search"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/primary_blue"
+            app:layout_constraintEnd_toStartOf="@id/btn_add_contact"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginEnd="8dp"/>
+
+        <ImageButton
+            android:id="@+id/btn_add_contact"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_add"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/primary_blue"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginEnd="16dp"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- 검색창 (기본값: GONE) -->
     <androidx.appcompat.widget.SearchView
         android:id="@+id/search_contact"
         android:layout_width="0dp"
@@ -28,8 +62,10 @@
         android:layout_marginTop="8dp"
         android:queryHint="이름/번호로 검색"
         android:iconifiedByDefault="false"
+        app:searchIcon="@null"
         android:background="@drawable/bg_edittext"
-        app:layout_constraintTop_toBottomOf="@id/title_home"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/header_home"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
@@ -40,18 +76,6 @@
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
         app:layout_constraintTop_toBottomOf="@id/search_contact"
-        app:layout_constraintBottom_toTopOf="@id/action_card"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <!-- 하단 버튼 카드 -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/action_card"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>

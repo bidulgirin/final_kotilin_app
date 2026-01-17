@@ -1,32 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="20dp">
-    <EditText
-        android:id="@+id/etDialogName"
+    android:padding="20dp"
+    android:background="@color/app_background">
+
+    <!-- Header Icon -->
+    <ImageView
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_add"
+        app:tint="@color/primary_blue" />
+
+    <!-- Name Field -->
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="이름"
-        android:inputType="textPersonName" />
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        app:startIconDrawable="@drawable/ic_home"
+        app:startIconTint="@color/primary_blue"
+        app:boxStrokeColor="@color/primary_blue"
+        app:hintTextColor="@color/primary_blue">
 
-    <EditText
-        android:id="@+id/etDialogPhone"
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDialogName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName"
+            android:textColor="@color/main_text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Phone Field -->
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
         android:hint="연락처"
-        android:inputType="phone"
-        android:layout_marginTop="12dp" />
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        app:startIconDrawable="@drawable/ic_phone"
+        app:startIconTint="@color/primary_blue"
+        app:boxStrokeColor="@color/primary_blue"
+        app:hintTextColor="@color/primary_blue">
 
-    <EditText
-        android:id="@+id/etDialogMemo"
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDialogPhone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="phone"
+            android:textColor="@color/main_text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Memo Field -->
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
         android:hint="메모"
-        android:inputType="textMultiLine"
-        android:minLines="3"
-        android:gravity="top"
-        android:layout_marginTop="12dp" />
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        app:startIconDrawable="@drawable/ic_bookmark"
+        app:startIconTint="@color/primary_blue"
+        app:boxStrokeColor="@color/primary_blue"
+        app:hintTextColor="@color/primary_blue">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDialogMemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textMultiLine"
+            android:minLines="3"
+            android:gravity="top"
+            android:textColor="@color/main_text" />
+    </com.google.android.material.textfield.TextInputLayout>
 
 </LinearLayout>

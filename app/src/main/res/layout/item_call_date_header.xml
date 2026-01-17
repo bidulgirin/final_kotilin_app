@@ -3,11 +3,12 @@
     android:id="@+id/tv_date_header"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
     android:paddingTop="14dp"
     android:paddingBottom="8dp"
     android:text="2026년 1월 9일 (금)"
     android:textStyle="bold"
     android:textSize="14sp"
-    android:textColor="#333"/>
+    android:textColor="@color/sub_text"
+    android:background="@color/app_background"/>

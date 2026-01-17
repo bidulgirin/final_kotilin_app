@@ -5,11 +5,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
+    android:layout_marginHorizontal="20dp"
+    android:layout_marginVertical="6dp"
     app:cardCornerRadius="16dp"
     app:cardElevation="2dp"
     app:strokeWidth="1dp"
-    app:strokeColor="#14000000"
+    app:strokeColor="@color/stroke_color"
+    app:cardBackgroundColor="@color/app_background"
     app:cardUseCompatPadding="true">
 
     <LinearLayout
@@ -32,6 +34,7 @@
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
                 android:textSize="16sp"
+                android:textColor="@color/main_text"
                 android:maxLines="1"
                 android:ellipsize="end"
                 tools:text="홍길동"/>
@@ -40,15 +43,15 @@
                 android:id="@+id/tv_number"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="2dp"
                 android:textSize="13sp"
-                android:textColor="#6B6B6B"
+                android:textColor="@color/sub_text"
                 android:maxLines="1"
                 android:ellipsize="end"
                 tools:text="010-1234-5678"/>
         </LinearLayout>
 
-        <!-- 전화 버튼 (아이콘 버튼 느낌) -->
+        <!-- 전화 버튼 -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_call"
             style="@style/Widget.MaterialComponents.Button.TextButton"
@@ -64,7 +67,18 @@
             app:iconTint="@android:color/white"
             app:iconPadding="0dp"
             app:cornerRadius="14dp"
-            app:backgroundTint="#2E7DFF"/>
+            app:backgroundTint="@color/primary_blue"/>
+
+        <!-- 더보기 버튼 (수정/삭제) -->
+        <ImageButton
+            android:id="@+id/btn_more"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_more_vert_24"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="menu"
+            app:tint="@color/gray_text" />
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
