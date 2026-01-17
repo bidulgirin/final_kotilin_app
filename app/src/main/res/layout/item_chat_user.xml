@@ -15,5 +15,5 @@
         android:lineSpacingExtra="3dp"
         android:padding="12dp"
         android:background="@drawable/bg_bubble_user"
-        android:textColor="@android:color/white"/>
+        android:textColor="@color/chat_user_text"/>
 </LinearLayout>

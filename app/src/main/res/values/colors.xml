@@ -11,6 +11,12 @@
     <color name="component_bg">#FFF5F5F5</color>
     <color name="stroke_color">#DADCE0</color>
 
+    <!-- 챗봇용 색상 -->
+    <color name="chat_bot_bubble">#F1F5F9</color>
+    <color name="chat_bot_text">#000000</color>
+    <color name="chat_user_bubble">#3b8db8</color>
+    <color name="chat_user_text">#FFFFFF</color>
+
     <!-- 기존 리소스 호환성을 위한 별칭 -->
     <color name="light_gray">#FFE0E0E0</color>
     <color name="gray_text">#5F6368</color>

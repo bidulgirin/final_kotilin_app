@@ -7,6 +7,12 @@
     <color name="component_bg">#1E1E1E</color>
     <color name="stroke_color">#333333</color>
 
+    <!-- 챗봇용 색상 (Dark Mode) -->
+    <color name="chat_bot_bubble">#2D2D2D</color>
+    <color name="chat_bot_text">#FFFFFF</color>
+    <color name="chat_user_bubble">#3b8db8</color>
+    <color name="chat_user_text">#FFFFFF</color>
+
     <!-- 기존 리소스 호환성을 위한 별칭 (Dark Mode 버전) -->
     <color name="light_gray">#2C2C2C</color>
     <color name="gray_text">#B0B0B0</color>

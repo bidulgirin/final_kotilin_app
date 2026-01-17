@@ -13,7 +13,7 @@
         android:background="@color/app_background"
         app:title="조치 안내"
         app:titleTextColor="@color/primary_blue"
-        app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge"
+        app:titleTextAppearance="@style/ToolbarTitleStyle"
         app:navigationIcon="?attr/homeAsUpIndicator"
         app:navigationIconTint="@color/primary_blue"
         app:layout_constraintTop_toTopOf="parent"
