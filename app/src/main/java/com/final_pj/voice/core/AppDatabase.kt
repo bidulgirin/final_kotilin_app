@@ -26,7 +26,7 @@ import com.final_pj.voice.feature.stt.SttResultEntity
         // 새로 추가
         CallSummaryEntity::class 
     ],
-    version = 7, // 버전 증가
+    version = 8, // 버전 증가: 7 -> 8
     exportSchema = false
 )
 

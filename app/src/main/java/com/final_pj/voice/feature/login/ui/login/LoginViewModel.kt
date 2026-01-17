@@ -20,8 +20,13 @@ class LoginViewModel(private val loginRepository: LoginRepository, private val t
     private val _loginResult = MutableLiveData<LoginResult>()
     val loginResult: LiveData<LoginResult> = _loginResult
 
-    // Google 로그인 이후 API 호출 응답 구조(accessToken, isNewUser 등)를 가정하고 일반 로그인에도 적용
-    data class LoginResponse(val accessToken: String, val isNewUser: Boolean = false)
+    // 백엔드 응답에 이름과 이메일이 포함되어 있다고 가정하고 필드 추가
+    data class LoginResponse(
+        val accessToken: String,
+        val isNewUser: Boolean = false,
+        val name: String?,
+        val email: String?
+    )
 
 
     fun login(username: String, password: String) {
@@ -32,8 +37,12 @@ class LoginViewModel(private val loginRepository: LoginRepository, private val t
                 // Repository에서 반환된 응답을 사용한다고 가정
                 val loginResponse = result.data as? LoginResponse
                 if (loginResponse != null) {
-                    tokenStore.saveAccessToken(loginResponse.accessToken)
-                    _loginResult.value = LoginResult(success = LoggedInUserView(displayName = username))
+                    tokenStore.saveAuthInfo(
+                        token = loginResponse.accessToken,
+                        name = loginResponse.name,
+                        email = loginResponse.email
+                    )
+                    _loginResult.value = LoginResult(success = LoggedInUserView(displayName = loginResponse.name ?: loginResponse.email ?: username))
                 } else {
                     _loginResult.value = LoginResult(error = R.string.login_failed)
                 }
@@ -53,9 +62,13 @@ class LoginViewModel(private val loginRepository: LoginRepository, private val t
                 // Repository에서 받은 응답이 JWT 토큰과 사용자 정보를 포함하고 있다고 가정
                 val response = result.data as? LoginResponse
                 if (response != null) {
-                    tokenStore.saveAccessToken(response.accessToken)
+                    tokenStore.saveAuthInfo(
+                        token = response.accessToken,
+                        name = response.name,
+                        email = response.email
+                    )
                     // 성공 처리 (isNewUser는 false로 가정하거나, Repository에서 받아와야 함)
-                    _loginResult.value = LoginResult(success = LoggedInUserView(displayName = email))
+                    _loginResult.value = LoginResult(success = LoggedInUserView(displayName = response.name ?: response.email ?: email))
                 } else {
                     _loginResult.value = LoginResult(error = R.string.login_failed)
                 }

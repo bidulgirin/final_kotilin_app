@@ -3,7 +3,7 @@ package com.final_pj.voice.feature.login.data
 import com.final_pj.voice.feature.login.api.ApiClient
 import com.final_pj.voice.feature.login.data.model.LoggedInUser
 import com.final_pj.voice.feature.login.dto.NormalLoginRequest
-import com.final_pj.voice.feature.login.ui.login.LoginViewModel.LoginResponse // ViewModel에서 정의한 응답 구조 재사용 가정
+import com.final_pj.voice.feature.login.ui.login.LoginViewModel.LoginResponse // ViewModel용 응답 구조
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -13,11 +13,8 @@ import kotlinx.coroutines.withContext
  */
 class LoginDataSource {
 
-    // 기존 로그인 함수 (ID/PW 기반이 아닌 경우, 혹은 초기 상태 확인용으로 남겨둡니다)
     fun login(username: String, password: String): Result<LoggedInUser> {
-        // TODO: handle loggedInUser authentication for existing cache logic
         try {
-            // 실제로는 서버 통신이 필요하며, 이 코드는 더미 사용자만 반환합니다.
             val fakeUser = LoggedInUser(java.util.UUID.randomUUID().toString(), username)
             return Result.Success(fakeUser)
         } catch (e: Throwable) {
@@ -25,18 +22,23 @@ class LoginDataSource {
         }
     }
 
-    // 일반 로그인 API 호출을 처리하는 함수 (JWT 발급 요청)
+    // 일반 로그인 API 호출
     suspend fun normalLogin(email: String, password: String): Result<LoginResponse> {
         return withContext(Dispatchers.IO) {
             try {
                 val request = NormalLoginRequest(email = email, password = password)
                 
-                // ApiClient.api.normalLogin을 호출하여 서버 응답을 받아옵니다.
-                // resp는 { accessToken: String, isNewUser: Boolean } 형태라고 가정합니다.
-                val resp = ApiClient.api.normalLogin(request) 
+                // 1. 백엔드 서버로부터 응답을 받음 (중첩된 user 객체 포함)
+                val resp = ApiClient.api.normalLogin(request)
                 
-                // 성공 시, ViewModel에서 예상하는 응답 구조로 변환하여 반환
-                val loginResponse = LoginResponse(accessToken = resp.accessToken, isNewUser = resp.isNewUser)
+                // 2. ViewModel이 사용하기 편하도록 데이터 가공
+                // resp.user.email 처럼 내부 객체에서 값을 꺼냅니다.
+                val loginResponse = LoginResponse(
+                    accessToken = resp.accessToken,
+                    isNewUser = resp.isNewUser,
+                    name = resp.user.id,  // 백엔드에 name이 없다면 id를 임시로 사용
+                    email = resp.user.email
+                )
                 Result.Success(loginResponse)
                 
             } catch (e: Exception) {

@@ -1,10 +1,23 @@
 package com.final_pj.voice.feature.login
 // TokenStore.kt
 import android.content.Context
+import android.util.Log
 
 class TokenStore(context: Context) {
     private val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
 
+    fun saveAuthInfo(token: String, name: String?, email: String?) {
+        Log.d("token", "${token}")
+        Log.d("name", "${name}")
+        Log.d("email", "${email}")
+        prefs.edit().apply {
+            putString("accessToken", token)
+            putString("name", name)
+            putString("email", email)
+            apply()
+        }
+    }
+    
     fun saveAccessToken(token: String) {
         prefs.edit().putString("accessToken", token).apply()
     }
@@ -20,9 +33,10 @@ class TokenStore(context: Context) {
         return !JwtUtil.isExpired(token)
     }
 
-
-
     fun getAccessToken(): String? = prefs.getString("accessToken", null)
+    fun getUserName(): String? = prefs.getString("name", null)
+    fun getUserEmail(): String? = prefs.getString("email", null)
+
 
     fun clear() {
         prefs.edit().clear().apply()

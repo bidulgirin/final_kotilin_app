@@ -16,7 +16,6 @@ import java.util.Locale
 
 class CallLogAdapter(
     private val items: MutableList<CallUiItem>,
-    private val isSummaryFeatureEnabled: () -> Boolean, // 설정 확인 함수 주입 (요청 사항 2)
     private val onDetailClick: (CallRecord) -> Unit,
     private val onBlockClick: (CallRecord) -> Unit,
     private val onCallClick: (String) -> Unit,
@@ -80,49 +79,21 @@ class CallLogAdapter(
             binding.callType.text = record.callType.orEmpty()
             binding.callTime.text = timeFormat.format(Date(record.date))
 
-            // --- 리포트 UI 제어 로직 시작 (요청 사항 1, 2, 3 반영) ---
-            val isSummaryFeatureOn = isSummaryFeatureEnabled()
-            
-            // 루트 뷰 클릭은 항상 onDetailClick로 연결 (전체 아이템 클릭 시 상세 보기)
+            val hasSummary = !record.summary.isNullOrEmpty()
+            binding.callSummary.isVisible = hasSummary
+            if (hasSummary) binding.callSummary.text = "리포트보기"
+
             binding.root.setOnClickListener { onDetailClick(record) }
+            binding.callSummary.setOnClickListener { onDetailClick(record) }
 
-            if (!isSummaryFeatureOn) {
-                // 1. 요약 기능이 꺼져 있으면 요약/리포트 버튼 숨김
-                binding.callSummary.isVisible = false
-            } else {
-                // 2. 요약 기능이 켜져 있는 경우, 요약 버튼 표시 상태 제어
-                binding.callSummary.isVisible = true
-                
-                when {
-                    // 3. 요약이 완료되었고 내용이 있는 경우: 리포트 보기
-                    record.isSummaryDone && !record.summary.isNullOrEmpty() -> {
-                        binding.callSummary.text = "리포트보기"
-                        binding.callSummary.isEnabled = true
-                        // 리포트 버튼 클릭 시 onDetailClick 호출 (루트 클릭과 동일)
-                        binding.callSummary.setOnClickListener { onDetailClick(record) }
-                    }
-                    // 4. 요약 중인 경우: 요약 중... 표시 및 비활성화
-                    !record.isSummaryDone && record.summary != null -> {
-                        binding.callSummary.text = "리포트 요약 중..."
-                        binding.callSummary.isEnabled = false // 클릭 비활성화
-                        binding.callSummary.setOnClickListener(null) // 클릭 리스너 제거
-                    }
-                    // 5. 그 외: 아직 요약이 시작되지 않았거나 내용이 없는 경우
-                    else -> {
-                        binding.callSummary.isVisible = false // 숨김
-                    }
-                }
-            }
-            // --- 리포트 UI 제어 로직 끝 ---
-
-            // ✅ 통화 버튼은 그대로
+            // 통화 버튼은 그대로
             binding.btnCall.isEnabled = phone.isNotBlank()
             binding.btnCall.alpha = if (phone.isNotBlank()) 1f else 0.3f
             binding.btnCall.setOnClickListener {
                 if (phone.isNotBlank()) onCallClick(phone)
             }
 
-            // ✅ 더보기 -> 팝업 메뉴(신고/차단/삭제)
+            // 더보기 -> 팝업 메뉴(신고/차단/삭제)
             binding.btnMore.setOnClickListener { anchor ->
                 showMoreMenu(anchor, record)
             }

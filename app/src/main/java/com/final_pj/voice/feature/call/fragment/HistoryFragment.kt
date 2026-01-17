@@ -108,7 +108,7 @@ class HistoryFragment : Fragment() {
         // isSummaryFeatureEnabled() 함수를 MyInCallService.instance에서 가져오도록 가정
         adapter = CallLogAdapter(
             items = uiItems,
-            isSummaryFeatureEnabled = { com.final_pj.voice.feature.call.service.MyInCallService.instance?.isSummaryEnabled() ?: false },
+            //isSummaryFeatureEnabled = { com.final_pj.voice.feature.call.service.MyInCallService.instance?.isSummaryEnabled() ?: false },
             onDetailClick = { record ->
                 // summary가 있을 때만 detailFragment로 이동
                 if (!record.summary.isNullOrEmpty()) {

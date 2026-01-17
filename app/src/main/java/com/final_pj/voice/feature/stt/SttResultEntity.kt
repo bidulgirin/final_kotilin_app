@@ -15,5 +15,6 @@ data class SttResultEntity(
     val category: String? = null,
     val summary: String? = null,
     val keywords: List<String>? = null,
+    val conversation: List<String>? = null,
     val createdAt: Long = System.currentTimeMillis()
 )

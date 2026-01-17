@@ -228,6 +228,7 @@ class SttUploader(
                             category = llm?.category,
                             summary = llm?.summary,
                             keywords = llm?.keywords,
+                            conversation = llm?.community // community 필드를 conversation으로 매핑
                         )
                     )
                     Log.d("STT", "DB 저장 완료 id=$id callId=$callId")

@@ -44,16 +44,15 @@ class LoginRepository(val dataSource: LoginDataSource) {
     // 이 함수는 서버로부터 JWT 토큰을 포함한 응답을 받아야 합니다.
     suspend fun normalLogin(email: String, password: String): Result<LoginResponse> {
         // 실제로는 dataSource.normalLogin(email, password) 호출로 대체되어야 합니다.
-        // 현재 dataSource에 normalLogin이 없으므로, 임시로 에러를 발생시키거나 더미 데이터를 반환합니다.
-        // 개발자가 LoginDataSource를 수정해야 함을 알립니다.
         
         return try {
-            // **주의**: LoginDataSource에 normalLogin이 정의되어 있지 않으므로, 
-            // 실제로는 dataSource.normalLogin(email, password)를 호출해야 하며,
-            // 해당 함수는 Result<LoginResponse>를 반환해야 합니다.
-            
-            // 임시 더미 응답: 실제 API 호출 코드를 LoginDataSource에 구현하세요.
-            val dummyResponse = LoginResponse(accessToken = "DUMMY_NORMAL_JWT_TOKEN_${System.currentTimeMillis()}", isNewUser = false)
+            // 임시 더미 응답: LoginResponse 생성 시 변경된 파라미터(name, email)를 추가합니다.
+            val dummyResponse = LoginResponse(
+                accessToken = "DUMMY_NORMAL_JWT_TOKEN_${System.currentTimeMillis()}",
+                isNewUser = false,
+                name = "사용자", // 임시 이름
+                email = email  // 입력받은 이메일
+            )
             Result.Success(dummyResponse)
             
         } catch (e: Exception) {

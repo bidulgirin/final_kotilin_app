@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.final_pj.voice.databinding.FragmentMyPageBinding
+import com.final_pj.voice.feature.login.TokenStore
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
@@ -29,12 +30,6 @@ import java.util.Locale
 
 class MyPageFragment : Fragment() {
 
-    companion object {
-        private const val PREF_NAME = "settings"
-        private const val USER_NAME = "user_name"
-        private const val USER_EMAIL = "user_email"
-    }
-
     private var _binding: FragmentMyPageBinding? = null
     private val binding get() = _binding!!
 
@@ -49,6 +44,9 @@ class MyPageFragment : Fragment() {
     private val callsLabelsKey = ExtraStore.Key<List<String>>()
     private val suspiciousLabelsKey = ExtraStore.Key<List<String>>()
 
+    // TokenStore 인스턴스
+    private val tokenStore by lazy { TokenStore(requireContext()) }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -61,10 +59,9 @@ class MyPageFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 사용자 정보
-        val prefs = requireContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        val name = prefs.getString(USER_NAME, "-") ?: "-"
-        val email = prefs.getString(USER_EMAIL, "-") ?: "-"
+        // 사용자 정보 로드 (TokenStore 사용)
+        val name = tokenStore.getUserName() ?: "이름 없음"
+        val email = tokenStore.getUserEmail() ?: "이메일 정보 없음"
 
         binding.tvUserName.text = "이름: $name"
         binding.tvUserEmail.text = "이메일: $email"

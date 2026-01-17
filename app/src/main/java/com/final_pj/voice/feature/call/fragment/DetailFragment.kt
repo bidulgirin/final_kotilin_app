@@ -174,7 +174,8 @@ class DetailFragment : Fragment() {
             tvSub.text = "callId: ${result.callId}"
 
             // 원문
-            tvText.text = result.text
+            //tvText.text = result.text
+            tvText.text = (result.conversation as? List<*>)?.joinToString("\n") ?: result.conversation?.toString() ?: ""
 
             // 요약
             tvSummary.text = result.summary?.takeIf { it.isNotBlank() } ?: "요약 결과가 없습니다."
