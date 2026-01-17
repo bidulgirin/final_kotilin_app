@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 테마별 유동 색상 (Dark Mode) -->
+    <color name="app_background">#121212</color>
+    <color name="main_text">#FFFFFF</color>
+    <color name="sub_text">#B0B0B0</color>
+    <color name="component_bg">#1E1E1E</color>
+    <color name="stroke_color">#333333</color>
+
+    <!-- 기존 리소스 호환성을 위한 별칭 (Dark Mode 버전) -->
+    <color name="light_gray">#2C2C2C</color>
+    <color name="gray_text">#B0B0B0</color>
+    <color name="edit_text_bg">#1E1E1E</color>
+    <color name="dial_bg">#121212</color>
+
+    <!-- 포인트 색상은 다크모드에서도 가독성이 좋으므로 유지 -->
+    <color name="primary_blue">#3b8db8</color>
+    <color name="blue">#3b8db8</color>
+    <color name="green">#3b8db8</color>
+    <color name="orange">#3b8db8</color>
+
+    <!-- 시스템 색상 -->
+    <color name="red">#FF5252</color>
+
+    <!-- 다크모드에서의 소셜 버튼 -->
+    <color name="google_btn_bg">#333333</color>
+    <color name="google_btn_text">#FFFFFF</color>
+
+    <!-- 하위 호환성 -->
+    <color name="black">#FFFFFF</color>
+    <color name="white">#121212</color>
+</resources>

@@ -3,198 +3,191 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="@color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/tv_my_page_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="마이페이지"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            style="@style/FragmentTitleStyle"
+            android:text="마이페이지" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="12dp" />
-
-        <!-- 사용자 정보 카드 -->
-        <com.google.android.material.card.MaterialCardView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="14dp"
-            app:cardUseCompatPadding="true">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <LinearLayout
+            <!-- 사용자 정보 카드 -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                app:cardCornerRadius="14dp"
+                app:cardUseCompatPadding="true">
 
-                <TextView
-                    android:id="@+id/tvUserName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="이름: 이경민"
-                    android:textSize="16sp" />
-
-                <View
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="8dp" />
-
-                <TextView
-                    android:id="@+id/tvUserEmail"
-                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="이메일: de05154@gmail.com"
-                    android:textSize="16sp" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="12dp" />
+                    <TextView
+                        android:id="@+id/tvUserName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="이름: 이경민"
+                        android:textSize="16sp" />
 
-<!--        <Button-->
-<!--            android:id="@+id/btnEditProfile"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text="프로필 수정(추후)"-->
-<!--            android:enabled="false" />-->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="8dp" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="8dp" />
+                    <TextView
+                        android:id="@+id/tvUserEmail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="이메일: de05154@gmail.com"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-        <Button
-            android:id="@+id/btnBackSetting"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="설정으로 돌아가기" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="12dp" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="18dp" />
-
-        <!-- 일별/월별 토글 -->
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/togglePeriod"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:singleSelection="true"
-            app:selectionRequired="true">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDaily"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
+            <Button
+                android:id="@+id/btnBackSetting"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="일별" />
+                android:text="설정으로 돌아가기"
+                android:backgroundTint="@color/primary_blue" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnMonthly"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="24dp" />
+
+            <!-- 일별/월별 토글 -->
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/togglePeriod"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="월별" />
-        </com.google.android.material.button.MaterialButtonToggleGroup>
+                app:singleSelection="true"
+                app:selectionRequired="true">
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="14dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDaily"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="일별" />
 
-        <!-- 1) 일별/월별 통화 수 -->
-        <TextView
-            android:id="@+id/tvCallsTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="일별 통화 수"
-            android:textStyle="bold"
-            android:textSize="16sp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMonthly"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="월별" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:cardCornerRadius="14dp"
-            app:cardUseCompatPadding="true">
-
-            <com.patrykandpatrick.vico.views.cartesian.CartesianChartView
-                android:id="@+id/chartDailyCalls"
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="240dp"
-                android:padding="10dp"
-                app:chartStyle="@style/MyPageColumnChartStyle" />
-        </com.google.android.material.card.MaterialCardView>
+                android:layout_height="14dp" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="16dp" />
+            <!-- 1) 일별/월별 통화 수 -->
+            <TextView
+                android:id="@+id/tvCallsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="일별 통화 수"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@color/black" />
 
-        <!-- 2) 일별/월별 의심 통화 수 -->
-        <TextView
-            android:id="@+id/tvSuspiciousTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="일별 의심 통화 수"
-            android:textStyle="bold"
-            android:textSize="16sp" />
-
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:cardCornerRadius="14dp"
-            app:cardUseCompatPadding="true">
-
-            <com.patrykandpatrick.vico.views.cartesian.CartesianChartView
-                android:id="@+id/chartDailySuspiciousCalls"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_height="240dp"
-                android:padding="10dp"
-                app:chartStyle="@style/MyPageColumnChartStyle" />
-        </com.google.android.material.card.MaterialCardView>
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="14dp"
+                app:cardUseCompatPadding="true">
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="16dp" />
+                <com.patrykandpatrick.vico.views.cartesian.CartesianChartView
+                    android:id="@+id/chartDailyCalls"
+                    android:layout_width="match_parent"
+                    android:layout_height="240dp"
+                    android:padding="10dp"
+                    app:chartStyle="@style/MyPageColumnChartStyle" />
+            </com.google.android.material.card.MaterialCardView>
 
-        <!-- 3) 카테고리 TOP 5 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="카테고리 TOP 5"
-            android:textStyle="bold"
-            android:textSize="16sp" />
-
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:cardCornerRadius="14dp"
-            app:cardUseCompatPadding="true">
-
-            <com.github.mikephil.charting.charts.PieChart
-                android:id="@+id/chartTopCategories"
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="260dp"
-                android:padding="10dp" />
-        </com.google.android.material.card.MaterialCardView>
+                android:layout_height="16dp" />
 
-        <TextView
-            android:id="@+id/tvCategorySummary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="아직 데이터가 없어요"
-            android:textSize="14sp" />
+            <!-- 2) 일별/월별 의심 통화 수 -->
+            <TextView
+                android:id="@+id/tvSuspiciousTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="일별 의심 통화 수"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@color/black" />
 
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="14dp"
+                app:cardUseCompatPadding="true">
+
+                <com.patrykandpatrick.vico.views.cartesian.CartesianChartView
+                    android:id="@+id/chartDailySuspiciousCalls"
+                    android:layout_width="match_parent"
+                    android:layout_height="240dp"
+                    android:padding="10dp"
+                    app:chartStyle="@style/MyPageColumnChartStyle" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="16dp" />
+
+            <!-- 3) 카테고리 TOP 5 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="카테고리 TOP 5"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@color/black" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="14dp"
+                app:cardUseCompatPadding="true">
+
+                <com.github.mikephil.charting.charts.PieChart
+                    android:id="@+id/chartTopCategories"
+                    android:layout_width="match_parent"
+                    android:layout_height="260dp"
+                    android:padding="10dp" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvCategorySummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="아직 데이터가 없어요"
+                android:textSize="14sp" />
+
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

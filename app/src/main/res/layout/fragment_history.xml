@@ -6,17 +6,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/app_background"
     tools:context=".feature.call.fragment.HistoryFragment">
 
     <!-- 상단 타이틀 -->
     <TextView
         android:id="@+id/title_history"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:padding="10dp"
+        style="@style/FragmentTitleStyle"
         android:text="통화기록"
-        android:textSize="20sp"
-        android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>

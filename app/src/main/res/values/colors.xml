@@ -1,21 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 기존 색상 -->
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+    <!-- 명시적 색상 (참조용) -->
+    <color name="pure_black">#FF000000</color>
+    <color name="pure_white">#FFFFFFFF</color>
+
+    <!-- 테마별 유동 색상 (Light Mode) -->
+    <color name="app_background">#FFFFFF</color>
+    <color name="main_text">#000000</color>
+    <color name="sub_text">#5F6368</color>
+    <color name="component_bg">#FFF5F5F5</color>
+    <color name="stroke_color">#DADCE0</color>
+
+    <!-- 기존 리소스 호환성을 위한 별칭 -->
+    <color name="light_gray">#FFE0E0E0</color>
+    <color name="gray_text">#5F6368</color>
+    <color name="edit_text_bg">#FFF5F5F5</color>
+    <color name="dial_bg">#FFFFFF</color>
+
+    <!-- 포인트 색상 (고정) -->
+    <color name="primary_blue">#3b8db8</color>
+    <color name="blue">#3b8db8</color>
+    <color name="green">#3b8db8</color>
+    <color name="orange">#3b8db8</color>
+
+    <!-- 시스템 색상 (고정) -->
+    <color name="red">#FFF44336</color>
+
+    <!-- 소셜 버튼 등 -->
+    <color name="google_btn_bg">#FFFFFF</color>
+    <color name="google_btn_text">#757575</color>
+
+    <!-- 하위 호환성을 위해 남겨둠 -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-
-    <!-- 다이얼러 전용 색상 -->
-    <color name="red">#FFF44336</color>
-    <color name="light_gray">#FFE0E0E0</color>       <!-- 버튼 기본 배경 -->
-    <color name="dial_button_pressed">#FFB0B0B0</color> <!-- 버튼 누를 때 배경 -->
-    <color name="green">#FF4CAF50</color>          <!-- 전화걸기 버튼 -->
-    <color name="blue">#FF2196F3</color>           <!-- 저장 버튼 -->
-    <color name="orange">#FFFF9800</color>         <!-- 검색 버튼 -->
-    <color name="dial_bg">#FFFFFFFF</color>        <!-- 전체 다이얼러 배경 -->
-    <color name="edit_text_bg">#FFF5F5F5</color>   <!-- 전화번호 표시 배경 -->
 </resources>

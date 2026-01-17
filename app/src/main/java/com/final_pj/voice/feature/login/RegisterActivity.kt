@@ -19,10 +19,6 @@ import kotlinx.coroutines.*
 
 class RegisterActivity : AppCompatActivity() {
 
-    companion object {
-        private const val TAG = "RegisterActivity"
-    }
-
     private lateinit var tokenStore: TokenStore
     private lateinit var scope: CoroutineScope
     private lateinit var registerViewModel: RegisterViewModel
@@ -31,6 +27,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var etPassword: EditText
     private lateinit var etNickname: EditText
     private lateinit var btnRegister: Button
+    private lateinit var tvBackToLogin: TextView
     private lateinit var progress: ProgressBar
     private lateinit var tvError: TextView
 
@@ -48,6 +45,7 @@ class RegisterActivity : AppCompatActivity() {
         etPassword = findViewById(R.id.etRegisterPassword)
         etNickname = findViewById(R.id.etRegisterNickname)
         btnRegister = findViewById(R.id.btnRegister)
+        tvBackToLogin = findViewById(R.id.tvBackToLogin)
         progress = findViewById(R.id.progressRegister)
         tvError = findViewById(R.id.tvRegisterError)
 
@@ -86,6 +84,10 @@ class RegisterActivity : AppCompatActivity() {
         btnRegister.setOnClickListener {
             tvError.visibility = View.GONE
             attemptRegistration()
+        }
+
+        tvBackToLogin.setOnClickListener {
+            finish() // 로그인 화면으로 돌아가기
         }
     }
     

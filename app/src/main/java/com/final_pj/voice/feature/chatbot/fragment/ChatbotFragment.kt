@@ -374,7 +374,7 @@ class ChatbotFragment : Fragment(R.layout.fragment_chatbot) {
 
     private fun onKeywordChipSelected(selectedKeyword: String, rv: RecyclerView) {
         // 키워드를 사용자가 입력한 것처럼 처리
-        onUserSend(selectedKeyword, rv, view!!.findViewById(R.id.btnSend))
+        onUserSend(selectedKeyword, rv, requireView().findViewById(R.id.btnSend))
     }
 
     private fun onUserSend(

@@ -5,17 +5,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/white"
     tools:context=".feature.call.fragment.AudioListFragment">
 
     <!-- 상단 타이틀 -->
     <TextView
         android:id="@+id/titleToolbar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:padding="10dp"
+        style="@style/FragmentTitleStyle"
         android:text="통화 녹음 목록"
-        android:textSize="20sp"
-        android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
@@ -74,7 +71,8 @@
                 android:text="전체 삭제(0)"
                 app:cornerRadius="14dp"
                 app:icon="@drawable/ic_delete"
-                app:iconPadding="8dp"/>
+                app:iconPadding="8dp"
+                android:backgroundTint="@color/red"/>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -119,6 +117,7 @@
                     android:insetBottom="0dp"
                     app:icon="@drawable/ic_play"
                     app:iconPadding="0dp"
+                    app:iconTint="@color/primary_blue"
                     app:cornerRadius="12dp"/>
 
                 <TextView
