@@ -1,6 +1,6 @@
 package com.final_pj.voice.feature.login.dto
 
-// 백엔드 실제 응답 구조와 매칭: {"accessToken": "...", "isNewUser": true, "user": {"id": "...", "email": "..."}}
+// 백엔드 실제 응답 구조와 매칭
 data class LoginResponse(
     val accessToken: String,
     val isNewUser: Boolean,
@@ -9,5 +9,7 @@ data class LoginResponse(
 
 data class UserInfoDto(
     val id: String,
-    val email: String
+    val email: String,
+    val name: String? = null,
+    val nickname: String? = null
 )

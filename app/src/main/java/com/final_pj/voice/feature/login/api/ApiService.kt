@@ -20,7 +20,7 @@ interface ApiService {
     @POST("api/v1/auth/register") // 일반 회원가입 엔드포인트 가정
     suspend fun register(@Body body: RegisterRequest): LoginResponse // JWT를 포함한 응답 가정
 
-    @POST("api/v1/auth/normal")
+    @POST("api/v1/auth/login")
     suspend fun normalLogin(@Body body: NormalLoginRequest): LoginResponse
 
     @PUT("api/v1/users/me")

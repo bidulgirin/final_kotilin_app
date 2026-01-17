@@ -12,6 +12,7 @@ import com.final_pj.voice.feature.login.data.Result
 import com.final_pj.voice.feature.login.dto.RegisterRequest
 import com.final_pj.voice.feature.login.dto.LoginResponse as ApiLoginResponse
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 class RegisterViewModel(
     private val registerRepository: RegisterRepository,
@@ -35,25 +36,30 @@ class RegisterViewModel(
                 if (response != null) {
                     Log.d("RegisterViewModel", "Registration Success: $response")
                     
-                    // 백엔드 응답에서 정보를 가져오거나, 입력받은 정보를 사용
-                    // 백엔드 구조: {"accessToken": "...", "user": {"id": "...", "email": "..."}}
+                    // 우선순위: 입력한 nickname -> 서버의 nickname -> 서버의 name -> 서버의 id
+                    val displayName = nickname ?: response.user.nickname ?: response.user.name ?: response.user.id
+                    
                     tokenStore.saveAuthInfo(
                         token = response.accessToken,
-                        name = nickname ?: response.user.id,
+                        name = displayName,
                         email = response.user.email
                     )
                     
-                    _registerResult.value = LoginResult(success = LoggedInUserView(displayName = nickname ?: response.user.email))
+                    _registerResult.value = LoginResult(success = LoggedInUserView(displayName = displayName))
                 } else {
                     Log.e("RegisterViewModel", "Cast to ApiLoginResponse failed")
                     _registerResult.value = LoginResult(error = R.string.login_failed)
                 }
-            } else {
-                _registerResult.value = LoginResult(error = R.string.login_failed)
+            } else if (result is Result.Error) {
+                val exception = result.exception
+                Log.e("RegisterViewModel", "Registration Error: ${exception.message}")
+                
+                if (exception is HttpException && exception.code() == 400) {
+                    _registerResult.value = LoginResult(error = R.string.error_duplicate_email)
+                } else {
+                    _registerResult.value = LoginResult(error = R.string.login_failed)
+                }
             }
         }
     }
-
-    // **주의**: LoginViewModel에서 사용되던 유효성 검사 로직이 여기서는 사용되지 않으므로,
-    // RegisterActivity에서 직접 이메일/비밀번호 길이 검사를 해야 합니다.
 }

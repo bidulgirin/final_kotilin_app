@@ -28,15 +28,17 @@ class LoginDataSource {
             try {
                 val request = NormalLoginRequest(email = email, password = password)
                 
-                // 1. 백엔드 서버로부터 응답을 받음 (중첩된 user 객체 포함)
+                // 1. 백엔드 서버로부터 응답을 받음
                 val resp = ApiClient.api.normalLogin(request)
                 
                 // 2. ViewModel이 사용하기 편하도록 데이터 가공
-                // resp.user.email 처럼 내부 객체에서 값을 꺼냅니다.
+                // nickname -> name -> id 순서로 표시 이름을 결정합니다.
+                val displayName = resp.user.nickname ?: resp.user.name ?: resp.user.id
+                
                 val loginResponse = LoginResponse(
                     accessToken = resp.accessToken,
                     isNewUser = resp.isNewUser,
-                    name = resp.user.id,  // 백엔드에 name이 없다면 id를 임시로 사용
+                    name = displayName,
                     email = resp.user.email
                 )
                 Result.Success(loginResponse)
