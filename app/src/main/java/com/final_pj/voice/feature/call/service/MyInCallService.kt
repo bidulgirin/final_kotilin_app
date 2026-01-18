@@ -393,7 +393,7 @@ class MyInCallService : InCallService() {
                     if (currentPos >= maxSamples) {
                         try {
                             val chunkCopy = audioShort.clone()
-
+                            // 변경사항 딥보이스 + 대화맥락 알림 따로 울리게 해야함
                             mfccUploader.uploadPcmShortChunk(
                                 callId = callId, // 보이스피싱점수 누적하려고 기준점 잡은거임
                                 chunk = chunkCopy, // 당연하게 원본데이터는 건드리면 안되니껜~ 클론해서 쓴 값이 들어가고용

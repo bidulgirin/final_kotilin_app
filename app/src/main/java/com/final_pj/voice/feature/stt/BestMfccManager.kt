@@ -22,7 +22,7 @@ class BestMfccManager(
     private val crypto: AudioCrypto,
     private val okHttp: OkHttpClient = OkHttpClient(),
 ) {
-
+    // deep voice 와 문맥판별결과 둘다 나와야함
     data class UploadResult(
         val callId: String,
         val phishingScore: Double,
@@ -96,6 +96,8 @@ class BestMfccManager(
                         val returnedCallId = json.optString("call_id", callId)
                         val score = json.optDouble("phishing_score", 0.0)
                         val shouldAlert = json.optBoolean("should_alert", false)
+                        // 이제 deepvoice_score로 받을것임
+                        val deepvoice_score = json.optDouble("deepvoice_score", 0.0)
 
                         // ---- stt ----
                         val sttObj = json.optJSONObject("stt")
