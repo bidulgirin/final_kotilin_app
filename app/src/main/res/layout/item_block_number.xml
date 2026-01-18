@@ -31,12 +31,18 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_unblock"
-            style="@style/Widget.Material3.Button.TonalButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="해제"
+            android:textSize="16sp"
             android:textColor="@color/primary_blue"
-            app:cornerRadius="12dp"/>
+            app:strokeColor="@color/primary_blue"
+            app:cornerRadius="12dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"/>
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
