@@ -17,7 +17,7 @@ object NotificationHelper {
 
     private const val CHANNEL_ID = "vp_alert_channel"
     private const val CHANNEL_NAME = "보이스피싱 감지"
-    private const val CHANNEL_DESC = "보이스피싱 위험 감지 알림"
+    private const val CHANNEL_DESC = "보이스피싱 위험 감지 알림" //
     private const val DEFAULT_NOTIFICATION_ID = 1001
 
     fun ensureChannel(context: Context) {

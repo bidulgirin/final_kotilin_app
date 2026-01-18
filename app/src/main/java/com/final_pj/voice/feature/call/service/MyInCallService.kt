@@ -191,13 +191,14 @@ class MyInCallService : InCallService() {
                     currentCallSessionId = UUID.randomUUID().toString()
 
                     Log.d("CALL", "Call ACTIVE -> start. Session ID: $currentCallSessionId")
-                    // 통화 내용 탐지 시작~
                     CallEventBus.notifyCallStarted()
 
-                    // 녹음은 무조건 시작
-                    startRecording()
+                    // 둘 중 하나라도 켜져 있으면 녹음 시작 (요약은 녹음파일 기반이므로)
+                    if (isRecordEnabled() || isSummaryEnabled()) {
+                        startRecording()
+                    }
 
-                    // “녹음 off”는 '파일 자동삭제 정책' 의미
+                    // “녹음 off” 정책 결정
                     deleteRecordingAfterUpload = (!isRecordEnabled() && isSummaryEnabled())
                     
                     startMonitoring()
@@ -206,44 +207,41 @@ class MyInCallService : InCallService() {
                 Call.STATE_DISCONNECTING -> {
                     started = false
                     stopMonitoring()
-                    
                     Log.d("CALL", "Call DISCONNECTING -> Stop monitoring.")
                     
                     val duration = System.currentTimeMillis() - activeAtMs
                     if (duration < 5000) {
-                        Log.d("CALL", "too short ($duration ms) -> skip upload/cleanup")
+                        Log.d("CALL", "too short ($duration ms) -> cleanup")
                         if (!isRecordEnabled()) deleteCurrentRecordingFileIfExists()
+                        stopRecordingSafely()
                         CallEventBus.notifyCallEnded()
                         return
                     }
                     
-                    // DISCONNECTING 상태에서는 일단 녹음만 멈추고,
-                    // DISCONNECTED 상태에서 업로드 로직을 수행하여 중복을 방지합니다.
                     stopRecordingSafely()
                     CallEventBus.notifyCallEnded()
                 }
 
                 Call.STATE_DISCONNECTED -> {
-                    // DISCONNECTING에서 이미 stopRecordingSafely()를 호출했을 수 있으므로 안전하게 처리
                     stopRecordingSafely() 
                     
                     val duration = System.currentTimeMillis() - activeAtMs
                     if (duration < 5000) {
-                        Log.d("CALL", "too short ($duration ms) -> skip upload")
                         if (!isRecordEnabled()) deleteCurrentRecordingFileIfExists()
                         CallEventBus.notifyCallEnded()
                         return
                     }
 
-                    // 요약 OFF면 onSaveStt를 호출하지 않음
+                    // 요약 OFF면 skip
                     if (!isSummaryEnabled()) {
-                        Log.d("SUMMARY", "summary_enabled=false -> skip onSaveStt()")
+                        Log.d("SUMMARY", "summary_enabled=false -> skip upload")
+                        // 녹음도 OFF면 즉시 삭제
                         if (!isRecordEnabled()) deleteCurrentRecordingFileIfExists()
                         CallEventBus.notifyCallEnded()
                         return
                     }
 
-                    // 요약 ON일 때만 업로드 로직 실행
+                    // 요약 ON일 때만 업로드
                     onSaveStt { success ->
                         Log.d("UPLOAD", "finished success=$success")
                         if (deleteRecordingAfterUpload) {
