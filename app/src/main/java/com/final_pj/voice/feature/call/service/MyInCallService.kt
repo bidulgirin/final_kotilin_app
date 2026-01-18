@@ -421,8 +421,9 @@ class MyInCallService : InCallService() {
 
                                         NotificationHelper.showAlert(
                                             context = applicationContext,
-                                            title = "주의",
-                                            message = "딥 보이스 점수: ${"%.2f".format(res.phishingScore)}\n통화 내용을 주의하세요."
+                                            title = "딥보이스 사용 주의",
+                                            //message = "딥 보이스 점수: ${"%.2f".format(res.phishingScore)}\n통화 내용을 주의하세요."
+                                            message = "통화 내용을 주의하세요."
                                         )
                                     }
                                 },
