@@ -47,17 +47,13 @@ class HistoryFragment : Fragment() {
 
     private lateinit var adapter: CallLogAdapter
     private val uiItems = mutableListOf<CallUiItem>()
-    private val callRecords = mutableListOf<CallRecord>()
 
     private val REQ_CONTACTS = 1001
     private val REQ_CALL = 1002
 
-    private var pendingCallNumber: String? = null
-
     private val mainHandler = Handler(Looper.getMainLooper())
     private var callLogObserver: ContentObserver? = null
 
-    // 디바운스용 Job
     private var refreshJob: Job? = null
 
     override fun onCreateView(
@@ -78,7 +74,6 @@ class HistoryFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // 화면 복귀 시 최신화
         reloadAllCallLogs()
     }
 
@@ -105,12 +100,9 @@ class HistoryFragment : Fragment() {
         val recycler = view.findViewById<RecyclerView>(R.id.history_list)
         recycler.layoutManager = LinearLayoutManager(requireContext())
 
-        // isSummaryFeatureEnabled() 함수를 MyInCallService.instance에서 가져오도록 가정
         adapter = CallLogAdapter(
             items = uiItems,
-            //isSummaryFeatureEnabled = { com.final_pj.voice.feature.call.service.MyInCallService.instance?.isSummaryEnabled() ?: false },
             onDetailClick = { record ->
-                // summary가 있을 때만 detailFragment로 이동
                 if (!record.summary.isNullOrEmpty()) {
                     val bundle = Bundle().apply {
                         putLong("call_id", record.id)
@@ -118,71 +110,59 @@ class HistoryFragment : Fragment() {
                     }
                     findNavController().navigate(R.id.detailFragment, bundle)
                 } else {
-                    // 요약이 없는 경우 클릭 시 피드백 (선택 사항)
                     Toast.makeText(requireContext(), "분석된 요약 내용이 없습니다.", Toast.LENGTH_SHORT).show()
                 }
             },
-            onBlockClick = { record ->
-                showBlockConfirm(record)
-            },
-            onCallClick = { number ->
-                callPhone(number) //  1. 전화 걸기 호출
-            },
-            onDeleteClick = { record ->
-                showDeleteConfirm(record) // 2. 삭제 확인 창 호출
-            },
+            onBlockClick = { record -> showBlockConfirm(record) },
+            onCallClick = { number -> callPhone(number) },
+            onDeleteClick = { record -> showDeleteConfirm(record) },
             onReportClick = { record ->
                 val number = record.phoneNumber.takeIf { it.isNotBlank() }
-                if (number != null) {
-                    showReportDialog(number)
-                } else {
-                    Toast.makeText(requireContext(), "신고할 전화번호 정보가 없습니다.", Toast.LENGTH_SHORT).show()
-                }
+                if (number != null) showReportDialog(number)
+                else Toast.makeText(requireContext(), "신고할 전화번호 정보가 없습니다.", Toast.LENGTH_SHORT).show()
             }
         )
         recycler.adapter = adapter
 
-        reloadAllCallLogs()
+        // DB 변화를 실시간으로 감지 (STT 요약 완료 시 UI 즉시 반영)
+        val app = requireActivity().application as App
+        viewLifecycleOwner.lifecycleScope.launch {
+            app.db.sttSummaryDao().observeAllResults().collect {
+                Log.d("HistoryFragment", "DB changed: stt_result count = ${it.size}")
+                reloadAllCallLogs()
+            }
+        }
     }
 
-    // 1. 전화 걸기 로직
-    // 전화 거는 화면으로 이동 (발신)
     private fun callPhone(number: String) {
         if (number.isNotEmpty()) {
             val intent = Intent(requireContext(), CallingActivity::class.java).apply {
                 putExtra("phone_number", number)
-                putExtra("is_outgoing", true)   // ⭐ 발신 표시
+                putExtra("is_outgoing", true)
             }
             startActivity(intent)
         }
     }
-    // 2. 삭제 확인 다이얼로그
+
     private fun showDeleteConfirm(record: CallRecord) {
         AlertDialog.Builder(requireContext())
             .setTitle("기록 삭제")
             .setMessage("이 통화 기록을 삭제하시겠습니까?")
-            .setPositiveButton("삭제") { _, _ ->
-                deleteCallLog(record)
-            }
+            .setPositiveButton("삭제") { _, _ -> deleteCallLog(record) }
             .setNegativeButton("취소", null)
             .show()
     }
 
-    // 3. 실제 시스템 데이터베이스에서 삭제
     private fun deleteCallLog(record: CallRecord) {
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val rows = requireContext().contentResolver.delete(
+                requireContext().contentResolver.delete(
                     CallLog.Calls.CONTENT_URI,
                     "${CallLog.Calls._ID} = ?",
                     arrayOf(record.id.toString())
                 )
-
                 withContext(Dispatchers.Main) {
-                    if (rows > 0) {
-                        Toast.makeText(context, "기록이 삭제되었습니다.", Toast.LENGTH_SHORT).show()
-                        // 삭제 후 리스트 새로고침은 ContentObserver가 감지하여 자동으로 reloadAllCallLogs()를 실행함
-                    }
+                    Toast.makeText(context, "기록이 삭제되었습니다.", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -194,27 +174,20 @@ class HistoryFragment : Fragment() {
 
     private fun reloadAllCallLogs() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val records = withContext(Dispatchers.IO) { queryCallLogs() } // List<CallRecord>
-            val newUi = buildSectionedItems(records)                      // List<CallUiItem>
+            val records = withContext(Dispatchers.IO) { queryCallLogs() }
+            val newUi = buildSectionedItems(records)
             adapter.submitItems(newUi)
         }
     }
 
     private fun registerCallLogObserver() {
         if (callLogObserver != null) return
-
         callLogObserver = object : ContentObserver(mainHandler) {
-            override fun onChange(selfChange: Boolean) {
-                super.onChange(selfChange)
-                refreshCallLogsDebounced()
-            }
-
             override fun onChange(selfChange: Boolean, uri: Uri?) {
                 super.onChange(selfChange, uri)
                 refreshCallLogsDebounced()
             }
         }
-
         requireContext().contentResolver.registerContentObserver(
             CallLog.Calls.CONTENT_URI,
             true,
@@ -224,9 +197,7 @@ class HistoryFragment : Fragment() {
 
 
     private fun unregisterCallLogObserver() {
-        callLogObserver?.let {
-            requireContext().contentResolver.unregisterContentObserver(it)
-        }
+        callLogObserver?.let { requireContext().contentResolver.unregisterContentObserver(it) }
         callLogObserver = null
         refreshJob?.cancel()
         refreshJob = null
@@ -235,15 +206,12 @@ class HistoryFragment : Fragment() {
     private fun refreshCallLogsDebounced() {
         refreshJob?.cancel()
         refreshJob = viewLifecycleOwner.lifecycleScope.launch {
-            delay(400)
+            delay(500)
             reloadAllCallLogs()
         }
     }
 
-
-
-    private suspend fun queryCallLogs(): List<CallRecord> {
-        val result = mutableListOf<CallRecord>()
+    private suspend fun queryCallLogs(): List<CallRecord> = withContext(Dispatchers.IO) {
         val app = requireActivity().application as App
         val summaryDao = app.db.callSummaryDao()
 
@@ -266,7 +234,7 @@ class HistoryFragment : Fragment() {
 
         cursor?.use { c ->
             while (c.moveToNext()) {
-                val id = c.getLong(0).toString() // Room의 callId가 String이므로 변환
+                val id = c.getLong(0).toString()
                 val name = c.getString(1)
                 val number = c.getString(2)
                 val typeInt = c.getInt(3)
@@ -276,41 +244,31 @@ class HistoryFragment : Fragment() {
                     CallRecord(
                         id = id.toLong(),
                         name = name,
-                        phoneNumber = number ?: "", // getString이 null일 경우 빈 문자열로 안전하게 처리
+                        phoneNumber = number ?: "",
                         callType = mapCallType(typeInt),
                         date = date,
-                        summary = null, // 일단 비워둠
-                        isSummaryDone = false // 새로 조회된 항목은 아직 요약 안됨
+                        summary = null,
+                        isSummaryDone = false
                     )
                 )
                 callIds.add(id)
             }
         }
 
-        // [중요] DB에서 해당 ID들의 요약본을 한꺼번에 가져옴
+        // DB에서 요약 데이터 조회
         val summaries = summaryDao.getSummariesByCallIds(callIds)
-        // 빠른 조회를 위해 Map으로 변환 (Key: callId, Value: summary)
+        Log.d("HistoryFragment", "Querying summaries: Requested ${callIds.size}, Found ${summaries.size}")
+        
         val summaryMap = summaries.associate { it.callId to it.summary }
 
-        // 생성된 Record들에 summary 매핑 및 isSummaryDone 설정
-        return tempRecords.map { record ->
+        tempRecords.map { record ->
             val summary = summaryMap[record.id.toString()]
             record.copy(
                 summary = summary,
-                isSummaryDone = summary != null // Summary가 있으면 완료된 것으로 간주
+                isSummaryDone = summary != null
             )
         }
     }
-
-
-    // 이거 어디서 사용...하던데...
-    //    private fun mapCallType(typeInt: Int): String =
-    //        when (typeInt) {
-    //            CallLog.Calls.INCOMING_TYPE -> "Incoming"
-    //            CallLog.Calls.OUTGOING_TYPE -> "Outgoing"
-    //            CallLog.Calls.MISSED_TYPE -> "Missed"
-    //            else -> "Unknown"
-    //        }
 
     private fun mapCallType(typeInt: Int): String =
         when (typeInt) {
@@ -321,7 +279,6 @@ class HistoryFragment : Fragment() {
             else -> "알 수 없음"
         }
 
-    // 차단
     private fun showBlockConfirm(record: CallRecord) {
         val number = record.phoneNumber?.trim()
         if (number.isNullOrEmpty()) return
@@ -333,30 +290,20 @@ class HistoryFragment : Fragment() {
                 blockNumber(number)
                 dialog.dismiss()
             }
-            .setNegativeButton("아니오") { dialog, _ ->
-                dialog.dismiss()
-            }
+            .setNegativeButton("아니오", null)
             .show()
     }
 
     private fun blockNumber(rawNumber: String) {
         val app = requireActivity().application as App
-
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             val ok = app.repo.add(rawNumber)
             if (ok) BlocklistCache.add(rawNumber)
-
             withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    requireContext(),
-                    if (ok) "차단 목록에 추가됨" else "이미 차단되어 있거나 저장 실패",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(requireContext(), if (ok) "차단 목록에 추가됨" else "저장 실패", Toast.LENGTH_SHORT).show()
             }
         }
     }
-
-    // --- 신고 기능 추가 ---
 
     private fun normalizePhone(raw: String): String {
         return raw.trim().replace(Regex("[^0-9+]"), "")
@@ -369,55 +316,13 @@ class HistoryFragment : Fragment() {
             description = description?.takeIf { it.isNotBlank() }
         )
         val res = api.insertNumber(req)
-        if (res.isSuccessful) {
-            return res.body() ?: throw IllegalStateException("응답 바디가 비어있습니다.")
-        }
-        if (res.code() == 409) {
-            throw IllegalStateException("이미 등록된 번호입니다.")
-        }
-        val err = res.errorBody()?.string()
-        throw IllegalStateException("서버 오류 (${res.code()}): ${err ?: "unknown"}")
-    }
-
-    private fun confirmReport(number: String, description: String) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("신고하기")
-            .setMessage("$number 제보하시겠습니까?")
-            .setPositiveButton("예", null)
-            .setNegativeButton("아니오") { d, _ -> d.dismiss() }
-            .create()
-            .also { dialog ->
-                dialog.setOnShowListener {
-                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                        val normalized = normalizePhone(number)
-                        val descOrNull = description
-                            .takeIf { it != "- 선택 -" }
-                            ?.trim()
-                            ?.takeIf { it.isNotBlank() }
-
-                        viewLifecycleOwner.lifecycleScope.launch {
-                            try {
-                                withContext(Dispatchers.IO) {
-                                    postVoicePhisingNumber(normalized, descOrNull)
-                                }
-                                Toast.makeText(requireContext(), "신고가 접수되었습니다.", Toast.LENGTH_SHORT).show()
-                                dialog.dismiss()
-                            } catch (e: IllegalStateException) {
-                                Toast.makeText(requireContext(), e.message ?: "실패", Toast.LENGTH_SHORT).show()
-                            } catch (e: Exception) {
-                                Toast.makeText(requireContext(), "네트워크 오류: ${e.message}", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
-                }
-                dialog.show()
-            }
+        if (res.isSuccessful) return res.body() ?: throw IllegalStateException("응답 바디가 비어있습니다.")
+        if (res.code() == 409) throw IllegalStateException("이미 등록된 번호입니다.")
+        throw IllegalStateException("서버 오류 (${res.code()})")
     }
 
     private fun showReportDialog(defaultPhone: String) {
-        val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.save_report_contact, null)
-
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.save_report_contact, null)
         val etPhone = dialogView.findViewById<EditText>(R.id.etDialogPhone)
         val spinner = dialogView.findViewById<Spinner>(R.id.report_reason_spinner)
 
@@ -428,27 +333,27 @@ class HistoryFragment : Fragment() {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = adapter
 
-        val dialog = AlertDialog.Builder(requireContext())
+        AlertDialog.Builder(requireContext())
             .setTitle("신고하기")
             .setView(dialogView)
             .setNegativeButton("취소", null)
-            .setPositiveButton("확인", null)
-            .create()
-
-        dialog.setOnShowListener {
-            val positiveBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            positiveBtn.setOnClickListener {
+            .setPositiveButton("확인") { _, _ ->
                 val phone = etPhone.text.toString().trim()
                 val description = spinner.selectedItem.toString().trim()
-
                 if (phone.isEmpty()) {
-                    etPhone.error = "연락처를 입력하세요"
-                    return@setOnClickListener
+                    Toast.makeText(requireContext(), "연락처를 입력하세요", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
                 }
-                confirmReport(phone, description)
-                dialog.dismiss()
+                
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        withContext(Dispatchers.IO) { postVoicePhisingNumber(phone, description) }
+                        Toast.makeText(requireContext(), "신고가 접수되었습니다.", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), e.message ?: "실패", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
-        }
-        dialog.show()
+            .show()
     }
 }

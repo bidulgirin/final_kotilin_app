@@ -10,6 +10,7 @@ import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.provider.CallLog
 import android.telecom.Call
 import android.telecom.InCallService
 import android.util.Log
@@ -41,6 +42,8 @@ class MyInCallService : InCallService() {
     private val sttBuffer = SttBuffer()
     private lateinit var mfccUploader: BestMfccManager
     private var currentCallSessionId: String? = null
+    private var currentRecordingFile: File? = null
+    private var lastKnownCallLogId: Long? = null
 
     // 알림 유형별 개별 쿨다운 관리
     private var lastDVNotifyAt = 0L
@@ -73,6 +76,10 @@ class MyInCallService : InCallService() {
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
         currentCall = call
+        
+        // 통화 전 시점의 최신 CallLog ID 기록
+        markCallLogBaseline()
+        
         call.registerCallback(callCallback)
         if (call.details.callDirection == Call.Details.DIRECTION_INCOMING) {
             showIncomingCallUI(call)
@@ -110,12 +117,38 @@ class MyInCallService : InCallService() {
                 Call.STATE_DISCONNECTED -> {
                     stopMonitoring()
                     stopRecordingSafely()
+                    
+                    val callEndTime = System.currentTimeMillis()
+                    val fileToUpload = currentRecordingFile
+                    val sessionId = currentCallSessionId
+                    
+                    if (fileToUpload != null && sessionId != null) {
+                        // 별도 스코프에서 CallLog ID 매칭 시도 후 업로드
+                        serviceScope.launch {
+                            Log.d("STT_TRIGGER", "Resolving CallLog ID...")
+                            val callLogId = resolveCurrentCallLogId(callEndTime)
+                            
+                            val finalKey = if (callLogId != null) {
+                                Log.d("STT_TRIGGER", "Matched CallLog ID: $callLogId")
+                                callLogId.toString()
+                            } else {
+                                Log.w("STT_TRIGGER", "Failed to match CallLog ID. Using Session ID as fallback.")
+                                sessionId
+                            }
+                            
+                            sttUploader.enqueueUploadFile(finalKey, fileToUpload) { success ->
+                                Log.d("STT_TRIGGER", "STT upload finished. success=$success, key=$finalKey")
+                            }
+                        }
+                    }
+                    
                     CallEventBus.notifyCallEnded()
                 }
             }
         }
     }
 
+    @SuppressLint("MissingPermission")
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     private fun startMonitoring() {
         stopMonitoring()
@@ -178,7 +211,14 @@ class MyInCallService : InCallService() {
     private fun startRecording() {
         try {
             val file = File(getExternalFilesDir(null), "call_${System.currentTimeMillis()}.m4a")
-            recorder = MediaRecorder().apply {
+            currentRecordingFile = file
+            
+            recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                MediaRecorder(this)
+            } else {
+                @Suppress("DEPRECATION")
+                MediaRecorder()
+            }.apply {
                 setAudioSource(MediaRecorder.AudioSource.VOICE_CALL)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
@@ -186,7 +226,10 @@ class MyInCallService : InCallService() {
                 prepare()
                 start()
             }
-        } catch (e: Exception) { Log.e("REC", "Fail", e) }
+        } catch (e: Exception) { 
+            Log.e("REC", "Fail", e) 
+            currentRecordingFile = null
+        }
     }
 
     private fun stopRecordingSafely() {
@@ -205,5 +248,35 @@ class MyInCallService : InCallService() {
     private fun ensureEndsWithPath(base: String, leaf: String): String {
         val b = base.trimEnd('/')
         return if (b.endsWith("/$leaf")) b else "$b/$leaf"
+    }
+
+    // --- CallLog ID 매칭 지원 메서드 ---
+
+    @SuppressLint("MissingPermission")
+    private fun markCallLogBaseline() {
+        lastKnownCallLogId = getLatestCallLogId()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun getLatestCallLogId(): Long? {
+        val projection = arrayOf(CallLog.Calls._ID)
+        val sortOrder = "${CallLog.Calls.DATE} DESC LIMIT 1"
+        return try {
+            contentResolver.query(CallLog.Calls.CONTENT_URI, projection, null, null, sortOrder)?.use { c ->
+                if (c.moveToFirst()) c.getLong(0) else null
+            }
+        } catch (e: Exception) { null }
+    }
+
+    private suspend fun resolveCurrentCallLogId(callEndTimeMs: Long): Long? = withContext(Dispatchers.IO) {
+        val deadline = System.currentTimeMillis() + 8000 // 최대 8초 대기
+        val baseline = lastKnownCallLogId
+        
+        while (System.currentTimeMillis() < deadline) {
+            val latest = getLatestCallLogId()
+            if (latest != null && latest != baseline) return@withContext latest
+            delay(500) // 0.5초 간격 폴링
+        }
+        null
     }
 }

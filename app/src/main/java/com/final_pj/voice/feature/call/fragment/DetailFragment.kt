@@ -97,12 +97,15 @@ class DetailFragment : Fragment() {
                 }
                 val summary = tvSummary.text?.toString().orEmpty()
                 val text = tvText.text?.toString().orEmpty()
+
+
+
                 val keywords = result?.keywords
 
                 val bundle = Bundle().apply {
                     putLong("CALL_ID", callId)
                     putString("SUMMARY_TEXT", summary)
-                    putString("CALL_TEXT", text)
+                    putString("CALL_TEXT", text) // 잠시 교체
                     if (keywords != null) {
                         putStringArrayList("KEYWORDS", ArrayList(keywords))
                     }
@@ -162,7 +165,26 @@ class DetailFragment : Fragment() {
             tvTitle.text = "통화 상세"
             tvSub.text = "callId: ${result.callId}"
 
-            tvText.text = (result.conversation as? List<*>)?.joinToString("\n") ?: result.conversation?.toString() ?: ""
+
+//            val exampleText = """
+//                    - 서울지방남부경찰청 범죄수익환수에 김*규 사무관입니다.
+//
+//                    - 본인은 ****년 **월 **일생 이*민씨 본인 맞습니까?
+//
+//                    - 주범 김*호씨랑 관계가 어떻게 되십니까?
+//
+//                    - 금융감독원에서 본인이 이용중이신 금융권 진술하실 때 계좌번호 및 비밀번호 개인정보는 말씀하시는게 아니고 적금, 예금, 신용카드, 가상화폐 등등 보유중인 금액만 말씀해주시면 됩니다.
+//
+//                    - 만약에 오차범위가 클 경우에는 저희가 범죄수익금에 은닉한다고 간주가 될 수 있으시니까 사실의 근거해서 얘기해주세요.
+//
+//                    - 지금 진술해주신 대로 정보 정리해서 담당 검사님한테 이관처리해드릴겁니다.
+//
+//                    - 전화 연결되시면 본인 성함, 생년월일, 사건번호 말씀해주시면 됩니다.
+//                """.trimIndent()
+
+            //tvText.text = exampleText
+
+            tvText.text = (result.conversation as? List<*>)?.joinToString("\n\n") ?: result.conversation?.toString() ?: ""
 
             tvSummary.text = result.summary?.takeIf { it.isNotBlank() } ?: "요약 결과가 없습니다."
 

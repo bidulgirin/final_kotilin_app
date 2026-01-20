@@ -12,7 +12,9 @@ object AppDatabaseProvider {
                 context.applicationContext,
                 AppDatabase::class.java,
                 "app_db"
-            ).fallbackToDestructiveMigration()
+            )
+                .addMigrations(AppDatabase.MIGRATION_8_9) // 마이그레이션 등록
+                .fallbackToDestructiveMigration() // 만약 마이그레이션 실패 시 데이터 초기화 후 재생성 (보험용)
                 .build()
                 .also { INSTANCE = it }
         }

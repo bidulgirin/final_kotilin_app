@@ -2,6 +2,8 @@ package com.final_pj.voice.core
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.final_pj.voice.feature.blocklist.network.dao.BlockedNumberDao
 import com.final_pj.voice.feature.blocklist.network.entity.BlockedNumberEntity
 import com.final_pj.voice.feature.mypage.dao.SttResultStatsDao
@@ -10,11 +12,6 @@ import com.final_pj.voice.feature.report.network.dto.PhishingDao
 import com.final_pj.voice.feature.stt.SttResultDao
 import com.final_pj.voice.feature.stt.SttResultEntity
 
-/**
- * Room DB 정의
- * - entities 배열에 테이블들 등록
- * - version 변경 시 migration 고려
- */
 @Database(
     entities = [
         BlockedNumberEntity::class,
@@ -22,19 +19,23 @@ import com.final_pj.voice.feature.stt.SttResultEntity
         PhishingNumberEntity::class,
         CallSummaryEntity::class 
     ],
-    version = 9, // 버전 증가: 8 -> 9
+    version = 9,
     exportSchema = false
 )
-
-// 로컬 저장 데이터 베이스 dao
 abstract class AppDatabase : RoomDatabase() {
-    // 차단목록
     abstract fun blockedNumberDao(): BlockedNumberDao
-    // callid 별 요약내용
     abstract fun sttSummaryDao(): SttResultDao
-    // 보이스 피싱 데이터피싱
     abstract fun phishingDao(): PhishingDao
     abstract fun callSummaryDao(): CallSummaryDao
-    // 통계/시각화용 DAO 추가
     abstract fun sttResultStatsDao(): SttResultStatsDao
+
+    companion object {
+        // 버전 8 -> 9 마이그레이션: 신규 점수 컬럼 2개 추가
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE stt_result ADD COLUMN deepvoiceScore REAL")
+                database.execSQL("ALTER TABLE stt_result ADD COLUMN koberScore REAL")
+            }
+        }
+    }
 }
