@@ -1,6 +1,8 @@
 package com.final_pj.voice.feature.call.fragment
 
+import android.content.Intent
 import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -9,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.final_pj.voice.R
@@ -53,6 +56,7 @@ class AudioListFragment : Fragment() {
             onSingleDelete = { audioItem, position ->
                 confirmDelete(audioItem, position)
             },
+            onExport = { audioItem -> shareAudioFile(audioItem) },
             onSelectionChanged = { count, inSelectionMode ->
                 renderSelectionUi(count, inSelectionMode)
             }
@@ -97,14 +101,46 @@ class AudioListFragment : Fragment() {
         currentAudio = item
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
-            setDataSource(requireContext(), item.uri)
-            prepare()
-            start()
+            try {
+                setDataSource(requireContext(), item.uri)
+                prepare()
+                start()
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "재생 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                return@apply
+            }
         }
 
         binding.tvTotalTime.text = formatDuration(mediaPlayer?.duration?.toLong() ?: 0L)
         binding.tvNowPlaying.text = "재생 중: ${File(item.path).name.ifBlank { item.uri.toString() }}"
+        renderPlayPause(isPlaying = true)
         updateSeekBar()
+    }
+
+    private fun shareAudioFile(item: AudioItem) {
+        val file = File(item.path)
+        if (!file.exists()) {
+            Toast.makeText(requireContext(), "파일이 존재하지 않습니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        try {
+            val contentUri: Uri = FileProvider.getUriForFile(
+                requireContext(),
+                "${requireContext().packageName}.fileprovider",
+                file
+            )
+
+            val shareIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_STREAM, contentUri)
+                type = "audio/*"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(shareIntent, "녹음 파일 추출/공유"))
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "추출 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun updateSeekBar() {
@@ -132,13 +168,11 @@ class AudioListFragment : Fragment() {
         }
 
         if (mp.isPlaying) {
-            // 일시정지
             mp.pause()
             isPaused = true
             updateJob?.cancel()
             renderPlayPause(isPlaying = false)
         } else {
-            // 재개(일시정지에서)
             mp.start()
             isPaused = false
             renderPlayPause(isPlaying = true)
@@ -158,6 +192,7 @@ class AudioListFragment : Fragment() {
         binding.tvCurrentTime.text = "00:00"
         binding.tvTotalTime.text = "00:00"
         binding.tvNowPlaying.text = "재생 중: -"
+        renderPlayPause(isPlaying = false)
     }
 
     override fun onDestroyView() {
@@ -215,7 +250,6 @@ class AudioListFragment : Fragment() {
     }
 
     private fun deleteSelected(selected: List<AudioItem>) {
-        // 재생 중 항목이 선택된 경우 먼저 정지
         val playingSelected = selected.any { it.uri == currentAudio?.uri }
         if (playingSelected) {
             stopAudio()

@@ -13,20 +13,16 @@ import com.final_pj.voice.feature.stt.SttResultEntity
 /**
  * Room DB 정의
  * - entities 배열에 테이블들 등록
- * - version 변경 시 migration 고려 (배포용 아니면 destructive도 가능)
+ * - version 변경 시 migration 고려
  */
 @Database(
     entities = [
-        // 기존 차단번호 테이블 엔티티 (이미 있다면 이름 맞춰서)
         BlockedNumberEntity::class,
-        // 새로 추가된 STT 결과 테이블
         SttResultEntity::class,
-        // 신고된번호 테이블
         PhishingNumberEntity::class,
-        // 새로 추가
         CallSummaryEntity::class 
     ],
-    version = 8, // 버전 증가: 7 -> 8
+    version = 9, // 버전 증가: 8 -> 9
     exportSchema = false
 )
 

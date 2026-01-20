@@ -224,6 +224,8 @@ class SttUploader(
                             callId = callId,
                             text = parsed.text,
                             isVoicephishing = llm?.isVoicephishing,
+                            deepvoiceScore = llm?.deepvoiceScore, // 매핑 수정
+                            koberScore = llm?.koberScore,           // 매핑 추가
                             voicephishingScore = llm?.voicephishingScore,
                             category = llm?.category,
                             summary = llm?.summary,

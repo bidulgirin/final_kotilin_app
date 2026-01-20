@@ -32,7 +32,7 @@
             android:layout_height="wrap_content"
             android:layout_toEndOf="@id/cbSelect"
             android:layout_marginStart="10dp"
-            android:layout_toStartOf="@id/btnDelete"
+            android:layout_toStartOf="@id/btnMore"
             android:orientation="vertical">
 
             <TextView
@@ -58,9 +58,8 @@
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
-        <!-- 선택모드 아닐 때만 단일 삭제 -->
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDelete"
+            android:id="@+id/btnMore"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="44dp"
             android:layout_height="44dp"
@@ -72,10 +71,18 @@
             android:insetRight="0dp"
             android:insetTop="0dp"
             android:insetBottom="0dp"
-            app:icon="@drawable/ic_delete"
+            app:icon="@drawable/ic_more_vert_24"
             app:iconTint="@color/gray_text"
             app:iconPadding="0dp"
             app:cornerRadius="12dp"/>
+
+        <!-- 기존 삭제 버튼은 More 메뉴 안으로 이동시키거나 숨김 처리 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDelete"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"/>
+
     </RelativeLayout>
 
 </com.google.android.material.card.MaterialCardView>

@@ -32,6 +32,13 @@
     <!-- 시스템 색상 (고정) -->
     <color name="red">#FFF44336</color>
 
+    <!-- 차트 전용 컬러 팔레트 (현대적인 파스텔톤) -->
+    <color name="chart_1">#4E79A7</color>
+    <color name="chart_2">#F28E2B</color>
+    <color name="chart_3">#E15759</color>
+    <color name="chart_4">#76B7B2</color>
+    <color name="chart_5">#59A14F</color>
+
     <!-- 소셜 버튼 등 -->
     <color name="google_btn_bg">#FFFFFF</color>
     <color name="google_btn_text">#757575</color>

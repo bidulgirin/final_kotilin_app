@@ -5,7 +5,7 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
+    android:background="@color/app_background"
     android:padding="20dp">
 
     <!-- 상단: 번호 -->
@@ -16,7 +16,7 @@
         android:layout_marginTop="28dp"
         android:gravity="center"
         android:text="+82 10-1234-5678"
-        android:textColor="@color/white"
+        android:textColor="@color/main_text"
         android:textSize="30sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
@@ -31,7 +31,7 @@
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:text="연결 중..."
-        android:textColor="@color/white"
+        android:textColor="@color/main_text"
         android:textSize="16sp"
         android:alpha="0.8"
         app:layout_constraintTop_toBottomOf="@id/tvCallingNumber"
@@ -46,7 +46,7 @@
         android:layout_marginTop="6dp"
         android:gravity="center"
         android:text="00:00"
-        android:textColor="@color/white"
+        android:textColor="@color/main_text"
         android:textSize="18sp"
         android:alpha="0.9"
         app:layout_constraintTop_toBottomOf="@id/tvCallState"
@@ -69,9 +69,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:cardBackgroundColor="#1FFFFFFF"
+        app:cardBackgroundColor="@color/component_bg"
         app:cardCornerRadius="18dp"
-        app:strokeColor="#33FFFFFF"
+        app:strokeColor="@color/stroke_color"
         app:strokeWidth="1dp"
         android:layout_marginBottom="18dp"
         app:layout_constraintBottom_toTopOf="@id/controlsRow"
@@ -93,8 +93,8 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:text="1"
                 android:textSize="20sp"
-                android:textColor="@color/white"
-                app:strokeColor="#55FFFFFF"
+                android:textColor="@color/main_text"
+                app:strokeColor="@color/stroke_color"
                 app:cornerRadius="16dp"/>
 
             <com.google.android.material.button.MaterialButton
@@ -102,8 +102,8 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:text="2"
                 android:textSize="20sp"
-                android:textColor="@color/white"
-                app:strokeColor="#55FFFFFF"
+                android:textColor="@color/main_text"
+                app:strokeColor="@color/stroke_color"
                 app:cornerRadius="16dp"/>
 
             <com.google.android.material.button.MaterialButton
@@ -111,8 +111,8 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:text="3"
                 android:textSize="20sp"
-                android:textColor="@color/white"
-                app:strokeColor="#55FFFFFF"
+                android:textColor="@color/main_text"
+                app:strokeColor="@color/stroke_color"
                 app:cornerRadius="16dp"/>
 
             <com.google.android.material.button.MaterialButton
@@ -120,8 +120,8 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:text="4"
                 android:textSize="20sp"
-                android:textColor="@color/white"
-                app:strokeColor="#55FFFFFF"
+                android:textColor="@color/main_text"
+                app:strokeColor="@color/stroke_color"
                 app:cornerRadius="16dp"/>
 
             <com.google.android.material.button.MaterialButton
@@ -129,8 +129,8 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:text="5"
                 android:textSize="20sp"
-                android:textColor="@color/white"
-                app:strokeColor="#55FFFFFF"
+                android:textColor="@color/main_text"
+                app:strokeColor="@color/stroke_color"
                 app:cornerRadius="16dp"/>
 
             <com.google.android.material.button.MaterialButton
@@ -138,8 +138,8 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:text="6"
                 android:textSize="20sp"
-                android:textColor="@color/white"
-                app:strokeColor="#55FFFFFF"
+                android:textColor="@color/main_text"
+                app:strokeColor="@color/stroke_color"
                 app:cornerRadius="16dp"/>
 
             <com.google.android.material.button.MaterialButton
@@ -147,8 +147,8 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:text="7"
                 android:textSize="20sp"
-                android:textColor="@color/white"
-                app:strokeColor="#55FFFFFF"
+                android:textColor="@color/main_text"
+                app:strokeColor="@color/stroke_color"
                 app:cornerRadius="16dp"/>
 
             <com.google.android.material.button.MaterialButton
@@ -156,8 +156,8 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:text="8"
                 android:textSize="20sp"
-                android:textColor="@color/white"
-                app:strokeColor="#55FFFFFF"
+                android:textColor="@color/main_text"
+                app:strokeColor="@color/stroke_color"
                 app:cornerRadius="16dp"/>
 
             <com.google.android.material.button.MaterialButton
@@ -165,8 +165,8 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:text="9"
                 android:textSize="20sp"
-                android:textColor="@color/white"
-                app:strokeColor="#55FFFFFF"
+                android:textColor="@color/main_text"
+                app:strokeColor="@color/stroke_color"
                 app:cornerRadius="16dp"/>
 
             <!-- *, 0, # -->
@@ -175,8 +175,8 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:text="*"
                 android:textSize="20sp"
-                android:textColor="@color/white"
-                app:strokeColor="#55FFFFFF"
+                android:textColor="@color/main_text"
+                app:strokeColor="@color/stroke_color"
                 app:cornerRadius="16dp"/>
 
             <com.google.android.material.button.MaterialButton
@@ -184,8 +184,8 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:text="0"
                 android:textSize="20sp"
-                android:textColor="@color/white"
-                app:strokeColor="#55FFFFFF"
+                android:textColor="@color/main_text"
+                app:strokeColor="@color/stroke_color"
                 app:cornerRadius="16dp"/>
 
             <com.google.android.material.button.MaterialButton
@@ -193,8 +193,8 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:text="#"
                 android:textSize="20sp"
-                android:textColor="@color/white"
-                app:strokeColor="#55FFFFFF"
+                android:textColor="@color/main_text"
+                app:strokeColor="@color/stroke_color"
                 app:cornerRadius="16dp"/>
         </GridLayout>
 
@@ -219,12 +219,12 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="음소거"
-            android:textColor="@color/white"
+            android:textColor="@color/main_text"
             app:icon="@drawable/ic_mic_on"
-            app:iconTint="@color/white"
+            app:iconTint="@color/main_text"
             app:iconGravity="textTop"
             app:cornerRadius="18dp"
-            app:backgroundTint="#1FFFFFFF"/>
+            app:backgroundTint="@color/component_bg"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnKeypad"
@@ -232,13 +232,13 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="키패드"
-            android:textColor="@color/white"
+            android:textColor="@color/main_text"
             app:icon="@drawable/ic_dialog"
-            app:iconTint="@color/white"
+            app:iconTint="@color/main_text"
             app:iconGravity="textTop"
             android:layout_marginHorizontal="10dp"
             app:cornerRadius="18dp"
-            app:backgroundTint="#1FFFFFFF"/>
+            app:backgroundTint="@color/component_bg"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSpeaker"
@@ -246,12 +246,12 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="스피커"
-            android:textColor="@color/white"
+            android:textColor="@color/main_text"
             app:icon="@drawable/ic_speaker_off"
-            app:iconTint="@color/white"
+            app:iconTint="@color/main_text"
             app:iconGravity="textTop"
             app:cornerRadius="18dp"
-            app:backgroundTint="#1FFFFFFF"/>
+            app:backgroundTint="@color/component_bg"/>
     </LinearLayout>
 
     <!-- 종료 버튼 -->
@@ -260,11 +260,11 @@
         android:layout_width="86dp"
         android:layout_height="86dp"
         android:text="종료"
-        android:textColor="@color/white"
+        android:textColor="@color/pure_white"
         app:cornerRadius="43dp"
-        app:backgroundTint="@color/red"
+        android:backgroundTint="@color/red"
         app:icon="@drawable/ic_cancel"
-        app:iconTint="@color/white"
+        app:iconTint="@color/pure_white"
         app:iconGravity="textTop"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

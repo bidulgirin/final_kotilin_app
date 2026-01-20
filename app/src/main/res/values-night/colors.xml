@@ -28,6 +28,13 @@
     <!-- 시스템 색상 -->
     <color name="red">#FF5252</color>
 
+    <!-- 차트 전용 컬러 팔레트 (다크모드 최적화) -->
+    <color name="chart_1">#5B9BD5</color>
+    <color name="chart_2">#ED7D31</color>
+    <color name="chart_3">#A5A5A5</color>
+    <color name="chart_4">#FFC000</color>
+    <color name="chart_5">#4472C4</color>
+
     <!-- 다크모드에서의 소셜 버튼 -->
     <color name="google_btn_bg">#333333</color>
     <color name="google_btn_text">#FFFFFF</color>

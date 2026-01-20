@@ -58,10 +58,10 @@
                         android:alpha="0.75"
                         android:layout_marginBottom="12dp"/>
 
-                    <LinearLayout
+                    <com.google.android.material.chip.ChipGroup
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        app:chipSpacingHorizontal="8dp">
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chipStatus"
@@ -69,8 +69,7 @@
                             android:layout_height="wrap_content"
                             android:text="일반통화"
                             android:clickable="false"
-                            android:checkable="false"
-                            android:layout_marginEnd="8dp"/>
+                            android:checkable="false"/>
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chipCategory"
@@ -78,17 +77,26 @@
                             android:layout_height="wrap_content"
                             android:text="카테고리"
                             android:clickable="false"
-                            android:checkable="false"
-                            android:layout_marginEnd="8dp"/>
+                            android:checkable="false"/>
 
                         <com.google.android.material.chip.Chip
-                            android:id="@+id/chipScore"
+                            android:id="@+id/chipDeepScore"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="점수"
+                            android:text="딥보이스:-"
                             android:clickable="false"
-                            android:checkable="false"/>
-                    </LinearLayout>
+                            android:checkable="false"
+                            android:visibility="gone"/>
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipKoberScore"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="문맥분석:-"
+                            android:clickable="false"
+                            android:checkable="false"
+                            android:visibility="gone"/>
+                    </com.google.android.material.chip.ChipGroup>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

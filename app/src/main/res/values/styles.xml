@@ -12,11 +12,7 @@
     </style>
 
     <style name="MyPageColumnChartStyle">
-        <item name="layers">column</item>
-        <item name="showBottomAxis">true</item>
-        <item name="showStartAxis">true</item>
-        <item name="scrollEnabled">false</item>
-        <item name="zoomEnabled">false</item>
+        <!-- 기본 축 표시 여부 등만 설정 -->
     </style>
 
     <style name="FragmentTitleStyle">
