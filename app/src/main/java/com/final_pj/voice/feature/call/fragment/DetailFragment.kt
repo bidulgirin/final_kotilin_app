@@ -175,7 +175,7 @@ class DetailFragment : Fragment() {
 //
 //                    - 금융감독원에서 본인이 이용중이신 금융권 진술하실 때 계좌번호 및 비밀번호 개인정보는 말씀하시는게 아니고 적금, 예금, 신용카드, 가상화폐 등등 보유중인 금액만 말씀해주시면 됩니다.
 //
-//                    - 만약에 오차범위가 클 경우에는 저희가 범죄수익금에 은닉한다고 간주가 될 수 있으시니까 사실의 근거해서 얘기해주세요.
+//                    - 만약에 오차범위가 클 경우에는 저희가 범죄수익금에 은닉한다고 간주가 될 수 있으시니까 사실의 근거에서 얘기해주세요.
 //
 //                    - 지금 진술해주신 대로 정보 정리해서 담당 검사님한테 이관처리해드릴겁니다.
 //
@@ -184,6 +184,7 @@ class DetailFragment : Fragment() {
 
             //tvText.text = exampleText
 
+            // 가독성을 위해 문장 사이 간격을 한 칸 더 추가 (\n\n)
             tvText.text = (result.conversation as? List<*>)?.joinToString("\n\n") ?: result.conversation?.toString() ?: ""
 
             tvSummary.text = result.summary?.takeIf { it.isNotBlank() } ?: "요약 결과가 없습니다."

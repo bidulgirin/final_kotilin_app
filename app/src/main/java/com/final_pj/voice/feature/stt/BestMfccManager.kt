@@ -18,6 +18,9 @@ class BestMfccManager(
         val callId: String,
         val deepvoiceScore: Double,
         val koberStatus: String,
+        val koberRiskScore: Double, // 추가: 위험도 점수
+        val category: String?,      // 추가: 탐지된 카테고리 (details[0].result)
+        val detectedKeyword: String?,
         val shouldAlert: Boolean,
         val rawBody: String
     )
@@ -72,24 +75,40 @@ class BestMfccManager(
                     try {
                         val json = JSONObject(bodyStr)
                         
-                        // 1. Deepvoice 점수 (대소문자 무관하게 체크)
                         val dvScore = json.optDouble("deepvoiceScore", json.optDouble("deepvoice_score", 0.0))
                         
-                        // 2. Kobert Status (중요: koberScore 객체 내부 확인)
                         var kStatus = "NORMAL"
+                        var kKeyword: String? = null
+                        var kRiskScore = 0.0
+                        var kCategory: String? = null
+                        
                         val koberObj = json.optJSONObject("koberScore")
                         if (koberObj != null) {
                             kStatus = koberObj.optString("status", "NORMAL").uppercase()
+                            kRiskScore = koberObj.optDouble("risk_score", 0.0)
+                            
+                            val detailsArr = koberObj.optJSONArray("details")
+                            if (detailsArr != null && detailsArr.length() > 0) {
+                                kCategory = detailsArr.optJSONObject(0)?.optString("result")
+                            }
+
+                            val faissHits = koberObj.optJSONArray("faiss_hits")
+                            if (faissHits != null && faissHits.length() > 0) {
+                                kKeyword = faissHits.optJSONObject(0)?.optString("keyword")
+                            }
                         }
 
                         val should = json.optBoolean("should_alert", false)
 
-                        Log.d("VP_DEBUG", "Parsed -> DV: $dvScore, Kober: $kStatus, Body: $bodyStr")
+                        Log.d("VP_DEBUG", "Parsed -> DV: $dvScore, Kober: $kStatus, Risk: $kRiskScore, Cat: $kCategory")
 
                         onResult?.invoke(UploadResult(
                             callId = json.optString("call_id", callId),
                             deepvoiceScore = dvScore,
                             koberStatus = kStatus,
+                            koberRiskScore = kRiskScore,
+                            category = kCategory,
+                            detectedKeyword = kKeyword,
                             shouldAlert = should,
                             rawBody = bodyStr
                         ))

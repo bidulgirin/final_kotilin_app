@@ -127,7 +127,7 @@ class MyInCallService : InCallService() {
                         serviceScope.launch {
                             Log.d("STT_TRIGGER", "Resolving CallLog ID...")
                             val callLogId = resolveCurrentCallLogId(callEndTime)
-                            
+
                             val finalKey = if (callLogId != null) {
                                 Log.d("STT_TRIGGER", "Matched CallLog ID: $callLogId")
                                 callLogId.toString()
@@ -184,19 +184,41 @@ class MyInCallService : InCallService() {
                                 applicationContext, 
                                 "보이스피싱 위험 감지", 
                                 "[주의] 딥보이스가 의심됩니다.", 
-                                NotificationHelper.ID_DEEPVOICE
+                                NotificationHelper.ID_DEEPVOICE,
+                                status = "WARNING"
                             )
                         }
 
-                        // 2. 문맥 분석 알림 체크 (CRITICAL/WARNING)
-                        if ((res.koberStatus == "CRITICAL" || res.koberStatus == "WARNING") && (now - lastKobertNotifyAt >= cooldownMs)) {
+                        // 2. 문맥 분석 알림 체크 (위험도 점수 기반)
+                        val isHighRisk = res.koberRiskScore > 0.6
+                        if ((isHighRisk || res.koberStatus == "CRITICAL" || res.koberStatus == "WARNING") && (now - lastKobertNotifyAt >= cooldownMs)) {
                             lastKobertNotifyAt = now
-                            val msg = if (res.koberStatus == "CRITICAL") "[경고] 보이스피싱 의심 문맥 감지!" else "[주의] 보이스피싱 의심 문맥 주의!"
+                            
+                            val category = res.category ?: ""
+                            val msg: String
+                            val status: String
+                            Log.d("CALLSERVICE", "${category}")
+                            if (isHighRisk || res.koberStatus == "CRITICAL") {
+                                msg = "[경고] $category 피싱 위험이 매우 높습니다."
+                                status = "CRITICAL" // 빨간색
+                                
+                                if (res.koberStatus == "CRITICAL") {
+                                    started = false
+                                    lastDVNotifyAt = 0L
+                                    Log.w("CALLSERVICE", "CRITICAL Kobert alert received. Stopping all monitoring.")
+                                }
+                                
+                            } else {
+                                msg = "[주의] $category 의심 키워드가 감지되었습니다."
+                                status = "WARNING" // 주황색
+                            }
+
                             NotificationHelper.showAlert(
                                 applicationContext, 
                                 "보이스피싱 위험 감지", 
                                 msg, 
-                                NotificationHelper.ID_KOBERT
+                                NotificationHelper.ID_KOBERT,
+                                status = status
                             )
                         }
                     })
@@ -212,7 +234,7 @@ class MyInCallService : InCallService() {
         try {
             val file = File(getExternalFilesDir(null), "call_${System.currentTimeMillis()}.m4a")
             currentRecordingFile = file
-            
+
             recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 MediaRecorder(this)
             } else {
@@ -271,7 +293,7 @@ class MyInCallService : InCallService() {
     private suspend fun resolveCurrentCallLogId(callEndTimeMs: Long): Long? = withContext(Dispatchers.IO) {
         val deadline = System.currentTimeMillis() + 8000 // 최대 8초 대기
         val baseline = lastKnownCallLogId
-        
+
         while (System.currentTimeMillis() < deadline) {
             val latest = getLatestCallLogId()
             if (latest != null && latest != baseline) return@withContext latest

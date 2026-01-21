@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -22,7 +23,6 @@ object NotificationHelper {
     private const val CHANNEL_NAME = "보이스피싱 긴급 경고"
     private const val CHANNEL_DESC = "보이스피싱 위험 상황 시 알림을 보냅니다"
 
-    // 알림 유형별 고유 ID 정의 (동시 노출 가능하게 함)
     const val ID_DEEPVOICE = 1001
     const val ID_KOBERT = 1002
 
@@ -74,28 +74,41 @@ object NotificationHelper {
         context: Context,
         title: String,
         message: String,
-        notificationId: Int // 고정값 대신 파라미터로 받음
+        notificationId: Int,
+        status: String = "Normal"
     ) {
         if (!hasNotificationPermission(context)) return
 
         ensureChannel(context)
         triggerVibration(context)
 
+        val accentBarColor: Int
+        val titleTextColor: Int
+
+        if (status == "WARNING") {
+            accentBarColor = Color.parseColor("#FFA500")
+            titleTextColor = Color.parseColor("#FF8C00")
+        } else {
+            accentBarColor = Color.parseColor("#FF5252")
+            titleTextColor = Color.parseColor("#D32F2F")
+        }
+
         val remoteViews = RemoteViews(context.packageName, R.layout.notification_danger).apply {
             setTextViewText(R.id.noti_title, title)
             setTextViewText(R.id.noti_message, message)
+            //setInt(R.id.noti_accent_bar, "setBackgroundColor", accentBarColor)
+            setTextColor(R.id.noti_title, titleTextColor)
         }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_alert)
-            .setContentTitle(title)
-            .setContentText(message)
+            .setSmallIcon(R.drawable.ic_feedback)
+            .setCustomContentView(remoteViews)
+            .setCustomBigContentView(remoteViews) // 긴 메시지용 확장 뷰 설정
+            .setCustomHeadsUpContentView(remoteViews)
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
-            .setCustomContentView(remoteViews)
-            .setCustomHeadsUpContentView(remoteViews)
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
 
         NotificationManagerCompat.from(context).notify(notificationId, builder.build())
     }

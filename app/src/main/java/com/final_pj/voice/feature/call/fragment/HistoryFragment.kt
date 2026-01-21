@@ -118,17 +118,19 @@ class HistoryFragment : Fragment() {
             onDeleteClick = { record -> showDeleteConfirm(record) },
             onReportClick = { record ->
                 val number = record.phoneNumber.takeIf { it.isNotBlank() }
-                if (number != null) showReportDialog(number)
-                else Toast.makeText(requireContext(), "신고할 전화번호 정보가 없습니다.", Toast.LENGTH_SHORT).show()
+                if (number != null) {
+                    showReportDialog(number)
+                } else {
+                    Toast.makeText(requireContext(), "신고할 전화번호 정보가 없습니다.", Toast.LENGTH_SHORT).show()
+                }
             }
         )
         recycler.adapter = adapter
 
-        // DB 변화를 실시간으로 감지 (STT 요약 완료 시 UI 즉시 반영)
+        // DB 변화를 실시간으로 감지
         val app = requireActivity().application as App
         viewLifecycleOwner.lifecycleScope.launch {
             app.db.sttSummaryDao().observeAllResults().collect {
-                Log.d("HistoryFragment", "DB changed: stt_result count = ${it.size}")
                 reloadAllCallLogs()
             }
         }
@@ -255,10 +257,7 @@ class HistoryFragment : Fragment() {
             }
         }
 
-        // DB에서 요약 데이터 조회
         val summaries = summaryDao.getSummariesByCallIds(callIds)
-        Log.d("HistoryFragment", "Querying summaries: Requested ${callIds.size}, Found ${summaries.size}")
-        
         val summaryMap = summaries.associate { it.callId to it.summary }
 
         tempRecords.map { record ->
@@ -321,6 +320,30 @@ class HistoryFragment : Fragment() {
         throw IllegalStateException("서버 오류 (${res.code()})")
     }
 
+    private fun confirmReport(number: String, description: String) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("신고하기")
+            .setMessage("$number 제보하시겠습니까?")
+            .setPositiveButton("예") { _, _ ->
+                val normalized = normalizePhone(number)
+                val descOrNull = description
+                    .takeIf { it != "- 선택 -" }
+                    ?.trim()
+                    ?.takeIf { it.isNotBlank() }
+
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        withContext(Dispatchers.IO) { postVoicePhisingNumber(normalized, descOrNull) }
+                        Toast.makeText(requireContext(), "신고가 접수되었습니다.", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), e.message ?: "실패", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .setNegativeButton("아니오", null)
+            .show()
+    }
+
     private fun showReportDialog(defaultPhone: String) {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.save_report_contact, null)
         val etPhone = dialogView.findViewById<EditText>(R.id.etDialogPhone)
@@ -344,15 +367,7 @@ class HistoryFragment : Fragment() {
                     Toast.makeText(requireContext(), "연락처를 입력하세요", Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
-                
-                viewLifecycleOwner.lifecycleScope.launch {
-                    try {
-                        withContext(Dispatchers.IO) { postVoicePhisingNumber(phone, description) }
-                        Toast.makeText(requireContext(), "신고가 접수되었습니다.", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception) {
-                        Toast.makeText(requireContext(), e.message ?: "실패", Toast.LENGTH_SHORT).show()
-                    }
-                }
+                confirmReport(phone, description)
             }
             .show()
     }
