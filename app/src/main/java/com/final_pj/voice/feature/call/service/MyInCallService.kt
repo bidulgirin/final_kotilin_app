@@ -152,7 +152,7 @@ class MyInCallService : InCallService() {
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     private fun startMonitoring() {
         stopMonitoring()
-        val dvThreshold = 0.85
+        val dvThreshold = 0.87
 
         monitoringJob = serviceScope.launch {
             val callId = currentCallSessionId ?: return@launch
@@ -190,15 +190,16 @@ class MyInCallService : InCallService() {
                         }
 
                         // 2. 문맥 분석 알림 체크 (위험도 점수 기반)
-                        val isHighRisk = res.koberRiskScore > 0.6
+                        val isHighRisk = res.koberRiskScore >= 0.6
                         if ((isHighRisk || res.koberStatus == "CRITICAL" || res.koberStatus == "WARNING") && (now - lastKobertNotifyAt >= cooldownMs)) {
                             lastKobertNotifyAt = now
                             
                             val category = res.category ?: ""
                             val msg: String
                             val status: String
+
                             Log.d("CALLSERVICE", "${category}")
-                            if (isHighRisk || res.koberStatus == "CRITICAL") {
+                            if (isHighRisk && res.koberStatus != "NORMAL") {
                                 msg = "[경고] $category 피싱 위험이 매우 높습니다."
                                 status = "CRITICAL" // 빨간색
                                 
