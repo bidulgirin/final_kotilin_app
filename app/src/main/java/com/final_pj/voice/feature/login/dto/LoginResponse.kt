@@ -11,5 +11,5 @@ data class UserInfoDto(
     val id: String,
     val email: String,
     val name: String? = null,
-    val nickname: String? = null
+    val nickname: String? = null,
 )

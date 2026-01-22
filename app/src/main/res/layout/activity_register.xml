@@ -78,20 +78,56 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/etRegisterPassword" />
+    <!-- [추가됨] 통화 내용 제공 동의 체크박스 -->
+    <CheckBox
+        android:id="@+id/cbConsent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="통화 내용 제공 동의 (필수)"
+        android:textColor="@color/main_text"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etRegisterNickname" />
 
-    <!-- Register Button -->
+    <!-- [추가됨] 자세히 보기 버튼 -->
+    <TextView
+        android:id="@+id/tvConsentDetails"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="자세히 보기"
+        android:textColor="@color/sub_text"
+        android:textSize="12sp"
+        app:layout_constraintBaseline_toBaselineOf="@id/cbConsent"
+        app:layout_constraintStart_toEndOf="@id/cbConsent" />
+
+    <!-- [추가됨] 동의 설명 문구 -->
+    <TextView
+        android:id="@+id/tvConsentDescription"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="체크박스를 선택하시면 통화 내용 제공에 동의하는 것으로 간주됩니다."
+        android:textColor="@color/sub_text"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cbConsent" />
+
+    <!-- Register Button (위치 변경됨: top을 설명 문구 아래로) -->
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnRegister"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="24dp"
         android:background="@drawable/bg_primary_button"
         android:text="회원가입 완료"
         android:textColor="@color/pure_white"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etRegisterNickname" />
+        app:layout_constraintTop_toBottomOf="@id/tvConsentDescription" />
 
     <!-- Back to Login -->
     <TextView

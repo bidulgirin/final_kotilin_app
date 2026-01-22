@@ -24,7 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 
-class AudioListFragment : Fragment() {
+class MainRecodeListFragment : Fragment() {
 
     private var _binding: FragmentMainRecodeListBinding? = null
     private val binding get() = _binding!!
@@ -71,6 +71,11 @@ class AudioListFragment : Fragment() {
             confirmBulkDelete(selected)
         }
 
+        // NEW: 전체 녹음 삭제 버튼 리스너
+        binding.btnDeleteAll.setOnClickListener {
+            confirmDeleteAll()
+        }
+
         // 시크바 조작
         binding.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -95,6 +100,8 @@ class AudioListFragment : Fragment() {
         binding.tvSelectedCount.text = "선택됨 ${selectedCount}개"
         binding.btnBulkDelete.text = "전체 삭제(${selectedCount})"
         binding.btnBulkDelete.isEnabled = selectedCount > 0
+        // NEW: Show Delete All button when not in selection mode
+        binding.btnDeleteAll.visibility = if (inSelectionMode) View.GONE else View.VISIBLE
     }
 
     private fun playAudio(item: AudioItem) {
@@ -279,5 +286,43 @@ class AudioListFragment : Fragment() {
         }.getOrDefault(false)
 
         return ok
+    }
+    
+    // NEW: 전체 삭제 확인
+    private fun confirmDeleteAll() {
+        if (audioAdapter.itemCount == 0) {
+            Toast.makeText(requireContext(), "삭제할 녹음이 없습니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        AlertDialog.Builder(requireContext())
+            .setTitle("전체 녹음 삭제")
+            .setMessage("저장된 모든 녹음을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")
+            .setPositiveButton("전체 삭제") { d, _ ->
+                deleteAllRecordings()
+                d.dismiss()
+            }
+            .setNegativeButton("취소") { d, _ -> d.dismiss() }
+            .show()
+    }
+
+    // NEW: 전체 삭제 실행
+    private fun deleteAllRecordings() {
+        stopAudio() // Stop playback first
+
+        // Assuming adapter has a method to get all items, like getItems()
+        val allItems = audioAdapter.getItems() 
+        var successCount = 0
+        
+        allItems.forEach { item ->
+            if (deleteFileByItem(item)) successCount++
+        }
+
+        if (successCount > 0) {
+            audioAdapter.clearItems() // Assuming a clear method like clearItems() exists
+            Toast.makeText(requireContext(), "총 ${successCount}개의 녹음이 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(requireContext(), "삭제된 녹음이 없습니다.", Toast.LENGTH_SHORT).show()
+        }
     }
 }

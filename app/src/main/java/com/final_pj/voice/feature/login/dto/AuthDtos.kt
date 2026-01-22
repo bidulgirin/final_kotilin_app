@@ -1,7 +1,6 @@
 package com.final_pj.voice.feature.login.dto
 
-import java.time.Instant
-import java.util.UUID
+import com.google.gson.annotations.SerializedName
 
 data class GoogleLoginRequest(
     val idToken: String,
@@ -13,8 +12,10 @@ data class UserDto(
     val name: String?,
     val picture: String?,
     val nickname: String?,
+    val isAgree: Boolean,
 
-    val isVerified: Boolean,   // is_verified 반영
+    @SerializedName("is_verified")
+    val isVerified: Boolean   // is_verified 반영
 )
 
 data class GoogleLoginResponse(

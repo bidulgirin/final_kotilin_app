@@ -1,5 +1,6 @@
 package com.final_pj.voice.feature.call.adapter
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -118,5 +119,18 @@ class AudioAdapter(
     fun removeAt(position: Int) {
         items.removeAt(position)
         notifyItemRemoved(position)
+    }
+
+    fun getItems(): List<AudioItem> = items.toList()
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun clearItems() {
+        items.clear()
+        selectedUris.clear()
+        notifyDataSetChanged()
+        if (selectionMode) {
+            selectionMode = false
+            onSelectionChanged(0, false)
+        }
     }
 }

@@ -14,7 +14,7 @@
     <!-- 녹음기록 -->
     <fragment
         android:id="@+id/navigation_record"
-        android:name="com.final_pj.voice.feature.call.fragment.AudioListFragment"
+        android:name="com.final_pj.voice.feature.call.fragment.MainRecodeListFragment"
         android:label="Record" >
     </fragment>
 

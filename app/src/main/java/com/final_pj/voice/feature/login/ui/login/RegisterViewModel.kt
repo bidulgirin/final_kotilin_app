@@ -22,12 +22,13 @@ class RegisterViewModel(
     private val _registerResult = MutableLiveData<LoginResult>()
     val registerResult: LiveData<LoginResult> = _registerResult
     
-    fun register(email: String, password: String, nickname: String?) {
+    fun register(email: String, password: String, nickname: String?, isAgree: Boolean) {
         viewModelScope.launch {
             val request = RegisterRequest(
                 email = email,
                 password = password,
-                name = nickname
+                name = nickname,
+                isAgree = isAgree
             )
             val result = registerRepository.register(request)
 
